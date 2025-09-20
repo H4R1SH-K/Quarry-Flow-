@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster"
 export const metadata: Metadata = {
   title: 'QuarryFlow',
   description: 'Business management for quarry suppliers.',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({

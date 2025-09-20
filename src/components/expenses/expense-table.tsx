@@ -25,9 +25,10 @@ import { Label } from "@/components/ui/label";
 import { PlusCircle, Pencil } from "lucide-react";
 import type { Expense } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 export function ExpenseTable() {
-  const { expenses, addExpense, updateExpense } = useDataStore();
+  const { expenses, addExpense, updateExpense, vehicles } = useDataStore();
   const [open, setOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
@@ -35,6 +36,7 @@ export function ExpenseTable() {
   const [item, setItem] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
+  const [vehicleId, setVehicleId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (editingExpense) {
@@ -42,6 +44,7 @@ export function ExpenseTable() {
       setItem(editingExpense.item);
       setAmount(String(editingExpense.amount));
       setDate(editingExpense.date);
+      setVehicleId(editingExpense.vehicleId);
       setOpen(true);
     }
   }, [editingExpense]);
@@ -59,6 +62,7 @@ export function ExpenseTable() {
     setItem('');
     setAmount('');
     setDate('');
+    setVehicleId(undefined);
   };
 
   const handleSaveExpense = () => {
@@ -69,6 +73,7 @@ export function ExpenseTable() {
         item,
         amount: Number(amount),
         date,
+        vehicleId,
       };
       updateExpense(updatedExpense);
     } else {
@@ -78,6 +83,7 @@ export function ExpenseTable() {
         item,
         amount: Number(amount),
         date,
+        vehicleId,
       };
       addExpense(newExpense);
     }
@@ -132,6 +138,22 @@ export function ExpenseTable() {
                 </Label>
                 <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="col-span-3" />
               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="vehicle" className="text-right">
+                  Vehicle
+                </Label>
+                 <Select value={vehicleId} onValueChange={(value) => setVehicleId(value)}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a vehicle (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {vehicles.map(vehicle => (
+                      <SelectItem key={vehicle.id} value={vehicle.id}>{vehicle.vehicleNumber} - {vehicle.make} {vehicle.model}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
@@ -149,6 +171,7 @@ export function ExpenseTable() {
               <TableRow>
                 <TableHead>Category</TableHead>
                 <TableHead>Item</TableHead>
+                <TableHead>Vehicle</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -156,22 +179,26 @@ export function ExpenseTable() {
             </TableHeader>
             <TableBody>
               {expenses.length > 0 ? (
-                expenses.map((expense) => (
-                  <TableRow key={expense.id}>
-                    <TableCell className="font-medium">{expense.category}</TableCell>
-                    <TableCell>{expense.item}</TableCell>
-                    <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
-                    <TableCell>{new Date(expense.date).toLocaleDateString('en-IN')}</TableCell>
-                    <TableCell className="text-right">
-                       <Button variant="ghost" size="icon" onClick={() => handleEditClick(expense)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                expenses.map((expense) => {
+                  const vehicle = vehicles.find(v => v.id === expense.vehicleId);
+                  return (
+                    <TableRow key={expense.id}>
+                      <TableCell className="font-medium">{expense.category}</TableCell>
+                      <TableCell>{expense.item}</TableCell>
+                      <TableCell>{vehicle ? `${vehicle.vehicleNumber}` : 'N/A'}</TableCell>
+                      <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
+                      <TableCell>{new Date(expense.date).toLocaleDateString('en-IN')}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(expense)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     No expenses found.
                   </TableCell>
                 </TableRow>

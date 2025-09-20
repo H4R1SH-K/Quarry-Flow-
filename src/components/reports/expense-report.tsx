@@ -22,7 +22,7 @@ import 'jspdf-autotable';
 import { useDataStore } from '@/lib/data-store';
 
 export function ExpenseReport() {
-  const { expenses } = useDataStore();
+  const { expenses, vehicles } = useDataStore();
 
   const totalExpenses = expenses.reduce((acc, expense) => acc + expense.amount, 0);
 
@@ -41,8 +41,17 @@ export function ExpenseReport() {
 
   const handleExport = () => {
     const doc = new jsPDF();
-    const tableData = expenses.map(e => [e.category, e.item, `₹${e.amount.toLocaleString('en-IN')}`, new Date(e.date).toLocaleDateString('en-IN')]);
-    const tableHead = [['Category', 'Item/Description', 'Amount', 'Date']];
+    const tableData = expenses.map(e => {
+      const vehicle = vehicles.find(v => v.id === e.vehicleId);
+      return [
+        e.category, 
+        e.item, 
+        vehicle ? vehicle.vehicleNumber : 'N/A',
+        `₹${e.amount.toLocaleString('en-IN')}`, 
+        new Date(e.date).toLocaleDateString('en-IN')
+      ]
+    });
+    const tableHead = [['Category', 'Item/Description', 'Vehicle', 'Amount', 'Date']];
     const generationDate = new Date().toLocaleDateString('en-IN', {
       year: 'numeric',
       month: 'long',
@@ -150,25 +159,30 @@ export function ExpenseReport() {
                   <TableRow>
                     <TableHead>Category</TableHead>
                     <TableHead>Item</TableHead>
+                    <TableHead>Vehicle</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Date</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {expenses.length > 0 ? (
-                    expenses.map(expense => (
+                    expenses.map(expense => {
+                      const vehicle = vehicles.find(v => v.id === expense.vehicleId);
+                      return (
                       <TableRow key={expense.id}>
                         <TableCell className="font-medium">
                           {expense.category}
                         </TableCell>
                         <TableCell>{expense.item}</TableCell>
+                         <TableCell>{vehicle ? vehicle.vehicleNumber : 'N/A'}</TableCell>
                         <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
                         <TableCell>{new Date(expense.date).toLocaleDateString('en-IN')}</TableCell>
                       </TableRow>
-                    ))
+                      )
+                    })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="h-24 text-center">
+                      <TableCell colSpan={5} className="h-24 text-center">
                         No expenses found.
                       </TableCell>
                     </TableRow>

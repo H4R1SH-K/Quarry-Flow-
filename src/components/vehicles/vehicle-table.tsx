@@ -36,6 +36,7 @@ export function VehicleTable() {
   const [model, setModel] = useState('');
   const [year, setYear] = useState('');
   const [vin, setVin] = useState('');
+  const [vehicleNumber, setVehicleNumber] = useState('');
 
   useEffect(() => {
     if (editingVehicle) {
@@ -43,6 +44,7 @@ export function VehicleTable() {
       setModel(editingVehicle.model);
       setYear(String(editingVehicle.year));
       setVin(editingVehicle.vin);
+      setVehicleNumber(editingVehicle.vehicleNumber);
       setOpen(true);
     }
   }, [editingVehicle]);
@@ -60,6 +62,7 @@ export function VehicleTable() {
     setModel('');
     setYear('');
     setVin('');
+    setVehicleNumber('');
   };
   
   const handleSaveVehicle = () => {
@@ -70,6 +73,7 @@ export function VehicleTable() {
         model,
         year: Number(year),
         vin,
+        vehicleNumber,
       };
       updateVehicle(updatedVehicle);
     } else {
@@ -79,6 +83,7 @@ export function VehicleTable() {
         model,
         year: Number(year),
         vin,
+        vehicleNumber,
         status: 'Active',
       };
       addVehicle(newVehicle);
@@ -133,6 +138,12 @@ export function VehicleTable() {
                 </Label>
                 <Input id="vin" value={vin} onChange={(e) => setVin(e.target.value)} className="col-span-3" />
               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="vehicleNumber" className="text-right">
+                  Vehicle Number
+                </Label>
+                <Input id="vehicleNumber" value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} className="col-span-3" />
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
@@ -148,6 +159,7 @@ export function VehicleTable() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Vehicle Number</TableHead>
                 <TableHead>Make</TableHead>
                 <TableHead>Model</TableHead>
                 <TableHead>Year</TableHead>
@@ -160,7 +172,8 @@ export function VehicleTable() {
               {vehicles.length > 0 ? (
                 vehicles.map((vehicle) => (
                   <TableRow key={vehicle.id}>
-                    <TableCell className="font-medium">{vehicle.make}</TableCell>
+                    <TableCell className="font-medium">{vehicle.vehicleNumber}</TableCell>
+                    <TableCell>{vehicle.make}</TableCell>
                     <TableCell>{vehicle.model}</TableCell>
                     <TableCell>{vehicle.year}</TableCell>
                     <TableCell>{vehicle.vin}</TableCell>
@@ -186,7 +199,7 @@ export function VehicleTable() {
                 ))
               ) : (
                  <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={7} className="h-24 text-center">
                     No vehicles found.
                   </TableCell>
                 </TableRow>

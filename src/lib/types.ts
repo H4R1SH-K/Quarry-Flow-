@@ -40,6 +40,7 @@ export type Vehicle = {
     model: string;
     year: number;
     vin: string;
+    vehicleNumber: string;
     status: "Active" | "Maintenance" | "Inactive";
 };
 
@@ -49,4 +50,5 @@ export type Expense = {
     item: string;
     amount: number;
     date: string;
+    vehicleId?: string;
 };

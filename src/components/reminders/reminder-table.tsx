@@ -149,7 +149,7 @@ export function ReminderTable() {
                 <Label htmlFor="dueDate" className="text-right">Due Date</Label>
                 <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="col-span-3" />
               </div>
-              {type === 'Vehicle Permit' && (
+              {(type === 'Vehicle Permit' || type === 'Insurance') && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="relatedTo" className="text-right">Vehicle</Label>
                   <Select value={relatedTo} onValueChange={setRelatedTo}>

@@ -1,3 +1,4 @@
+
 export type Sale = {
     name: string;
     total: number;
@@ -39,7 +40,6 @@ export type Vehicle = {
     make: string;
     model: string;
     year: number;
-    vin: string;
     vehicleNumber: string;
     status: "Active" | "Maintenance" | "Inactive";
 };

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -35,7 +36,6 @@ export function VehicleTable() {
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
   const [year, setYear] = useState('');
-  const [vin, setVin] = useState('');
   const [vehicleNumber, setVehicleNumber] = useState('');
 
   useEffect(() => {
@@ -43,7 +43,6 @@ export function VehicleTable() {
       setMake(editingVehicle.make);
       setModel(editingVehicle.model);
       setYear(String(editingVehicle.year));
-      setVin(editingVehicle.vin);
       setVehicleNumber(editingVehicle.vehicleNumber);
       setOpen(true);
     }
@@ -61,7 +60,6 @@ export function VehicleTable() {
     setMake('');
     setModel('');
     setYear('');
-    setVin('');
     setVehicleNumber('');
   };
   
@@ -72,7 +70,6 @@ export function VehicleTable() {
         make,
         model,
         year: Number(year),
-        vin,
         vehicleNumber,
       };
       updateVehicle(updatedVehicle);
@@ -82,7 +79,6 @@ export function VehicleTable() {
         make,
         model,
         year: Number(year),
-        vin,
         vehicleNumber,
         status: 'Active',
       };
@@ -133,12 +129,6 @@ export function VehicleTable() {
                 <Input id="year" type="number" value={year} onChange={(e) => setYear(e.target.value)} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="vin" className="text-right">
-                  VIN
-                </Label>
-                <Input id="vin" value={vin} onChange={(e) => setVin(e.target.value)} className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="vehicleNumber" className="text-right">
                   Vehicle Number
                 </Label>
@@ -163,7 +153,6 @@ export function VehicleTable() {
                 <TableHead>Make</TableHead>
                 <TableHead>Model</TableHead>
                 <TableHead>Year</TableHead>
-                <TableHead>VIN</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -176,7 +165,6 @@ export function VehicleTable() {
                     <TableCell>{vehicle.make}</TableCell>
                     <TableCell>{vehicle.model}</TableCell>
                     <TableCell>{vehicle.year}</TableCell>
-                    <TableCell>{vehicle.vin}</TableCell>
                     <TableCell>
                       <Badge
                         variant={
@@ -199,7 +187,7 @@ export function VehicleTable() {
                 ))
               ) : (
                  <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     No vehicles found.
                   </TableCell>
                 </TableRow>

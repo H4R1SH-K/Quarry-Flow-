@@ -1,12 +1,12 @@
 import type { Sale, RecentSale, CostRevenue, Customer, Vehicle, Expense } from "./types";
 
 export const salesData: Sale[] = [
-  { name: "Jan", total: Math.floor(Math.random() * 400000) + 100000 },
-  { name: "Feb", total: Math.floor(Math.random() * 400000) + 100000 },
-  { name: "Mar", total: Math.floor(Math.random() * 400000) + 100000 },
-  { name: "Apr", total: Math.floor(Math.random() * 400000) + 100000 },
-  { name: "May", total: Math.floor(Math.random() * 400000) + 100000 },
-  { name: "Jun", total: Math.floor(Math.random() * 400000) + 100000 },
+  { name: "Jan", total: 325000 },
+  { name: "Feb", total: 280000 },
+  { name: "Mar", total: 350000 },
+  { name: "Apr", total: 420000 },
+  { name: "May", total: 390000 },
+  { name: "Jun", total: 450000 },
 ];
 
 export const recentSales: RecentSale[] = [

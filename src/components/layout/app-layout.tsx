@@ -15,6 +15,7 @@ const menuItems = [
     { name: "Customers", icon: Users, href: "/customers" },
     { name: "Expenses", icon: DollarSign, href: "/expenses" },
     { name: "Vehicles", icon: Truck, href: "/vehicles" },
+    { name: "Reminders", icon: Bell, href: "/reminders" },
     { name: "Reports", icon: LineChart, href: "/reports" },
 ];
 

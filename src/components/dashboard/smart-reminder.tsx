@@ -7,10 +7,26 @@ import { createSmartReminder, type FormState } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Bell, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Bell, Sparkles, AlertCircle, CheckCircle2, PlusCircle, Pencil, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Separator } from '../ui/separator';
+import { useDataStore } from '@/lib/data-store';
+import { differenceInDays, format, parseISO } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import type { Reminder } from '@/lib/types';
+import Link from 'next/link';
 
 const initialState: FormState = {
   message: '',
@@ -28,13 +44,88 @@ function SubmitButton() {
 
 export function SmartReminder() {
   const [state, formAction] = useActionState(createSmartReminder, initialState);
+  const { reminders, addReminder, updateReminder, vehicles, customers } = useDataStore();
   const formRef = React.useRef<HTMLFormElement>(null);
+  
+  const [open, setOpen] = React.useState(false);
+  const [editingReminder, setEditingReminder] = React.useState<Reminder | null>(null);
+
+  const [type, setType] = React.useState<"Vehicle Permit" | "Insurance" | "Credit">("Vehicle Permit");
+  const [details, setDetails] = React.useState('');
+  const [dueDate, setDueDate] = React.useState('');
+  const [status, setStatus] = React.useState<"Pending" | "Completed">('Pending');
+  const [relatedTo, setRelatedTo] = React.useState<string | undefined>(undefined);
 
   React.useEffect(() => {
-    if (state.success) {
+    if (state.success && state.data) {
       formRef.current?.reset();
+      setType(state.data.type || "Vehicle Permit");
+      setDetails(state.data.details || '');
+      setDueDate(state.data.dueDate || '');
+
+      if(state.data.relatedToName) {
+        const allItems = [...vehicles, ...customers];
+        const relatedItem = allItems.find(item => 'vehicleNumber' in item ? item.vehicleNumber === state.data.relatedToName : item.name === state.data.relatedToName);
+        if (relatedItem) {
+          setRelatedTo(relatedItem.id);
+        }
+      }
+      setOpen(true);
     }
-  }, [state.success]);
+  }, [state, vehicles, customers]);
+  
+  React.useEffect(() => {
+    if (editingReminder) {
+      setType(editingReminder.type);
+      setDetails(editingReminder.details);
+      setDueDate(editingReminder.dueDate);
+      setStatus(editingReminder.status);
+      setRelatedTo(editingReminder.relatedTo);
+      setOpen(true);
+    }
+  }, [editingReminder]);
+
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setEditingReminder(null);
+      resetForm();
+    }
+    setOpen(isOpen);
+  };
+  
+  const resetForm = () => {
+    setType("Vehicle Permit");
+    setDetails('');
+    setDueDate('');
+    setStatus('Pending');
+    setRelatedTo(undefined);
+  };
+
+  const handleSaveReminder = () => {
+    const reminderData = { type, details, dueDate, status, relatedTo };
+    if (editingReminder) {
+      updateReminder({ ...editingReminder, ...reminderData });
+    } else {
+      addReminder({ id: String(Date.now()), ...reminderData });
+    }
+    resetForm();
+    setEditingReminder(null);
+    setOpen(false);
+  };
+
+  const upcomingReminders = reminders
+    .filter(r => r.status === 'Pending')
+    .sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+    .slice(0, 2);
+
+  const getDaysLeft = (dueDate: string) => {
+    const days = differenceInDays(new Date(dueDate), new Date());
+    if (days < 0) return <span className="font-medium text-destructive">Overdue</span>
+    if (days === 0) return <span className="font-medium text-destructive">Today</span>
+    if (days <= 7) return <span className="font-medium text-orange-500">{days} days</span>
+    return `${days} days`;
+  }
 
   return (
     <Card>
@@ -44,36 +135,47 @@ export function SmartReminder() {
           <CardTitle className="font-headline">Smart Reminders</CardTitle>
         </div>
         <CardDescription>
-          Use AI to set reminders for permits, insurance, and licenses.
+          Use AI to set reminders for permits, insurance, and credit.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <h3 className="font-semibold text-sm">Upcoming Renewals</h3>
-          <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <p>Vehicle Permit - TN 01 AB 1234</p>
-              <p className="font-medium text-destructive">5 days</p>
-            </div>
-            <Separator className="my-2" />
-            <div className="flex items-center justify-between">
-              <p>General Business Insurance</p>
-              <p className="font-medium">28 days</p>
-            </div>
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold text-sm">Upcoming Renewals</h3>
+            <Link href="/reminders" className='text-sm text-primary hover:underline flex items-center'>
+              View All <ArrowRight className='h-4 w-4 ml-1'/>
+            </Link>
           </div>
+           {upcomingReminders.length > 0 ? (
+            <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-lg space-y-2">
+              {upcomingReminders.map((reminder, index) => (
+                <React.Fragment key={reminder.id}>
+                  <div className="flex items-center justify-between">
+                    <p className='truncate max-w-[200px]'>{reminder.details}</p>
+                    {getDaysLeft(reminder.dueDate)}
+                  </div>
+                  {index < upcomingReminders.length - 1 && <Separator />}
+                </React.Fragment>
+              ))}
+            </div>
+           ) : (
+             <div className="text-sm text-center text-muted-foreground p-3 bg-muted/50 rounded-lg">
+                No pending reminders.
+             </div>
+           )}
         </div>
 
         <form action={formAction} ref={formRef} className="space-y-4">
           <div>
             <Textarea
               name="prompt"
-              placeholder="e.g., 'Remind me to renew the insurance for truck TN 01 AB 1234, expiring on December 15th, 2024'"
+              placeholder="e.g., 'Remind me to renew insurance for TN 01 AB 1234, expiring on Dec 15, 2024'"
               className="min-h-[80px]"
             />
           </div>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
              <div className="flex-grow w-full">
-              {state.message && (
+              {state.message && !state.success && (
                 <Alert variant={state.success ? 'default' : 'destructive'} className={cn(state.success ? 'border-green-500/50 text-green-700' : '')}>
                   {state.success ? <CheckCircle2 className="h-4 w-4"/> : <AlertCircle className="h-4 w-4" />}
                   <AlertTitle className="font-semibold">{state.success ? 'Success' : 'Error'}</AlertTitle>
@@ -84,6 +186,69 @@ export function SmartReminder() {
             <SubmitButton />
           </div>
         </form>
+         <Dialog open={open} onOpenChange={handleOpenChange}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editingReminder ? 'Edit Reminder' : 'Add New Reminder'}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="type" className="text-right">Type</Label>
+                <Select value={type} onValueChange={(value: "Vehicle Permit" | "Insurance" | "Credit") => setType(value)}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Vehicle Permit">Vehicle Permit</SelectItem>
+                    <SelectItem value="Insurance">Insurance</SelectItem>
+                    <SelectItem value="Credit">Credit</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="details" className="text-right">Details</Label>
+                <Textarea id="details" value={details} onChange={(e) => setDetails(e.target.value)} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="dueDate" className="text-right">Due Date</Label>
+                <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="col-span-3" />
+              </div>
+              {type !== 'Insurance' && <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="relatedTo" className="text-right">
+                  {type === 'Credit' ? 'Customer' : 'Vehicle'}
+                </Label>
+                <Select value={relatedTo} onValueChange={setRelatedTo}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder={`Select a ${type === 'Credit' ? 'customer' : 'vehicle'}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    { (type === 'Credit' ? customers : vehicles).map(item => (
+                      <SelectItem key={item.id} value={item.id}>
+                        {type === 'Credit' ? (item as any).name : (item as any).vehicleNumber}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>}
+               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">Status</Label>
+                <Select value={status} onValueChange={(value: "Pending" | "Completed") => setStatus(value)}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+              <Button type="submit" onClick={handleSaveReminder}>Save Reminder</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

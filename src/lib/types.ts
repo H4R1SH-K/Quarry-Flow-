@@ -52,3 +52,12 @@ export type Expense = {
     date: string;
     vehicleId?: string;
 };
+
+export type Reminder = {
+  id: string;
+  type: "Vehicle Permit" | "Insurance" | "Credit";
+  details: string;
+  dueDate: string;
+  status: "Pending" | "Completed";
+  relatedTo?: string; // Can be customerId or vehicleId
+};

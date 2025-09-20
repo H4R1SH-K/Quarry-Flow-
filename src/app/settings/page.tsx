@@ -9,16 +9,17 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Upload, Database, Combine } from 'lucide-react';
+import { Download, Upload, Database, Combine, Cloud } from 'lucide-react';
 import { useDataStore } from '@/lib/data-store';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { migrateToFirestore, importToFirestore } from '@/lib/firebase';
 
 export default function SettingsPage() {
     const { sales, customers, vehicles, expenses, reminders, restoreData, importData } = useDataStore();
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const importMode = useRef<'restore' | 'import' | null>(null);
+    const importMode = useRef<'restore' | 'import' | 'import_cloud' | null>(null);
 
     const handleBackup = () => {
         const data = {
@@ -44,12 +45,30 @@ export default function SettingsPage() {
         });
     };
 
+    const handleCloudSync = async () => {
+        try {
+            const data = { sales, customers, vehicles, expenses, reminders };
+            await migrateToFirestore(data);
+            toast({
+                title: 'Cloud Sync Successful',
+                description: 'Your local data has been synced to the cloud.',
+            });
+        } catch (error) {
+            console.error('Cloud Sync Error:', error);
+            toast({
+                title: 'Cloud Sync Failed',
+                description: 'Could not sync data to the cloud. Please try again.',
+                variant: 'destructive',
+            });
+        }
+    };
+
     const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
         try {
             const text = e.target?.result;
             if (typeof text !== 'string') {
@@ -59,17 +78,23 @@ export default function SettingsPage() {
             
             if (data.sales && data.customers && data.vehicles && data.expenses && data.reminders) {
                 if(importMode.current === 'import') {
-                importData(data);
-                toast({
-                    title: "Import Successful",
-                    description: "Your data has been merged from the backup file.",
-                });
-                } else {
-                restoreData(data);
-                toast({
-                    title: "Restore Successful",
-                    description: "Your data has been restored from the backup file.",
-                });
+                    importData(data);
+                    toast({
+                        title: "Local Import Successful",
+                        description: "Your data has been merged from the backup file.",
+                    });
+                } else if (importMode.current === 'restore') {
+                    restoreData(data);
+                    toast({
+                        title: "Local Restore Successful",
+                        description: "Your data has been restored from the backup file.",
+                    });
+                } else if (importMode.current === 'import_cloud') {
+                    await importToFirestore(data);
+                     toast({
+                        title: "Cloud Import Successful",
+                        description: "Backup has been imported to the cloud.",
+                    });
                 }
             } else {
                 toast({
@@ -80,8 +105,8 @@ export default function SettingsPage() {
             }
         } catch (error) {
             toast({
-            title: "Restore Failed",
-            description: "The selected file is not a valid JSON backup.",
+            title: "Operation Failed",
+            description: "The selected file is not a valid JSON backup or an error occurred.",
             variant: "destructive",
             });
             console.error("Restore/Import failed:", error);
@@ -95,7 +120,7 @@ export default function SettingsPage() {
         reader.readAsText(file);
     };
 
-    const triggerFilePicker = (mode: 'restore' | 'import') => {
+    const triggerFilePicker = (mode: 'restore' | 'import' | 'import_cloud') => {
         importMode.current = mode;
         fileInputRef.current?.click();
     };
@@ -110,10 +135,10 @@ export default function SettingsPage() {
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         <Database className="h-6 w-6"/>
-                        <CardTitle className="font-headline">Data Management</CardTitle>
+                        <CardTitle className="font-headline">Local Data Management</CardTitle>
                     </div>
                     <CardDescription>
-                    Backup, restore, or import your application data. Your data is stored locally in your browser.
+                    Backup, restore, or import your application data stored in your browser.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -130,28 +155,56 @@ export default function SettingsPage() {
 
                     <Button onClick={() => triggerFilePicker('import')} variant="outline">
                         <Combine className="mr-2 h-4 w-4" />
-                        Import & Merge Data
+                        Import & Merge Data (Local)
                     </Button>
 
                     <Button onClick={() => triggerFilePicker('restore')} variant="destructive">
                         <Upload className="mr-2 h-4 w-4" />
-                        Restore (Overwrite)
+                        Restore (Overwrite Local)
                     </Button>
-
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileSelected}
-                        className="hidden"
-                        accept=".json"
-                    />
                     </div>
                     <div className='text-xs text-muted-foreground pt-2'>
-                        <p><span className='font-semibold'>Import & Merge:</span> Adds new records from a file without removing existing data.</p>
-                        <p><span className='font-semibold'>Restore (Overwrite):</span> Replaces all current data with the data from a file.</p>
+                        <p><span className='font-semibold'>Import & Merge:</span> Adds new records from a file to your local data.</p>
+                        <p><span className='font-semibold'>Restore (Overwrite):</span> Replaces all current local data with the data from a file.</p>
                     </div>
                 </CardContent>
             </Card>
+
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <Cloud className="h-6 w-6"/>
+                        <CardTitle className="font-headline">Cloud Sync</CardTitle>
+                    </div>
+                    <CardDescription>
+                    Sync your data with your Google Account for backup and access across devices.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex flex-col gap-2">
+                        <Button onClick={handleCloudSync}>
+                            <Cloud className="mr-2 h-4 w-4" />
+                            Sync to Cloud (One-time)
+                        </Button>
+                        <Button onClick={() => triggerFilePicker('import_cloud')} variant="outline">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Import Backup to Cloud
+                        </Button>
+                    </div>
+                     <div className='text-xs text-muted-foreground pt-2'>
+                        <p><span className='font-semibold'>Sync to Cloud:</span> Pushes all your current local data to the cloud.</p>
+                        <p><span className='font-semibold'>Import Backup to Cloud:</span> Upload a backup file directly to the cloud, merging its content.</p>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelected}
+                className="hidden"
+                accept=".json"
+            />
         </div>
     );
 }

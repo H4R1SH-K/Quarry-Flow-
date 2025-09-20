@@ -23,7 +23,17 @@ interface DataState {
   updateProfile: (profile: Profile) => void;
   restoreData: (data: Partial<DataState>) => void;
   importData: (data: Partial<DataState>) => void;
+  clearData: () => void;
 }
+
+const initialState = {
+  sales: [],
+  customers: [],
+  vehicles: [],
+  expenses: [],
+  reminders: [],
+  profile: null,
+};
 
 const mergeById = <T extends { id: string }>(existing: T[], incoming: T[]): T[] => {
   const existingIds = new Set(existing.map(item => item.id));
@@ -44,12 +54,7 @@ const mergeById = <T extends { id: string }>(existing: T[], incoming: T[]): T[] 
 export const useDataStore = create<DataState>()(
   persist(
     (set) => ({
-      sales: [],
-      customers: [],
-      vehicles: [],
-      expenses: [],
-      reminders: [],
-      profile: null,
+      ...initialState,
       addSale: (sale) => set((state) => ({ sales: [...state.sales, sale] })),
       updateSale: (sale) => set((state) => ({ sales: state.sales.map(s => s.id === sale.id ? sale : s) })),
       addCustomer: (customer) => set((state) => ({ customers: [...state.customers, customer] })),
@@ -71,6 +76,7 @@ export const useDataStore = create<DataState>()(
         reminders: data.reminders ? mergeById(state.reminders, data.reminders) : state.reminders,
         profile: data.profile || state.profile,
       })),
+      clearData: () => set({...initialState}),
     }),
     {
       name: 'quarryflow-storage',

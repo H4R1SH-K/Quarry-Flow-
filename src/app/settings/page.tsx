@@ -9,14 +9,26 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Upload, Database, Combine, Cloud } from 'lucide-react';
+import { Download, Upload, Database, Combine, Cloud, Trash2 } from 'lucide-react';
 import { useDataStore } from '@/lib/data-store';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { migrateToFirestore, importToFirestore } from '@/app/settings/actions';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 
 export default function SettingsPage() {
-    const { sales, customers, vehicles, expenses, reminders, restoreData, importData } = useDataStore();
+    const { sales, customers, vehicles, expenses, reminders, restoreData, importData, clearData } = useDataStore();
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const importMode = useRef<'restore' | 'import' | 'import_cloud' | null>(null);
@@ -127,6 +139,14 @@ export default function SettingsPage() {
         fileInputRef.current?.click();
     };
 
+    const handleClearData = () => {
+        clearData();
+        toast({
+            title: 'Local Data Cleared',
+            description: 'All your local application data has been removed.',
+        });
+    }
+
     return (
         <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
             <div className="flex items-center justify-between">
@@ -140,34 +160,61 @@ export default function SettingsPage() {
                         <CardTitle className="font-headline">Local Data Management</CardTitle>
                     </div>
                     <CardDescription>
-                    Backup, restore, or import your application data stored in your browser.
+                    Backup, restore, import, or clear your application data stored in your browser.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className='text-sm text-muted-foreground'>
-                        <p>Your data is automatically saved in your browser. Use these options to create a manual backup or restore data from a file.</p>
+                        <p>Your data is automatically saved in your browser. Use these options to manage your data.</p>
                     </div>
                     <div className="flex flex-col gap-2">
-                    <Button onClick={handleBackup}>
-                        <Download className="mr-2 h-4 w-4" />
-                        Backup Data
-                    </Button>
-                    
-                    <Separator className='my-2'/>
+                        <Button onClick={handleBackup}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Backup Data
+                        </Button>
+                        
+                        <Separator className='my-2'/>
 
-                    <Button onClick={() => triggerFilePicker('import')} variant="outline">
-                        <Combine className="mr-2 h-4 w-4" />
-                        Import & Merge Data (Local)
-                    </Button>
+                        <Button onClick={() => triggerFilePicker('import')} variant="outline">
+                            <Combine className="mr-2 h-4 w-4" />
+                            Import & Merge Data (Local)
+                        </Button>
 
-                    <Button onClick={() => triggerFilePicker('restore')} variant="destructive">
-                        <Upload className="mr-2 h-4 w-4" />
-                        Restore (Overwrite Local)
-                    </Button>
+                        <Button onClick={() => triggerFilePicker('restore')} variant="outline">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Restore (Overwrite Local)
+                        </Button>
+
+                        <Separator className='my-2'/>
+                        
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Clear Local Data
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete all your
+                                    local application data from this browser.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleClearData}>
+                                    Yes, clear all data
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </div>
-                    <div className='text-xs text-muted-foreground pt-2'>
+                    <div className='text-xs text-muted-foreground pt-2 space-y-1'>
                         <p><span className='font-semibold'>Import & Merge:</span> Adds new records from a file to your local data.</p>
                         <p><span className='font-semibold'>Restore (Overwrite):</span> Replaces all current local data with the data from a file.</p>
+                        <p><span className='font-semibold text-destructive'>Clear Local Data:</span> Erases all data stored in your browser.</p>
                     </div>
                 </CardContent>
             </Card>
@@ -181,7 +228,7 @@ export default function SettingsPage() {
                     <CardDescription>
                     Sync your data with your Google Account for backup and access across devices.
                     </CardDescription>
-                </CardHeader>
+                </Header>
                 <CardContent className="space-y-4">
                     <div className="flex flex-col gap-2">
                         <Button onClick={handleCloudSync}>

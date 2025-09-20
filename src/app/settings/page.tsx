@@ -76,7 +76,9 @@ export default function SettingsPage() {
             }
             const data = JSON.parse(text);
             
-            if (data.sales && data.customers && data.vehicles && data.expenses && data.reminders) {
+            const hasAnyData = ['sales', 'customers', 'vehicles', 'expenses', 'reminders'].some(key => Array.isArray(data[key]));
+
+            if (hasAnyData) {
                 if(importMode.current === 'import') {
                     importData(data);
                     toast({

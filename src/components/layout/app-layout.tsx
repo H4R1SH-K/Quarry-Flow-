@@ -1,20 +1,27 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, FileText, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign } from "lucide-react";
+import { Bell, FileText, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign, IndianRupee } from "lucide-react";
 import { Button } from "../ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import Image from "next/image";
+import { cn } from '@/lib/utils';
 
 const menuItems = [
-    { name: "Dashboard", icon: LayoutDashboard, href: "#" },
-    { name: "Sales", icon: ShoppingCart, href: "#" },
-    { name: "Customers", icon: Users, href: "#" },
-    { name: "Expenses", icon: DollarSign, href: "#" },
-    { name: "Vehicles", icon: Truck, href: "#" },
-    { name: "Reports", icon: LineChart, href: "#" },
+    { name: "Dashboard", icon: LayoutDashboard, href: "/" },
+    { name: "Sales", icon: ShoppingCart, href: "/sales" },
+    { name: "Customers", icon: Users, href: "/customers" },
+    { name: "Expenses", icon: DollarSign, href: "/expenses" },
+    { name: "Vehicles", icon: Truck, href: "/vehicles" },
+    { name: "Reports", icon: LineChart, href: "/reports" },
 ];
 
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  
   return (
     <SidebarProvider>
       <Sidebar>
@@ -30,10 +37,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarMenu>
                 {menuItems.map((item) => (
                     <SidebarMenuItem key={item.name}>
-                        <SidebarMenuButton tooltip={item.name} isActive={item.name === "Dashboard"}>
-                            <item.icon />
-                            <span>{item.name}</span>
-                        </SidebarMenuButton>
+                        <Link href={item.href} passHref>
+                            <SidebarMenuButton asChild tooltip={item.name} isActive={pathname === item.href}>
+                                <a>
+                                    <item.icon />
+                                    <span>{item.name}</span>
+                                </a>
+                            </SidebarMenuButton>
+                        </Link>
                     </SidebarMenuItem>
                 ))}
             </SidebarMenu>

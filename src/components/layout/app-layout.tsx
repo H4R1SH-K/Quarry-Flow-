@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, FileText, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign, UserCircle, Banknote } from "lucide-react";
+import { Bell, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign, UserCircle, Banknote } from "lucide-react";
 import { Button } from "../ui/button";
 
 const menuItems = [
@@ -16,11 +16,6 @@ const menuItems = [
     { name: "Reminders", icon: Bell, href: "/reminders" },
     { name: "Reports", icon: LineChart, href: "/reports" },
 ];
-
-const bottomMenuItems = [
-    { name: "Settings", icon: Settings, href: "/settings" },
-]
-
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -49,19 +44,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     </SidebarMenuItem>
                 ))}
             </SidebarMenu>
-
-             <SidebarMenu className="mt-auto">
-                {bottomMenuItems.map((item) => (
-                    <SidebarMenuItem key={item.name}>
-                        <Link href={item.href} passHref>
-                            <SidebarMenuButton tooltip={item.name} isActive={pathname === item.href}>
-                                <item.icon />
-                                <span>{item.name}</span>
-                            </SidebarMenuButton>
-                        </Link>
-                    </SidebarMenuItem>
-                ))}
-            </SidebarMenu>
         </SidebarContent>
       </Sidebar>
       <SidebarInset>
@@ -74,6 +56,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <Bell className="h-4 w-4" />
                 <span className="sr-only">Toggle notifications</span>
             </Button>
+            <Link href="/settings">
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                  <Settings className="h-5 w-5" />
+                  <span className="sr-only">Settings</span>
+              </Button>
+            </Link>
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                 <UserCircle className="h-6 w-6" />
                 <span className="sr-only">User Menu</span>

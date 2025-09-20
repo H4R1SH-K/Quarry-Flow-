@@ -1,5 +1,3 @@
-# Firebase Studio
+# QuarryFlow
 
-This is a NextJS starter in Firebase Studio.
-
-To get started, take a look at src/app/page.tsx.
+A business management app for a sand truck/quarry supply business. This application helps manage customers, sales, expenses, and provides key business insights through a clean and intuitive dashboard.

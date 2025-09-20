@@ -1,3 +1,34 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "1",
+      "description": "Avatar for Olivia Martin",
+      "imageUrl": "https://picsum.photos/seed/10/40/40",
+      "imageHint": "woman avatar"
+    },
+    {
+      "id": "2",
+      "description": "Avatar for Jackson Lee",
+      "imageUrl": "https://picsum.photos/seed/11/40/40",
+      "imageHint": "man avatar"
+    },
+    {
+      "id": "3",
+      "description": "Avatar for Isabella Nguyen",
+      "imageUrl": "https://picsum.photos/seed/12/40/40",
+      "imageHint": "woman avatar"
+    },
+    {
+      "id": "4",
+      "description": "Avatar for William Kim",
+      "imageUrl": "https://picsum.photos/seed/13/40/40",
+      "imageHint": "man avatar"
+    },
+    {
+      "id": "5",
+      "description": "Avatar for Sofia Davis",
+      "imageUrl": "https://picsum.photos/seed/14/40/40",
+      "imageHint": "woman avatar"
+    }
+  ]
 }

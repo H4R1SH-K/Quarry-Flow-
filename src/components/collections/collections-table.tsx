@@ -23,34 +23,30 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Pencil, Bell } from "lucide-react";
+import { PlusCircle, Pencil, Banknote } from "lucide-react";
 import type { Reminder } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { differenceInDays, format } from 'date-fns';
 
-export function ReminderTable() {
+export function CollectionsTable() {
   const { reminders, addReminder, updateReminder } = useDataStore();
   const [open, setOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
 
-  const [type, setType] = useState<"Vehicle Permit" | "Insurance">("Vehicle Permit");
   const [details, setDetails] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [status, setStatus] = useState<"Pending" | "Completed">('Pending');
-  const [relatedTo, setRelatedTo] = useState<string | undefined>(undefined);
   const [relatedToName, setRelatedToName] = useState('');
-
-  const filteredReminders = reminders.filter(r => r.type !== 'Credit');
+  
+  const collections = reminders.filter(r => r.type === 'Credit');
 
   useEffect(() => {
     if (editingReminder) {
-      setType(editingReminder.type as "Vehicle Permit" | "Insurance");
       setDetails(editingReminder.details);
       setDueDate(editingReminder.dueDate);
       setStatus(editingReminder.status);
-      setRelatedTo(editingReminder.relatedTo);
       setRelatedToName(editingReminder.relatedToName || '');
       setOpen(true);
     }
@@ -65,27 +61,24 @@ export function ReminderTable() {
   };
   
   const resetForm = () => {
-    setType("Vehicle Permit");
     setDetails('');
     setDueDate('');
     setStatus('Pending');
-    setRelatedTo(undefined);
     setRelatedToName('');
   };
 
   const handleSaveReminder = () => {
     const reminderData = {
-      type,
+      type: 'Credit' as const,
       details,
       dueDate,
       status,
-      relatedTo,
       relatedToName,
     };
     if (editingReminder) {
       updateReminder({ ...editingReminder, ...reminderData });
     } else {
-      addReminder({ id: String(Date.now()), ...reminderData, type: reminderData.type as any });
+      addReminder({ id: String(Date.now()), ...reminderData });
     }
     resetForm();
     setEditingReminder(null);
@@ -96,10 +89,6 @@ export function ReminderTable() {
     setEditingReminder(reminder);
   };
   
-  const getRelatedName = (reminder: Reminder) => {
-    return reminder.relatedToName || 'N/A';
-  }
-
   const getDaysLeft = (dueDate: string) => {
     const days = differenceInDays(new Date(dueDate), new Date());
     if (days < 0) return <span className="text-destructive">Overdue</span>
@@ -112,33 +101,21 @@ export function ReminderTable() {
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-            <Bell className="h-6 w-6"/>
-            <h2 className="text-3xl font-bold tracking-tight font-headline">Reminders</h2>
+            <Banknote className="h-6 w-6"/>
+            <h2 className="text-3xl font-bold tracking-tight font-headline">Collections</h2>
         </div>
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add Reminder
+              Add Collection
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingReminder ? 'Edit Reminder' : 'Add New Reminder'}</DialogTitle>
+              <DialogTitle>{editingReminder ? 'Edit Collection' : 'Add New Collection'}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="type" className="text-right">Type</Label>
-                <Select value={type} onValueChange={(value: "Vehicle Permit" | "Insurance") => setType(value)}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Vehicle Permit">Vehicle Permit</SelectItem>
-                    <SelectItem value="Insurance">Insurance</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="details" className="text-right">Details</Label>
                 <Textarea id="details" value={details} onChange={(e) => setDetails(e.target.value)} className="col-span-3" />
@@ -148,10 +125,10 @@ export function ReminderTable() {
                 <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="relatedToName" className="text-right">Vehicle</Label>
-                <Input id="relatedToName" value={relatedToName} onChange={(e) => setRelatedToName(e.target.value)} placeholder="Enter vehicle number" className="col-span-3" />
+                <Label htmlFor="relatedToName" className="text-right">Customer</Label>
+                <Input id="relatedToName" value={relatedToName} onChange={(e) => setRelatedToName(e.target.value)} placeholder="Enter customer name" className="col-span-3" />
               </div>
-               <div className="grid grid-cols-4 items-center gap-4">
+              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="status" className="text-right">Status</Label>
                 <Select value={status} onValueChange={(value: "Pending" | "Completed") => setStatus(value)}>
                   <SelectTrigger className="col-span-3">
@@ -166,7 +143,7 @@ export function ReminderTable() {
             </div>
             <DialogFooter>
               <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-              <Button type="submit" onClick={handleSaveReminder}>Save Reminder</Button>
+              <Button type="submit" onClick={handleSaveReminder}>Save Collection</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -176,24 +153,22 @@ export function ReminderTable() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Type</TableHead>
                 <TableHead>Details</TableHead>
                 <TableHead>Due Date</TableHead>
                 <TableHead>Time Left</TableHead>
-                <TableHead>Related To</TableHead>
+                <TableHead>Customer</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredReminders.length > 0 ? (
-                filteredReminders.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).map((reminder) => (
+              {collections.length > 0 ? (
+                collections.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).map((reminder) => (
                   <TableRow key={reminder.id}>
-                    <TableCell className="font-medium">{reminder.type}</TableCell>
-                    <TableCell className="max-w-[250px] truncate">{reminder.details}</TableCell>
+                    <TableCell className="max-w-[250px] truncate font-medium">{reminder.details}</TableCell>
                     <TableCell>{format(new Date(reminder.dueDate), 'PPP')}</TableCell>
                     <TableCell>{getDaysLeft(reminder.dueDate)}</TableCell>
-                    <TableCell>{getRelatedName(reminder)}</TableCell>
+                    <TableCell>{reminder.relatedToName || 'N/A'}</TableCell>
                     <TableCell>
                       <Badge variant={reminder.status === "Pending" ? "destructive" : "default"}>
                         {reminder.status}
@@ -208,8 +183,8 @@ export function ReminderTable() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
-                    No reminders found.
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    No collections found.
                   </TableCell>
                 </TableRow>
               )}

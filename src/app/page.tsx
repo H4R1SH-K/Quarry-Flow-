@@ -3,10 +3,10 @@ import { RecentSales } from "@/components/dashboard/recent-sales";
 import { SalesChart } from "@/components/dashboard/sales-chart";
 import { SmartReminder } from "@/components/dashboard/smart-reminder";
 import { CostRevenueChart } from "@/components/dashboard/cost-revenue-chart";
-import { CreditReminders } from "@/components/dashboard/credit-reminders";
 import { ExpenseBreakdownChart } from "@/components/dashboard/expense-breakdown-chart";
 import { VehicleSummary } from "@/components/dashboard/vehicle-summary";
 import { RecentExpenses } from "@/components/dashboard/recent-expenses";
+import { UpcomingCollections } from "@/components/dashboard/upcoming-collections";
 
 
 export default function DashboardPage() {
@@ -27,7 +27,7 @@ export default function DashboardPage() {
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 grid gap-4">
             <CostRevenueChart />
-            <CreditReminders />
+            <UpcomingCollections />
           </div>
           <div className="lg:col-span-1 grid gap-4">
             <SmartReminder />

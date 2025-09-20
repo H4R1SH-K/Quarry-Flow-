@@ -8,7 +8,7 @@ import { differenceInDays } from 'date-fns';
 import { Banknote, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
-export function CreditReminders() {
+export function UpcomingCollections() {
   const { reminders } = useDataStore();
 
   const upcomingCollections = reminders
@@ -51,7 +51,7 @@ export function CreditReminders() {
                 {index < upcomingCollections.length - 1 && <Separator />}
               </React.Fragment>
             ))}
-             <Link href="/reminders" className='text-sm text-primary hover:underline flex items-center pt-2'>
+             <Link href="/collections" className='text-sm text-primary hover:underline flex items-center pt-2'>
               View All Collections <ArrowRight className='h-4 w-4 ml-1'/>
             </Link>
           </div>

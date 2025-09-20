@@ -49,7 +49,7 @@ export function SmartReminder() {
   const [open, setOpen] = React.useState(false);
   const [editingReminder, setEditingReminder] = React.useState<Reminder | null>(null);
 
-  const [type, setType] = React.useState<"Vehicle Permit" | "Insurance" | "Credit">("Vehicle Permit");
+  const [type, setType] = React.useState<"Vehicle Permit" | "Insurance">("Vehicle Permit");
   const [details, setDetails] = React.useState('');
   const [dueDate, setDueDate] = React.useState('');
   const [status, setStatus] = React.useState<"Pending" | "Completed">('Pending');
@@ -57,9 +57,9 @@ export function SmartReminder() {
   const [relatedToName, setRelatedToName] = React.useState('');
 
   React.useEffect(() => {
-    if (state.success && state.data) {
+    if (state.success && state.data && state.data.type !== 'Credit') {
       formRef.current?.reset();
-      setType(state.data.type || "Vehicle Permit");
+      setType(state.data.type as "Vehicle Permit" | "Insurance" || "Vehicle Permit");
       setDetails(state.data.details || '');
       setDueDate(state.data.dueDate || '');
       setRelatedToName(state.data.relatedToName || '');
@@ -69,7 +69,7 @@ export function SmartReminder() {
   
   React.useEffect(() => {
     if (editingReminder) {
-      setType(editingReminder.type);
+      setType(editingReminder.type as "Vehicle Permit" | "Insurance");
       setDetails(editingReminder.details);
       setDueDate(editingReminder.dueDate);
       setStatus(editingReminder.status);
@@ -102,7 +102,7 @@ export function SmartReminder() {
     if (editingReminder) {
       updateReminder({ ...editingReminder, ...reminderData });
     } else {
-      addReminder({ id: String(Date.now()), ...reminderData });
+      addReminder({ id: String(Date.now()), ...reminderData, type: reminderData.type as any });
     }
     resetForm();
     setEditingReminder(null);
@@ -130,7 +130,7 @@ export function SmartReminder() {
           <CardTitle className="font-headline">Smart Reminders</CardTitle>
         </div>
         <CardDescription>
-          Use AI to set reminders for permits, insurance, and credit.
+          Use AI to set reminders for permits and insurance.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 flex-grow flex flex-col">
@@ -189,14 +189,13 @@ export function SmartReminder() {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="type" className="text-right">Type</Label>
-                <Select value={type} onValueChange={(value: "Vehicle Permit" | "Insurance" | "Credit") => setType(value)}>
+                <Select value={type} onValueChange={(value: "Vehicle Permit" | "Insurance") => setType(value)}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Vehicle Permit">Vehicle Permit</SelectItem>
                     <SelectItem value="Insurance">Insurance</SelectItem>
-                    <SelectItem value="Credit">Credit</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -208,18 +207,10 @@ export function SmartReminder() {
                 <Label htmlFor="dueDate" className="text-right">Due Date</Label>
                 <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="col-span-3" />
               </div>
-              {(type === 'Vehicle Permit' || type === 'Insurance') && (
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="relatedToName" className="text-right">Vehicle</Label>
-                  <Input id="relatedToName" value={relatedToName} onChange={(e) => setRelatedToName(e.target.value)} placeholder="Enter vehicle number" className="col-span-3" />
-                </div>
-              )}
-              {type === 'Credit' && (
-                <div className="grid grid-cols-4 items-center gap-4">
-                   <Label htmlFor="relatedToName" className="text-right">Customer</Label>
-                  <Input id="relatedToName" value={relatedToName} onChange={(e) => setRelatedToName(e.target.value)} placeholder="Enter customer name" className="col-span-3" />
-                </div>
-              )}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="relatedToName" className="text-right">Vehicle</Label>
+                <Input id="relatedToName" value={relatedToName} onChange={(e) => setRelatedToName(e.target.value)} placeholder="Enter vehicle number" className="col-span-3" />
+              </div>
                <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="status" className="text-right">Status</Label>
                 <Select value={status} onValueChange={(value: "Pending" | "Completed") => setStatus(value)}>

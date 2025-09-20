@@ -17,7 +17,7 @@ import { useDataStore } from '@/lib/data-store';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
-import { addDays, format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, sub } from 'date-fns';
+import { addDays, format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, sub, isValid } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import type { Sales, Expense, Reminder } from '@/lib/types';
 
@@ -29,39 +29,41 @@ export function ExpenseReport() {
     to: new Date(),
   });
 
-   const getFilteredData = <T extends { date: string }>(data: T[]): T[] => {
+   const getFilteredData = <T extends { date?: string, dueDate?: string }>(data: T[]): T[] => {
     const now = new Date();
+    const dateKey = 'date' in data[0] ? 'date' : 'dueDate';
+    
     if (filter === 'today') {
-      return data.filter(e => new Date(e.date).toDateString() === now.toDateString());
+      return data.filter(e => e[dateKey] && new Date(e[dateKey]!).toDateString() === now.toDateString());
     }
     if (filter === 'week') {
       const start = startOfWeek(now);
       const end = endOfWeek(now);
       return data.filter(e => {
-        const itemDate = new Date(e.date);
-        return itemDate >= start && itemDate <= end;
+        const itemDate = e[dateKey] ? new Date(e[dateKey]!) : null;
+        return itemDate && itemDate >= start && itemDate <= end;
       });
     }
     if (filter === 'month') {
       const start = startOfMonth(now);
       const end = endOfMonth(now);
       return data.filter(e => {
-        const itemDate = new Date(e.date);
-        return itemDate >= start && itemDate <= end;
+        const itemDate = e[dateKey] ? new Date(e[dateKey]!) : null;
+        return itemDate && itemDate >= start && itemDate <= end;
       });
     }
     if (filter === 'year') {
       const start = startOfYear(now);
       const end = endOfYear(now);
       return data.filter(e => {
-        const itemDate = new Date(e.date);
-        return itemDate >= start && itemDate <= end;
+        const itemDate = e[dateKey] ? new Date(e[dateKey]!) : null;
+        return itemDate && itemDate >= start && itemDate <= end;
       });
     }
     if (filter === 'custom' && date?.from && date?.to) {
         return data.filter(e => {
-            const itemDate = new Date(e.date);
-            return itemDate >= date.from! && itemDate <= date.to!;
+            const itemDate = e[dateKey] ? new Date(e[dateKey]!) : null;
+            return itemDate && itemDate >= date.from! && itemDate <= date.to!;
         });
     }
     return data; // 'all'
@@ -127,7 +129,7 @@ export function ExpenseReport() {
       (doc as any).autoTable({
         startY: currentY + 2,
         head: [['Date', 'Customer', 'Vehicle', 'Load Size', 'Price']],
-        body: filteredSales.map(s => [format(new Date(s.date), 'PP'), s.customer, s.vehicle, s.loadSize, `₹${s.price.toLocaleString('en-IN')}`]),
+        body: filteredSales.map(s => [s.date && isValid(new Date(s.date)) ? format(new Date(s.date), 'PP') : 'N/A', s.customer, s.vehicle, s.loadSize, `₹${s.price.toLocaleString('en-IN')}`]),
         theme: 'striped',
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
         didDrawPage: (data: any) => { currentY = data.cursor.y; }
@@ -143,7 +145,7 @@ export function ExpenseReport() {
       (doc as any).autoTable({
         startY: currentY + 2,
         head: [['Date', 'Category', 'Item/Description', 'Vehicle', 'Amount']],
-        body: filteredExpenses.map(e => [format(new Date(e.date), 'PP'), e.category, e.item, e.vehicle || 'N/A', `₹${e.amount.toLocaleString('en-IN')}`]),
+        body: filteredExpenses.map(e => [e.date && isValid(new Date(e.date)) ? format(new Date(e.date), 'PP') : 'N/A', e.category, e.item, e.vehicle || 'N/A', `₹${e.amount.toLocaleString('en-IN')}`]),
         theme: 'striped',
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
         didDrawPage: (data: any) => { currentY = data.cursor.y; }
@@ -159,7 +161,7 @@ export function ExpenseReport() {
       (doc as any).autoTable({
         startY: currentY + 2,
         head: [['Type', 'Details', 'Due Date', 'Related To']],
-        body: pendingReminders.map(r => [r.type, r.details, format(new Date(r.dueDate), 'PP'), r.relatedToName || 'N/A']),
+        body: pendingReminders.map(r => [r.type, r.details, r.dueDate && isValid(new Date(r.dueDate)) ? format(new Date(r.dueDate), 'PP') : 'N/A', r.relatedToName || 'N/A']),
         theme: 'striped',
         headStyles: { fillColor: [255, 145, 0], textColor: 255, fontStyle: 'bold' },
         didDrawPage: (data: any) => { currentY = data.cursor.y; }
@@ -199,11 +201,19 @@ export function ExpenseReport() {
 
     // Footer
     const pageHeight = doc.internal.pageSize.height;
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    doc.text('This is a system-generated report from QuarryFlow.', 15, pageHeight - 15);
-    doc.text('_________________________', 150, pageHeight - 20);
-    doc.text('Signature / Stamp', 155, pageHeight - 15);
+    const pageCount = (doc as any).internal.getNumberOfPages();
+
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        doc.text('This is a system-generated report from QuarryFlow.', 15, pageHeight - 15);
+        if (i === pageCount) {
+             doc.text('_________________________', 150, pageHeight - 20);
+             doc.text('Signature / Stamp', 155, pageHeight - 15);
+        }
+        doc.text(`Page ${i} of ${pageCount}`, 200, pageHeight - 10, { align: 'right' });
+    }
 
 
     doc.save(`QuarryFlow_Report_${filterText.replace(/ /g, '_')}.pdf`);

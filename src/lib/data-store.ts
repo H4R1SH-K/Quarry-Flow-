@@ -28,7 +28,13 @@ interface DataState {
 const mergeById = <T extends { id: string }>(existing: T[], incoming: T[]): T[] => {
   const existingIds = new Set(existing.map(item => item.id));
   const newItems = incoming.filter(item => !existingIds.has(item.id));
-  return [...existing, ...newItems];
+  
+  const updatedItems = existing.map(item => {
+    const incomingItem = incoming.find(i => i.id === item.id);
+    return incomingItem ? { ...item, ...incomingItem } : item;
+  });
+
+  return [...updatedItems, ...newItems];
 }
 
 export const useDataStore = create<DataState>()(

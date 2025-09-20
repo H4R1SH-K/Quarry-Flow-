@@ -49,11 +49,16 @@ export function DataManagement() {
 
     const reader = new FileReader();
     reader.onload = (e) => {
+      const text = e.target?.result;
+      if (typeof text !== 'string') {
+        toast({
+          title: "Restore Failed",
+          description: "Could not read the file.",
+          variant: "destructive",
+        });
+        return;
+      }
       try {
-        const text = e.target?.result;
-        if (typeof text !== 'string') {
-          throw new Error('File is not a valid text file.');
-        }
         const data = JSON.parse(text);
         
         // Basic validation
@@ -74,7 +79,7 @@ export function DataManagement() {
       } catch (error) {
          toast({
           title: "Restore Failed",
-          description: "Could not parse the backup file. Please ensure it's a valid JSON file.",
+          description: "The selected file is not a valid JSON backup.",
           variant: "destructive",
         });
         console.error("Restore failed:", error);
@@ -122,7 +127,7 @@ export function DataManagement() {
             ref={fileInputRef}
             onChange={handleRestore}
             className="hidden"
-            accept="application/json"
+            accept=".json"
           />
         </div>
       </CardContent>

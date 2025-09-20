@@ -31,6 +31,10 @@ const mergeById = <T extends { id: string }>(existing: T[], incoming: T[]): T[] 
   
   const updatedItems = existing.map(item => {
     const incomingItem = incoming.find(i => i.id === item.id);
+    // Keep existing amount if incoming is null/undefined
+    if (incomingItem && 'amount' in incomingItem && (incomingItem as any).amount == null) {
+      (incomingItem as any).amount = (item as any).amount;
+    }
     return incomingItem ? { ...item, ...incomingItem } : item;
   });
 

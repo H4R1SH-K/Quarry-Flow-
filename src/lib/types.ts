@@ -63,6 +63,7 @@ export type Reminder = {
   status: "Pending" | "Completed";
   relatedTo?: string; // Can be customerId or vehicleId
   relatedToName?: string;
+  amount?: number;
 };
 
 export type Profile = {

@@ -42,7 +42,10 @@ export function UpcomingCollections() {
             {upcomingCollections.map((reminder, index) => (
               <React.Fragment key={reminder.id}>
                 <div className="grid gap-1 text-sm">
-                  <div className="font-semibold">{reminder.relatedToName || 'Unknown'}</div>
+                  <div className="flex justify-between">
+                    <p className="font-semibold">{reminder.relatedToName || 'Unknown'}</p>
+                     {reminder.amount && <p className="font-semibold">₹{reminder.amount.toLocaleString('en-IN')}</p>}
+                  </div>
                   <div className="flex justify-between">
                     <p className="text-muted-foreground truncate max-w-[200px]">{reminder.details}</p>
                     <p className="font-medium">{getDaysLeft(reminder.dueDate)}</p>

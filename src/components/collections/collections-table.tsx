@@ -50,6 +50,7 @@ export function CollectionsTable() {
   const [dueDate, setDueDate] = useState('');
   const [status, setStatus] = useState<"Pending" | "Completed">('Pending');
   const [relatedToName, setRelatedToName] = useState('');
+  const [amount, setAmount] = useState('');
   
   const collections = reminders.filter(r => r.type === 'Credit');
 
@@ -59,6 +60,7 @@ export function CollectionsTable() {
       setDueDate(editingReminder.dueDate);
       setStatus(editingReminder.status);
       setRelatedToName(editingReminder.relatedToName || '');
+      setAmount(editingReminder.amount ? String(editingReminder.amount) : '');
       setOpen(true);
     }
   }, [editingReminder]);
@@ -76,6 +78,7 @@ export function CollectionsTable() {
     setDueDate('');
     setStatus('Pending');
     setRelatedToName('');
+    setAmount('');
   };
 
   const handleSaveReminder = () => {
@@ -85,6 +88,7 @@ export function CollectionsTable() {
       dueDate,
       status,
       relatedToName,
+      amount: Number(amount) || 0,
     };
     if (editingReminder) {
       updateReminder({ ...editingReminder, ...reminderData });
@@ -136,6 +140,10 @@ export function CollectionsTable() {
                 <Textarea id="details" value={details} onChange={(e) => setDetails(e.target.value)} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="amount" className="text-right">Amount</Label>
+                <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount to collect" className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="dueDate" className="text-right">Due Date</Label>
                 <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="col-span-3" />
               </div>
@@ -169,6 +177,7 @@ export function CollectionsTable() {
             <TableHeader>
               <TableRow>
                 <TableHead>Details</TableHead>
+                <TableHead>Amount</TableHead>
                 <TableHead>Due Date</TableHead>
                 <TableHead>Time Left</TableHead>
                 <TableHead>Customer</TableHead>
@@ -181,6 +190,7 @@ export function CollectionsTable() {
                 collections.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).map((reminder) => (
                   <TableRow key={reminder.id}>
                     <TableCell className="max-w-[250px] truncate font-medium">{reminder.details}</TableCell>
+                    <TableCell>₹{reminder.amount?.toLocaleString('en-IN') || 'N/A'}</TableCell>
                     <TableCell>{format(new Date(reminder.dueDate), 'PPP')}</TableCell>
                     <TableCell>{getDaysLeft(reminder.dueDate)}</TableCell>
                     <TableCell>{reminder.relatedToName || 'N/A'}</TableCell>
@@ -217,7 +227,7 @@ export function CollectionsTable() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={7} className="h-24 text-center">
                     No collections found.
                   </TableCell>
                 </TableRow>

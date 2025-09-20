@@ -52,10 +52,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="w-full flex-1">
                 {/* Can add a search bar here if needed */}
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                <Bell className="h-4 w-4" />
-                <span className="sr-only">Toggle notifications</span>
-            </Button>
+            <Link href="/reminders">
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                  <Bell className="h-4 w-4" />
+                  <span className="sr-only">Reminders</span>
+              </Button>
+            </Link>
             <Link href="/settings">
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                   <Settings className="h-5 w-5" />

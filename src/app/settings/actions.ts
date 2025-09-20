@@ -25,7 +25,7 @@ export const migrateToFirestore = async (data: Partial<DataState>) => {
     try {
         const app = getFirebaseApp();
         if (!app) {
-            throw new Error("Firebase is not configured. Please set up Firebase in your project settings.");
+            return { success: false, message: "Firebase is not configured. Please add your Firebase configuration to enable cloud features." };
         }
         const db = getFirestore(app);
         
@@ -62,7 +62,7 @@ export const importToFirestore = async (data: Partial<DataState>) => {
      try {
         const app = getFirebaseApp();
         if (!app) {
-            throw new Error("Firebase is not configured. Please set up Firebase in your project settings.");
+             return { success: false, message: "Firebase is not configured. Please add your Firebase configuration to enable cloud features." };
         }
         const db = getFirestore(app);
 

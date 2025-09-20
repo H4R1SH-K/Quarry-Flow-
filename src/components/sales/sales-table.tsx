@@ -38,6 +38,7 @@ import { PlusCircle, Pencil, Trash2 } from "lucide-react";
 import { useDataStore } from '@/lib/data-store';
 import type { Sales } from '@/lib/types';
 import { format, isValid } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 export function SalesTable() {
     const { sales, addSale, updateSale, deleteSale } = useDataStore();
@@ -47,14 +48,17 @@ export function SalesTable() {
     const [customer, setCustomer] = useState('');
     const [vehicle, setVehicle] = useState('');
     const [loadSize, setLoadSize] = useState('');
+    const [unit, setUnit] = useState<'KG' | 'Ton'>('Ton');
     const [price, setPrice] = useState('');
     const [date, setDate] = useState('');
 
     useEffect(() => {
         if (editingSale) {
+            const [size, unitValue] = editingSale.loadSize.split(' ');
             setCustomer(editingSale.customer);
             setVehicle(editingSale.vehicle);
-            setLoadSize(editingSale.loadSize);
+            setLoadSize(size || '');
+            setUnit((unitValue as 'KG' | 'Ton') || 'Ton');
             setPrice(String(editingSale.price));
             setDate(editingSale.date);
             setOpen(true);
@@ -73,17 +77,19 @@ export function SalesTable() {
         setCustomer('');
         setVehicle('');
         setLoadSize('');
+        setUnit('Ton');
         setPrice('');
         setDate('');
     };
 
     const handleSaveSale = () => {
+        const fullLoadSize = `${loadSize} ${unit}`;
         if (editingSale) {
             const updatedSale: Sales = {
                 ...editingSale,
                 customer,
                 vehicle,
-                loadSize,
+                loadSize: fullLoadSize,
                 price: Number(price),
                 date,
             };
@@ -93,7 +99,7 @@ export function SalesTable() {
                 id: String(Date.now()),
                 customer,
                 vehicle,
-                loadSize,
+                loadSize: fullLoadSize,
                 price: Number(price),
                 date,
             };
@@ -138,7 +144,18 @@ export function SalesTable() {
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="loadSize" className="text-right">Load Size</Label>
-                                <Input id="loadSize" value={loadSize} onChange={(e) => setLoadSize(e.target.value)} className="col-span-3" />
+                                <div className="col-span-3 flex items-center gap-2">
+                                    <Input id="loadSize" value={loadSize} onChange={(e) => setLoadSize(e.target.value)} className="flex-1" />
+                                    <Select value={unit} onValueChange={(value: "KG" | "Ton") => setUnit(value)}>
+                                      <SelectTrigger className="w-[80px]">
+                                        <SelectValue placeholder="Unit" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="KG">KG</SelectItem>
+                                        <SelectItem value="Ton">Ton</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="price" className="text-right">Price</Label>

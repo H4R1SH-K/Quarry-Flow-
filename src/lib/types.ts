@@ -1,4 +1,5 @@
 
+
 export type Sale = {
     name: string;
     total: number;
@@ -62,4 +63,12 @@ export type Reminder = {
   status: "Pending" | "Completed";
   relatedTo?: string; // Can be customerId or vehicleId
   relatedToName?: string;
+};
+
+export type Profile = {
+  name: string;
+  email: string;
+  phone: string;
+  companyName: string;
+  address: string;
 };

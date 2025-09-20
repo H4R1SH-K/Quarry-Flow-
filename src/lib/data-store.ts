@@ -1,4 +1,4 @@
-import { Sales, Customer, Vehicle, Expense, Reminder } from '@/lib/types';
+import { Sales, Customer, Vehicle, Expense, Reminder, Profile } from '@/lib/types';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
@@ -8,6 +8,7 @@ interface DataState {
   vehicles: Vehicle[];
   expenses: Expense[];
   reminders: Reminder[];
+  profile: Profile | null;
   addSale: (sale: Sales) => void;
   updateSale: (sale: Sales) => void;
   addCustomer: (customer: Customer) => void;
@@ -19,6 +20,7 @@ interface DataState {
   addReminder: (reminder: Reminder) => void;
   updateReminder: (reminder: Reminder) => void;
   deleteReminder: (id: string) => void;
+  updateProfile: (profile: Profile) => void;
   restoreData: (data: Partial<DataState>) => void;
   importData: (data: Partial<DataState>) => void;
 }
@@ -37,6 +39,7 @@ export const useDataStore = create<DataState>()(
       vehicles: [],
       expenses: [],
       reminders: [],
+      profile: null,
       addSale: (sale) => set((state) => ({ sales: [...state.sales, sale] })),
       updateSale: (sale) => set((state) => ({ sales: state.sales.map(s => s.id === sale.id ? sale : s) })),
       addCustomer: (customer) => set((state) => ({ customers: [...state.customers, customer] })),
@@ -48,6 +51,7 @@ export const useDataStore = create<DataState>()(
       addReminder: (reminder) => set((state) => ({ reminders: [...state.reminders, reminder] })),
       updateReminder: (reminder) => set((state) => ({ reminders: state.reminders.map(r => r.id === reminder.id ? reminder : r) })),
       deleteReminder: (id) => set((state) => ({ reminders: state.reminders.filter(r => r.id !== id) })),
+      updateProfile: (profile) => set({ profile }),
       restoreData: (data) => set(data),
       importData: (data) => set((state) => ({
         sales: data.sales ? mergeById(state.sales, data.sales) : state.sales,
@@ -55,6 +59,7 @@ export const useDataStore = create<DataState>()(
         vehicles: data.vehicles ? mergeById(state.vehicles, data.vehicles) : state.vehicles,
         expenses: data.expenses ? mergeById(state.expenses, data.expenses) : state.expenses,
         reminders: data.reminders ? mergeById(state.reminders, data.reminders) : state.reminders,
+        profile: data.profile || state.profile,
       })),
     }),
     {

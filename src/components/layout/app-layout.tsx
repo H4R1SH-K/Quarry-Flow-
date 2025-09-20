@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign, Banknote } from "lucide-react";
+import { Bell, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign, Banknote, User } from "lucide-react";
 import { Button } from "../ui/button";
 
 const menuItems = [
@@ -15,6 +15,7 @@ const menuItems = [
     { name: "Collections", icon: Banknote, href: "/collections" },
     { name: "Reminders", icon: Bell, href: "/reminders" },
     { name: "Reports", icon: LineChart, href: "/reports" },
+    { name: "Profile", icon: User, href: "/profile"},
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -64,24 +65,26 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   <span className="sr-only">Settings</span>
               </Button>
             </Link>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-6 w-6"
-                >
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                <span className="sr-only">User Menu</span>
-            </Button>
+            <Link href="/profile">
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-6 w-6"
+                  >
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span className="sr-only">Personal Details</span>
+              </Button>
+            </Link>
         </header>
         {children}
       </SidebarInset>

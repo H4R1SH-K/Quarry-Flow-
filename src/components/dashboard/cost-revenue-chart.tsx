@@ -49,7 +49,7 @@ export function CostRevenueChart() {
               tickFormatter={(value) => value.slice(0, 3)}
             />
              <YAxis
-              tickFormatter={(value) => `$${value / 1000}k`}
+              tickFormatter={(value) => `₹${value / 1000}k`}
             />
             <ChartTooltip content={<ChartTooltipContent />} />
             <ChartLegend content={<ChartLegendContent />} />

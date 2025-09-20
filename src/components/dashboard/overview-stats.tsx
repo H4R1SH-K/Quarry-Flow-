@@ -13,7 +13,7 @@ export function OverviewStats() {
             title: "Total Expenses",
             value: "₹1,068,652",
             description: "+15.2% from last month",
-            icon: CreditCard
+            icon: IndianRupee
         },
         {
             title: "Net Profit",

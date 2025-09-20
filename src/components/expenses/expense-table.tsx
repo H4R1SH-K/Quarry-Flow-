@@ -188,7 +188,7 @@ export function ExpenseTable() {
                   return (
                     <TableRow key={expense.id}>
                       <TableCell className="font-medium">{expense.category}</TableCell>
-                      <TableCell>{expense.item}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{expense.item}</TableCell>
                       <TableCell>{expense.vehicle || 'N/A'}</TableCell>
                       <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
                       <TableCell>{expense.date && isValid(new Date(expense.date)) ? format(new Date(expense.date), 'PPP') : 'N/A'}</TableCell>

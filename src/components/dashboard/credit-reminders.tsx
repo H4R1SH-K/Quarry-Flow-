@@ -9,7 +9,7 @@ import { Banknote, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export function CreditReminders() {
-  const { reminders, customers } = useDataStore();
+  const { reminders } = useDataStore();
 
   const upcomingCollections = reminders
     .filter(r => r.type === 'Credit' && r.status === 'Pending')
@@ -24,11 +24,6 @@ export function CreditReminders() {
     return `${days} days left`;
   }
 
-  const getCustomerName = (customerId?: string) => {
-    if (!customerId) return 'Unknown Customer';
-    const customer = customers.find(c => c.id === customerId);
-    return customer?.name || 'Unknown Customer';
-  }
 
   return (
     <Card>
@@ -47,7 +42,7 @@ export function CreditReminders() {
             {upcomingCollections.map((reminder, index) => (
               <React.Fragment key={reminder.id}>
                 <div className="grid gap-1 text-sm">
-                  <div className="font-semibold">{getCustomerName(reminder.relatedTo)}</div>
+                  <div className="font-semibold">{reminder.relatedToName || 'Unknown'}</div>
                   <div className="flex justify-between">
                     <p className="text-muted-foreground truncate max-w-[200px]">{reminder.details}</p>
                     <p className="font-medium">{getDaysLeft(reminder.dueDate)}</p>

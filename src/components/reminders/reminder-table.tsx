@@ -40,6 +40,7 @@ export function ReminderTable() {
   const [dueDate, setDueDate] = useState('');
   const [status, setStatus] = useState<"Pending" | "Completed">('Pending');
   const [relatedTo, setRelatedTo] = useState<string | undefined>(undefined);
+  const [relatedToName, setRelatedToName] = useState('');
 
   useEffect(() => {
     if (editingReminder) {
@@ -48,6 +49,7 @@ export function ReminderTable() {
       setDueDate(editingReminder.dueDate);
       setStatus(editingReminder.status);
       setRelatedTo(editingReminder.relatedTo);
+      setRelatedToName(editingReminder.relatedToName || '');
       setOpen(true);
     }
   }, [editingReminder]);
@@ -66,6 +68,7 @@ export function ReminderTable() {
     setDueDate('');
     setStatus('Pending');
     setRelatedTo(undefined);
+    setRelatedToName('');
   };
 
   const handleSaveReminder = () => {
@@ -75,6 +78,7 @@ export function ReminderTable() {
       dueDate,
       status,
       relatedTo,
+      relatedToName,
     };
     if (editingReminder) {
       updateReminder({ ...editingReminder, ...reminderData });
@@ -91,14 +95,7 @@ export function ReminderTable() {
   };
   
   const getRelatedName = (reminder: Reminder) => {
-    if (!reminder.relatedTo) return 'N/A';
-    if (reminder.type === 'Credit') {
-      const customer = customers.find(c => c.id === reminder.relatedTo);
-      return customer?.name || 'N/A';
-    } else {
-      const vehicle = vehicles.find(v => v.id === reminder.relatedTo);
-      return vehicle?.vehicleNumber || 'N/A';
-    }
+    return reminder.relatedToName || 'N/A';
   }
 
   const getDaysLeft = (dueDate: string) => {
@@ -151,36 +148,14 @@ export function ReminderTable() {
               </div>
               {(type === 'Vehicle Permit' || type === 'Insurance') && (
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="relatedTo" className="text-right">Vehicle</Label>
-                  <Select value={relatedTo} onValueChange={setRelatedTo}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a vehicle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vehicles.map(item => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.vehicleNumber}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="relatedToName" className="text-right">Vehicle</Label>
+                  <Input id="relatedToName" value={relatedToName} onChange={(e) => setRelatedToName(e.target.value)} placeholder="Enter vehicle number" className="col-span-3" />
                 </div>
               )}
               {type === 'Credit' && (
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="relatedTo" className="text-right">Customer</Label>
-                  <Select value={relatedTo} onValueChange={setRelatedTo}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a customer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {customers.map(item => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="relatedToName" className="text-right">Customer</Label>
+                  <Input id="relatedToName" value={relatedToName} onChange={(e) => setRelatedToName(e.target.value)} placeholder="Enter customer name" className="col-span-3" />
                 </div>
               )}
                <div className="grid grid-cols-4 items-center gap-4">

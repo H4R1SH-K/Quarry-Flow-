@@ -60,4 +60,5 @@ export type Reminder = {
   dueDate: string;
   status: "Pending" | "Completed";
   relatedTo?: string; // Can be customerId or vehicleId
+  relatedToName?: string;
 };

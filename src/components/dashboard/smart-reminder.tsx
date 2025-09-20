@@ -7,18 +7,17 @@ import { createSmartReminder, type FormState } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Bell, Sparkles, AlertCircle, CheckCircle2, PlusCircle, Pencil, ArrowRight } from 'lucide-react';
+import { Bell, Sparkles, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Separator } from '../ui/separator';
 import { useDataStore } from '@/lib/data-store';
-import { differenceInDays, format, parseISO } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
@@ -44,7 +43,7 @@ function SubmitButton() {
 
 export function SmartReminder() {
   const [state, formAction] = useActionState(createSmartReminder, initialState);
-  const { reminders, addReminder, updateReminder, vehicles, customers } = useDataStore();
+  const { reminders, addReminder, updateReminder } = useDataStore();
   const formRef = React.useRef<HTMLFormElement>(null);
   
   const [open, setOpen] = React.useState(false);
@@ -55,6 +54,7 @@ export function SmartReminder() {
   const [dueDate, setDueDate] = React.useState('');
   const [status, setStatus] = React.useState<"Pending" | "Completed">('Pending');
   const [relatedTo, setRelatedTo] = React.useState<string | undefined>(undefined);
+  const [relatedToName, setRelatedToName] = React.useState('');
 
   React.useEffect(() => {
     if (state.success && state.data) {
@@ -62,17 +62,10 @@ export function SmartReminder() {
       setType(state.data.type || "Vehicle Permit");
       setDetails(state.data.details || '');
       setDueDate(state.data.dueDate || '');
-
-      if(state.data.relatedToName) {
-        const allItems = [...vehicles, ...customers];
-        const relatedItem = allItems.find(item => 'vehicleNumber' in item ? item.vehicleNumber === state.data.relatedToName : item.name === state.data.relatedToName);
-        if (relatedItem) {
-          setRelatedTo(relatedItem.id);
-        }
-      }
+      setRelatedToName(state.data.relatedToName || '');
       setOpen(true);
     }
-  }, [state, vehicles, customers]);
+  }, [state]);
   
   React.useEffect(() => {
     if (editingReminder) {
@@ -81,6 +74,7 @@ export function SmartReminder() {
       setDueDate(editingReminder.dueDate);
       setStatus(editingReminder.status);
       setRelatedTo(editingReminder.relatedTo);
+      setRelatedToName(editingReminder.relatedToName || '');
       setOpen(true);
     }
   }, [editingReminder]);
@@ -100,10 +94,11 @@ export function SmartReminder() {
     setDueDate('');
     setStatus('Pending');
     setRelatedTo(undefined);
+    setRelatedToName('');
   };
 
   const handleSaveReminder = () => {
-    const reminderData = { type, details, dueDate, status, relatedTo };
+    const reminderData = { type, details, dueDate, status, relatedTo, relatedToName };
     if (editingReminder) {
       updateReminder({ ...editingReminder, ...reminderData });
     } else {
@@ -215,36 +210,14 @@ export function SmartReminder() {
               </div>
               {(type === 'Vehicle Permit' || type === 'Insurance') && (
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="relatedTo" className="text-right">Vehicle</Label>
-                  <Select value={relatedTo} onValueChange={setRelatedTo}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a vehicle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vehicles.map(item => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.vehicleNumber}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="relatedToName" className="text-right">Vehicle</Label>
+                  <Input id="relatedToName" value={relatedToName} onChange={(e) => setRelatedToName(e.target.value)} placeholder="Enter vehicle number" className="col-span-3" />
                 </div>
               )}
               {type === 'Credit' && (
                 <div className="grid grid-cols-4 items-center gap-4">
-                   <Label htmlFor="relatedTo" className="text-right">Customer</Label>
-                  <Select value={relatedTo} onValueChange={setRelatedTo}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a customer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {customers.map(item => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                   <Label htmlFor="relatedToName" className="text-right">Customer</Label>
+                  <Input id="relatedToName" value={relatedToName} onChange={(e) => setRelatedToName(e.target.value)} placeholder="Enter customer name" className="col-span-3" />
                 </div>
               )}
                <div className="grid grid-cols-4 items-center gap-4">

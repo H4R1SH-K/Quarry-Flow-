@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -8,14 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { IndianRupee, FileDown, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '../ui/button';
 import jsPDF from 'jspdf';
@@ -26,145 +19,194 @@ import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { addDays, format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, sub } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
+import type { Sales, Expense, Reminder } from '@/lib/types';
 
 export function ExpenseReport() {
-  const { expenses } = useDataStore();
+  const { expenses, sales, profile, reminders } = useDataStore();
   const [filter, setFilter] = useState<'all' | 'today' | 'week' | 'month' | 'year' | 'custom'>('all');
   const [date, setDate] = useState<DateRange | undefined>({
     from: sub(new Date(), {days: 30}),
     to: new Date(),
   });
 
-  const getFilteredExpenses = () => {
+   const getFilteredData = <T extends { date: string }>(data: T[]): T[] => {
     const now = new Date();
     if (filter === 'today') {
-      return expenses.filter(e => new Date(e.date).toDateString() === now.toDateString());
+      return data.filter(e => new Date(e.date).toDateString() === now.toDateString());
     }
     if (filter === 'week') {
       const start = startOfWeek(now);
       const end = endOfWeek(now);
-      return expenses.filter(e => {
-        const expenseDate = new Date(e.date);
-        return expenseDate >= start && expenseDate <= end;
+      return data.filter(e => {
+        const itemDate = new Date(e.date);
+        return itemDate >= start && itemDate <= end;
       });
     }
     if (filter === 'month') {
       const start = startOfMonth(now);
       const end = endOfMonth(now);
-      return expenses.filter(e => {
-        const expenseDate = new Date(e.date);
-        return expenseDate >= start && expenseDate <= end;
+      return data.filter(e => {
+        const itemDate = new Date(e.date);
+        return itemDate >= start && itemDate <= end;
       });
     }
     if (filter === 'year') {
       const start = startOfYear(now);
       const end = endOfYear(now);
-      return expenses.filter(e => {
-        const expenseDate = new Date(e.date);
-        return expenseDate >= start && expenseDate <= end;
+      return data.filter(e => {
+        const itemDate = new Date(e.date);
+        return itemDate >= start && itemDate <= end;
       });
     }
     if (filter === 'custom' && date?.from && date?.to) {
-        return expenses.filter(e => {
-            const expenseDate = new Date(e.date);
-            return expenseDate >= date.from! && expenseDate <= date.to!;
+        return data.filter(e => {
+            const itemDate = new Date(e.date);
+            return itemDate >= date.from! && itemDate <= date.to!;
         });
     }
-    return expenses; // 'all'
+    return data; // 'all'
   }
 
-  const filteredExpenses = getFilteredExpenses();
+  const filteredExpenses = getFilteredData(expenses);
+  const filteredSales = getFilteredData(sales);
+  
+  const pendingReminders = reminders.filter(r => r.status === 'Pending' && (r.type === 'Vehicle Permit' || r.type === 'Insurance'));
 
+  const totalRevenue = filteredSales.reduce((acc, sale) => acc + sale.price, 0);
   const totalExpenses = filteredExpenses.reduce((acc, expense) => acc + expense.amount, 0);
-
-  const expensesByCategory = filteredExpenses.reduce((acc, expense) => {
-    const category = expense.category;
-    const amount = expense.amount;
-    if (!acc[category]) {
-      acc[category] = 0;
-    }
-    acc[category] += amount;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const topCategory =
-    filteredExpenses.length > 0
-      ? Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1])[0]
-      : ['N/A', 0];
+  const netProfit = totalRevenue - totalExpenses;
 
   const handleExport = () => {
     const doc = new jsPDF();
-    const tableData = filteredExpenses.map(e => {
-      return [
-        e.category, 
-        e.item, 
-        e.vehicle || 'N/A',
-        `₹${e.amount.toLocaleString('en-IN')}`, 
-        new Date(e.date).toLocaleDateString('en-IN')
-      ]
-    });
-    const tableHead = [['Category', 'Item/Description', 'Vehicle', 'Amount', 'Date']];
-    const generationDate = new Date().toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-
+    const generationDate = format(new Date(), 'PPP');
     let filterText = "All Time";
     if (filter === 'today') filterText = 'Today';
     if (filter === 'week') filterText = 'This Week';
     if (filter === 'month') filterText = 'This Month';
     if (filter === 'year') filterText = 'This Year';
     if (filter === 'custom' && date?.from && date?.to) {
-      filterText = `${format(date.from, 'PPP')} to ${format(date.to, 'PPP')}`;
+      filterText = `${format(date.from, 'PP')} to ${format(date.to, 'PP')}`;
     }
 
-    doc.setFontSize(22);
+    // Header
+    doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('QuarryFlow', 15, 20);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Expense Report', 15, 26);
-    doc.text(`Period: ${filterText}`, 200, 20, { align: 'right' });
-    doc.text(`Generated on: ${generationDate}`, 200, 26, { align: 'right' });
-    doc.line(15, 30, 200, 30);
-
+    doc.text(profile?.companyName || 'QuarryFlow', 15, 20);
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Summary', 15, 40);
-    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Total Expenses: ₹${totalExpenses.toLocaleString('en-IN')}`, 15, 48);
-    doc.text(`Top Expense Category: ${topCategory[0]} (₹${Number(topCategory[1]).toLocaleString('en-IN')})`, 15, 54);
+    doc.text('Financial Summary', 15, 28);
+    doc.setFontSize(10);
+    doc.text(`Reporting Period: ${filterText}`, 200, 20, { align: 'right' });
+    doc.text(`Prepared By: ${profile?.name || 'Owner'}`, 200, 25, { align: 'right' });
+    doc.text(`Date of Report: ${generationDate}`, 200, 30, { align: 'right' });
+    doc.setLineWidth(0.5);
+    doc.line(15, 35, 200, 35);
 
-    (doc as any).autoTable({
-      head: tableHead,
-      body: tableData,
-      startY: 65,
+    let currentY = 45;
+
+    // Executive Summary
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Executive Summary', 15, currentY);
+    currentY += 8;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Total Sales Revenue: ₹${totalRevenue.toLocaleString('en-IN')}`, 15, currentY);
+    currentY += 6;
+    doc.text(`Total Expenses: ₹${totalExpenses.toLocaleString('en-IN')}`, 15, currentY);
+    currentY += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Net Profit/Loss: ₹${netProfit.toLocaleString('en-IN')}`, 15, currentY);
+    currentY += 12;
+
+    // Sales Details
+    if (filteredSales.length > 0) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Sales Details', 15, currentY);
+      (doc as any).autoTable({
+        startY: currentY + 2,
+        head: [['Date', 'Customer', 'Vehicle', 'Load Size', 'Price']],
+        body: filteredSales.map(s => [format(new Date(s.date), 'PP'), s.customer, s.vehicle, s.loadSize, `₹${s.price.toLocaleString('en-IN')}`]),
+        theme: 'striped',
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        didDrawPage: (data: any) => { currentY = data.cursor.y; }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    // Expense Details
+    if (filteredExpenses.length > 0) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Expense Details', 15, currentY);
+      (doc as any).autoTable({
+        startY: currentY + 2,
+        head: [['Date', 'Category', 'Item/Description', 'Vehicle', 'Amount']],
+        body: filteredExpenses.map(e => [format(new Date(e.date), 'PP'), e.category, e.item, e.vehicle || 'N/A', `₹${e.amount.toLocaleString('en-IN')}`]),
+        theme: 'striped',
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        didDrawPage: (data: any) => { currentY = data.cursor.y; }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 10;
+    }
+    
+    // Compliance & Reminders
+    if (pendingReminders.length > 0) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Compliance & Reminders', 15, currentY);
+      (doc as any).autoTable({
+        startY: currentY + 2,
+        head: [['Type', 'Details', 'Due Date', 'Related To']],
+        body: pendingReminders.map(r => [r.type, r.details, format(new Date(r.dueDate), 'PP'), r.relatedToName || 'N/A']),
+        theme: 'striped',
+        headStyles: { fillColor: [255, 145, 0], textColor: 255, fontStyle: 'bold' },
+        didDrawPage: (data: any) => { currentY = data.cursor.y; }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    // Profit & Loss
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Profit & Loss Statement', 15, currentY);
+    currentY += 8;
+    doc.setFontSize(11);
+    doc.autoTable({
+      startY: currentY,
+      body: [
+        ['Total Sales Revenue', `₹${totalRevenue.toLocaleString('en-IN')}`],
+        ['Total Expenses', `₹${totalExpenses.toLocaleString('en-IN')}`],
+        [{ content: 'Net Profit / Loss', styles: { fontStyle: 'bold' } }, { content: `₹${netProfit.toLocaleString('en-IN')}`, styles: { fontStyle: 'bold' } }],
+      ],
       theme: 'grid',
-      headStyles: {
-        fillColor: [41, 128, 185],
-        textColor: 255,
-        fontStyle: 'bold',
-      },
-      didDrawPage: (data: any) => {
-        const pageCount = doc.getNumberOfPages();
-        doc.setFontSize(8);
-        doc.text(
-          `Page ${data.pageNumber} of ${pageCount}`,
-          data.settings.margin.left,
-          doc.internal.pageSize.height - 10
-        );
-        doc.text(
-          'Generated by QuarryFlow',
-          doc.internal.pageSize.width - data.settings.margin.right,
-          doc.internal.pageSize.height - 10,
-          { align: 'right' }
-        );
-      },
+      styles: { cellPadding: 3 },
+      columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'right' } }
     });
+    currentY = (doc as any).lastAutoTable.finalY + 15;
 
-    doc.save(`QuarryFlow_Expense_Report_${filterText.replace(/ /g, '_')}.pdf`);
+    // Auditor notes
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Auditor Notes / Observations', 15, currentY);
+    currentY += 8;
+    doc.setDrawColor(200);
+    doc.setLineWidth(0.2);
+    doc.rect(15, currentY, 185, 40); // empty box for notes
+    currentY += 50;
+
+
+    // Footer
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.text('This is a system-generated report from QuarryFlow.', 15, pageHeight - 15);
+    doc.text('_________________________', 150, pageHeight - 20);
+    doc.text('Signature / Stamp', 155, pageHeight - 15);
+
+
+    doc.save(`QuarryFlow_Report_${filterText.replace(/ /g, '_')}.pdf`);
   };
 
 
@@ -172,11 +214,11 @@ export function ExpenseReport() {
     <Card>
       <CardHeader className="flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <CardTitle className="font-headline">Expense Report</CardTitle>
-          <CardDescription>A summary of your business expenses based on the selected period.</CardDescription>
+          <CardTitle className="font-headline">Financial Report</CardTitle>
+          <CardDescription>Generate a detailed financial report for the selected period.</CardDescription>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-           <Button onClick={handleExport} disabled={filteredExpenses.length === 0}>
+           <Button onClick={handleExport} disabled={sales.length === 0 && expenses.length === 0}>
              <FileDown className="mr-2 h-4 w-4" />
              Export as PDF
            </Button>
@@ -229,8 +271,19 @@ export function ExpenseReport() {
           </Popover>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                ₹{totalRevenue.toLocaleString('en-IN')}
+              </div>
+            </CardContent>
+          </Card>
+           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
               <IndianRupee className="h-4 w-4 text-muted-foreground" />
@@ -244,59 +297,16 @@ export function ExpenseReport() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Top Expense Category
+                Net Profit
               </CardTitle>
+              <IndianRupee className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{topCategory[0]}</div>
-              <p className="text-xs text-muted-foreground">
-                ₹{Number(topCategory[1]).toLocaleString('en-IN')}
-              </p>
+              <div className="text-2xl font-bold">₹{netProfit.toLocaleString('en-IN')}</div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold">Expense Breakdown</h3>
-          <Card>
-            <CardContent className="pt-6">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Item</TableHead>
-                    <TableHead>Vehicle</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredExpenses.length > 0 ? (
-                    filteredExpenses.map(expense => {
-                      return (
-                      <TableRow key={expense.id}>
-                        <TableCell className="font-medium">
-                          {expense.category}
-                        </TableCell>
-                        <TableCell>{expense.item}</TableCell>
-                         <TableCell>{expense.vehicle || 'N/A'}</TableCell>
-                        <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
-                        <TableCell>{new Date(expense.date).toLocaleDateString('en-IN')}</TableCell>
-                      </TableRow>
-                      )
-                    })
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">
-                        No expenses found for the selected period.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
       </CardContent>
     </Card>
   );

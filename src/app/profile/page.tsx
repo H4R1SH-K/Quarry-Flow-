@@ -54,7 +54,7 @@ export default function ProfilePage() {
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight font-headline">Personal Details</h2>
+        <h2 className="text-3xl font-bold tracking-tight font-headline">Personal & Company Details</h2>
       </div>
 
       <Card>
@@ -64,18 +64,18 @@ export default function ProfilePage() {
             <CardTitle className="font-headline">Your Information</CardTitle>
           </div>
           <CardDescription>
-            This information will be used for generating reports and other documents.
+            This information will be used for generating reports and other official documents.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" value={formData.name} onChange={handleChange} />
+              <Label htmlFor="name">Your Full Name (or Auditor's Name)</Label>
+              <Input id="name" placeholder="e.g. John Doe" value={formData.name} onChange={handleChange} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="companyName">Company Name</Label>
-              <Input id="companyName" value={formData.companyName} onChange={handleChange} />
+              <Input id="companyName" placeholder="e.g. QuarryFlow Inc." value={formData.companyName} onChange={handleChange} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
@@ -86,8 +86,8 @@ export default function ProfilePage() {
               <Input id="phone" type="tel" value={formData.phone} onChange={handleChange} />
             </div>
             <div className="col-span-1 space-y-2 md:col-span-2">
-              <Label htmlFor="address">Address</Label>
-              <Textarea id="address" value={formData.address} onChange={handleChange} />
+              <Label htmlFor="address">Company Address</Label>
+              <Textarea id="address" placeholder="Enter your full company address" value={formData.address} onChange={handleChange} />
             </div>
           </div>
           <div className="flex justify-end">

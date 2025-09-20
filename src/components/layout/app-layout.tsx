@@ -19,6 +19,10 @@ const menuItems = [
     { name: "Reports", icon: LineChart, href: "/reports" },
 ];
 
+const bottomMenuItems = [
+    { name: "Settings", icon: Settings, href: "/settings" },
+]
+
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -37,6 +41,19 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarContent>
             <SidebarMenu>
                 {menuItems.map((item) => (
+                    <SidebarMenuItem key={item.name}>
+                        <Link href={item.href} passHref>
+                            <SidebarMenuButton tooltip={item.name} isActive={pathname === item.href}>
+                                <item.icon />
+                                <span>{item.name}</span>
+                            </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                ))}
+            </SidebarMenu>
+
+             <SidebarMenu className="mt-auto">
+                {bottomMenuItems.map((item) => (
                     <SidebarMenuItem key={item.name}>
                         <Link href={item.href} passHref>
                             <SidebarMenuButton tooltip={item.name} isActive={pathname === item.href}>

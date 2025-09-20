@@ -30,7 +30,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: any) {
+      // Don't log an error if the user cancels the popup
+      if (error.code === 'auth/cancelled-popup-request') {
+        return;
+      }
       console.error("Error signing in with Google: ", error);
     }
   };

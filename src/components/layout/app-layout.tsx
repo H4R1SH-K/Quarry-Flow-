@@ -3,13 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, FileText, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign, IndianRupee, LogIn } from "lucide-react";
+import { Bell, FileText, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign, UserCircle } from "lucide-react";
 import { Button } from "../ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
-import Image from "next/image";
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/context/auth-context';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/" },
@@ -28,7 +23,6 @@ const bottomMenuItems = [
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, signInWithGoogle, signOut } = useAuth();
   
   return (
     <SidebarProvider>
@@ -75,47 +69,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="w-full flex-1">
                 {/* Can add a search bar here if needed */}
             </div>
-             {user ? (
-              <>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                    <Bell className="h-4 w-4" />
-                    <span className="sr-only">Toggle notifications</span>
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
-                        <AvatarFallback>{user.displayName?.charAt(0) || 'U'}</AvatarFallback>
-                      </Avatar>
-                      <span className="sr-only">Toggle user menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>{user.displayName || 'My Account'}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild><Link href="/settings">Settings</Link></DropdownMenuItem>
-                    <DropdownMenuItem>Support</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={signOut}>Logout</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            ) : (
-              <Button onClick={signInWithGoogle}>
-                <LogIn className="mr-2 h-4 w-4" />
-                Sign in with Google
-              </Button>
-            )}
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                <Bell className="h-4 w-4" />
+                <span className="sr-only">Toggle notifications</span>
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                <UserCircle className="h-6 w-6" />
+                <span className="sr-only">User Menu</span>
+            </Button>
         </header>
-        {user ? children : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold tracking-tight">Welcome to QuarryFlow</h2>
-              <p className="text-muted-foreground">Please sign in to manage your business.</p>
-            </div>
-          </div>
-        )}
+        {children}
       </SidebarInset>
     </SidebarProvider>
   );

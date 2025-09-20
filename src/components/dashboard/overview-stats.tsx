@@ -1,30 +1,43 @@
+'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { IndianRupee, Users, CreditCard, TrendingUp } from "lucide-react";
+import { IndianRupee, Users, TrendingUp } from "lucide-react";
+import { useDataStore } from "@/lib/data-store";
 
 export function OverviewStats() {
+    const { sales, expenses, customers } = useDataStore();
+
+    const totalRevenue = sales.reduce((acc, sale) => acc + sale.price, 0);
+    const totalExpenses = expenses.reduce((acc, expense) => acc + expense.amount, 0);
+    const netProfit = totalRevenue - totalExpenses;
+    const totalCustomers = customers.length;
+
+    const formatCurrency = (amount: number) => {
+        return `₹${amount.toLocaleString('en-IN')}`;
+    }
+
     const stats = [
         {
             title: "Total Revenue",
-            value: "₹3,754,247",
-            description: "+20.1% from last month",
+            value: formatCurrency(totalRevenue),
+            description: "Calculated from all sales",
             icon: IndianRupee
         },
         {
             title: "Total Expenses",
-            value: "₹1,068,652",
-            description: "+15.2% from last month",
+            value: formatCurrency(totalExpenses),
+            description: "Calculated from all expenses",
             icon: IndianRupee
         },
         {
             title: "Net Profit",
-            value: "₹2,685,595",
-            description: "+22.5% from last month",
+            value: formatCurrency(netProfit),
+            description: "Revenue minus expenses",
             icon: TrendingUp
         },
         {
-            title: "Top Customers",
-            value: "+573",
-            description: "+20 since last week",
+            title: "Total Customers",
+            value: `+${totalCustomers}`,
+            description: "Total number of customers",
             icon: Users
         }
     ];

@@ -5,11 +5,19 @@ export type Sale = {
 
 export type RecentSale = {
     id: string;
-    name: string;
-    initials: string;
+    name:string;
     email: string;
     amount: string;
 };
+
+export type Sales = {
+  id: string;
+  customer: string;
+  vehicle: string;
+  loadSize: string;
+  price: number;
+  date: string;
+}
 
 export type CostRevenue = {
     month: string;
@@ -39,6 +47,6 @@ export type Expense = {
     id: string;
     category: string;
     item: string;
-    amount: string;
+    amount: number;
     date: string;
 };

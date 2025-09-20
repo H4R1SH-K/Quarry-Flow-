@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -26,9 +25,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle } from "lucide-react";
 import type { Customer } from '@/lib/types';
+import { useDataStore } from '@/lib/data-store';
 
 export function CustomerTable() {
-  const [customerData, setCustomerData] = useState<Customer[]>([]);
+  const { customers, addCustomer } = useDataStore();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -37,14 +37,14 @@ export function CustomerTable() {
 
   const handleAddCustomer = () => {
     const newCustomer: Customer = {
-      id: String(customerData.length + 1),
+      id: String(customers.length + 1),
       name,
       email,
       phone,
       company,
       status: 'Active',
     };
-    setCustomerData([...customerData, newCustomer]);
+    addCustomer(newCustomer);
     setName('');
     setEmail('');
     setPhone('');
@@ -115,8 +115,8 @@ export function CustomerTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {customerData.length > 0 ? (
-                customerData.map((customer) => (
+              {customers.length > 0 ? (
+                customers.map((customer) => (
                   <TableRow key={customer.id}>
                     <TableCell className="font-medium">{customer.name}</TableCell>
                     <TableCell>{customer.email}</TableCell>

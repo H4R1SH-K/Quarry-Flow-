@@ -15,21 +15,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { expenseData } from '@/lib/data';
 import { IndianRupee, FileDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { useDataStore } from '@/lib/data-store';
 
 export function ExpenseReport() {
-  const totalExpenses = expenseData.reduce((acc, expense) => {
-    const amount = Number(String(expense.amount).replace(/[^0-9.-]+/g, ''));
-    return acc + amount;
-  }, 0);
+  const { expenses } = useDataStore();
 
-  const expensesByCategory = expenseData.reduce((acc, expense) => {
+  const totalExpenses = expenses.reduce((acc, expense) => acc + expense.amount, 0);
+
+  const expensesByCategory = expenses.reduce((acc, expense) => {
     const category = expense.category;
-    const amount = Number(String(expense.amount).replace(/[^0-9.-]+/g, ''));
+    const amount = expense.amount;
     if (!acc[category]) {
       acc[category] = 0;
     }
@@ -42,7 +41,7 @@ export function ExpenseReport() {
 
   const handleExport = () => {
     const doc = new jsPDF();
-    const tableData = expenseData.map(e => [e.category, e.item, e.amount, e.date]);
+    const tableData = expenses.map(e => [e.category, e.item, `₹${e.amount.toLocaleString('en-IN')}`, new Date(e.date).toLocaleDateString('en-IN')]);
     const tableHead = [['Category', 'Item/Description', 'Amount', 'Date']];
     const generationDate = new Date().toLocaleDateString('en-IN', {
       year: 'numeric',
@@ -67,7 +66,7 @@ export function ExpenseReport() {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Total Expenses: ₹${totalExpenses.toLocaleString('en-IN')}`, 15, 48);
-    doc.text(`Top Expense Category: ${topCategory[0]} (₹${topCategory[1].toLocaleString('en-IN')})`, 15, 54);
+    doc.text(`Top Expense Category: ${topCategory[0]} (₹${Number(topCategory[1]).toLocaleString('en-IN')})`, 15, 54);
 
     // Table
     (doc as any).autoTable({
@@ -109,7 +108,7 @@ export function ExpenseReport() {
           <CardTitle className="font-headline">Expense Report</CardTitle>
           <CardDescription>A summary of your business expenses.</CardDescription>
         </div>
-        <Button onClick={handleExport}>
+        <Button onClick={handleExport} disabled={expenses.length === 0}>
           <FileDown className="mr-2 h-4 w-4" />
           Export as PDF
         </Button>
@@ -136,7 +135,7 @@ export function ExpenseReport() {
             <CardContent>
               <div className="text-2xl font-bold">{topCategory[0]}</div>
               <p className="text-xs text-muted-foreground">
-                ₹{topCategory[1].toLocaleString('en-IN')}
+                ₹{Number(topCategory[1]).toLocaleString('en-IN')}
               </p>
             </CardContent>
           </Card>
@@ -156,16 +155,24 @@ export function ExpenseReport() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {expenseData.map(expense => (
-                    <TableRow key={expense.id}>
-                      <TableCell className="font-medium">
-                        {expense.category}
+                  {expenses.length > 0 ? (
+                    expenses.map(expense => (
+                      <TableRow key={expense.id}>
+                        <TableCell className="font-medium">
+                          {expense.category}
+                        </TableCell>
+                        <TableCell>{expense.item}</TableCell>
+                        <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
+                        <TableCell>{new Date(expense.date).toLocaleDateString('en-IN')}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="h-24 text-center">
+                        No expenses found.
                       </TableCell>
-                      <TableCell>{expense.item}</TableCell>
-                      <TableCell>{expense.amount}</TableCell>
-                      <TableCell>{expense.date}</TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

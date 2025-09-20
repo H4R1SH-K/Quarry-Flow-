@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -25,9 +24,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle } from "lucide-react";
 import type { Expense } from '@/lib/types';
+import { useDataStore } from '@/lib/data-store';
 
 export function ExpenseTable() {
-  const [expenseData, setExpenseData] = useState<Expense[]>([]);
+  const { expenses, addExpense } = useDataStore();
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState('');
   const [item, setItem] = useState('');
@@ -36,13 +36,13 @@ export function ExpenseTable() {
 
   const handleAddExpense = () => {
     const newExpense: Expense = {
-      id: String(expenseData.length + 1),
+      id: String(expenses.length + 1),
       category,
       item,
-      amount: `₹${amount}`,
+      amount: Number(amount),
       date,
     };
-    setExpenseData([...expenseData, newExpense]);
+    addExpense(newExpense);
     setCategory('');
     setItem('');
     setAmount('');
@@ -112,13 +112,13 @@ export function ExpenseTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {expenseData.length > 0 ? (
-                expenseData.map((expense) => (
+              {expenses.length > 0 ? (
+                expenses.map((expense) => (
                   <TableRow key={expense.id}>
                     <TableCell className="font-medium">{expense.category}</TableCell>
                     <TableCell>{expense.item}</TableCell>
-                    <TableCell>{expense.amount}</TableCell>
-                    <TableCell>{expense.date}</TableCell>
+                    <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>{new Date(expense.date).toLocaleDateString('en-IN')}</TableCell>
                   </TableRow>
                 ))
               ) : (

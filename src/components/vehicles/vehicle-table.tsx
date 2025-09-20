@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -26,9 +25,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle } from "lucide-react";
 import type { Vehicle } from '@/lib/types';
+import { useDataStore } from '@/lib/data-store';
 
 export function VehicleTable() {
-  const [vehicleData, setVehicleData] = useState<Vehicle[]>([]);
+  const { vehicles, addVehicle } = useDataStore();
   const [open, setOpen] = useState(false);
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
@@ -37,14 +37,14 @@ export function VehicleTable() {
 
   const handleAddVehicle = () => {
     const newVehicle: Vehicle = {
-      id: String(vehicleData.length + 1),
+      id: String(vehicles.length + 1),
       make,
       model,
       year: Number(year),
       vin,
       status: 'Active',
     };
-    setVehicleData([...vehicleData, newVehicle]);
+    addVehicle(newVehicle);
     setMake('');
     setModel('');
     setYear('');
@@ -115,8 +115,8 @@ export function VehicleTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {vehicleData.length > 0 ? (
-                vehicleData.map((vehicle) => (
+              {vehicles.length > 0 ? (
+                vehicles.map((vehicle) => (
                   <TableRow key={vehicle.id}>
                     <TableCell className="font-medium">{vehicle.make}</TableCell>
                     <TableCell>{vehicle.model}</TableCell>

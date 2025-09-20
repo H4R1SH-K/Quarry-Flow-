@@ -17,7 +17,7 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart"
-import { costRevenueData } from "@/lib/data"
+import { useDataStore } from "@/lib/data-store"
 
 const chartConfig = {
   revenue: {
@@ -31,6 +31,37 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export function CostRevenueChart() {
+  const { sales, expenses } = useDataStore();
+
+  const getChartData = () => {
+    const dataByMonth: { [key: string]: { revenue: number, dieselCost: number }} = {};
+
+    sales.forEach(sale => {
+      const month = new Date(sale.date).toLocaleString('default', { month: 'long' });
+      if (!dataByMonth[month]) {
+        dataByMonth[month] = { revenue: 0, dieselCost: 0 };
+      }
+      dataByMonth[month].revenue += sale.price;
+    });
+
+    expenses.forEach(expense => {
+      if (expense.category.toLowerCase() === 'diesel') {
+        const month = new Date(expense.date).toLocaleString('default', { month: 'long' });
+        if (dataByMonth[month]) {
+          dataByMonth[month].dieselCost += expense.amount;
+        }
+      }
+    });
+
+    return Object.keys(dataByMonth).map(month => ({
+      month,
+      ...dataByMonth[month]
+    }));
+  }
+
+  const chartData = getChartData();
+
+
   return (
     <Card>
       <CardHeader>
@@ -38,8 +69,9 @@ export function CostRevenueChart() {
         <CardDescription>A comparison of diesel costs and total revenue.</CardDescription>
       </CardHeader>
       <CardContent>
+        {chartData.length > 0 ? (
         <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-          <BarChart accessibilityLayer data={costRevenueData}>
+          <BarChart accessibilityLayer data={chartData}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="month"
@@ -57,6 +89,12 @@ export function CostRevenueChart() {
             <Bar dataKey="dieselCost" fill="var(--color-dieselCost)" radius={4} />
           </BarChart>
         </ChartContainer>
+         ) : (
+          <div className="flex justify-center items-center h-[200px]">
+            <p className="text-sm text-muted-foreground">No data to display for cost vs. revenue.</p>
+            <p className="text-xs text-muted-foreground">Add sales and diesel expenses to see the chart.</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

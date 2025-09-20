@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -24,9 +23,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle } from "lucide-react";
+import { useDataStore } from '@/lib/data-store';
+import type { Sales } from '@/lib/types';
 
 export default function SalesPage() {
-  const [salesData, setSalesData] = useState<any[]>([]);
+  const { sales, addSale } = useDataStore();
   const [open, setOpen] = useState(false);
   const [customer, setCustomer] = useState('');
   const [vehicle, setVehicle] = useState('');
@@ -34,15 +35,15 @@ export default function SalesPage() {
   const [price, setPrice] = useState('');
 
   const handleAddSale = () => {
-    const newSale = {
-      id: String(salesData.length + 1),
+    const newSale: Sales = {
+      id: String(sales.length + 1),
       customer,
       vehicle,
       loadSize,
-      price: `₹${price}`,
+      price: Number(price),
       date: new Date().toLocaleDateString('en-IN'),
     };
-    setSalesData([...salesData, newSale]);
+    addSale(newSale);
     setCustomer('');
     setVehicle('');
     setLoadSize('');
@@ -113,13 +114,13 @@ export default function SalesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {salesData.length > 0 ? (
-                salesData.map((sale) => (
+              {sales.length > 0 ? (
+                sales.map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell>{sale.customer}</TableCell>
                     <TableCell>{sale.vehicle}</TableCell>
                     <TableCell>{sale.loadSize}</TableCell>
-                    <TableCell>{sale.price}</TableCell>
+                    <TableCell>₹{sale.price.toLocaleString('en-IN')}</TableCell>
                     <TableCell>{sale.date}</TableCell>
                   </TableRow>
                 ))

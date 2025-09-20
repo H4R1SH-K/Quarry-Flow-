@@ -24,19 +24,24 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Pencil } from "lucide-react";
+import { PlusCircle, Pencil, Truck, Wrench, Ban, ListFilter } from "lucide-react";
 import type { Vehicle } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+
+type VehicleStatus = "Active" | "Maintenance" | "Inactive";
 
 export function VehicleTable() {
   const { vehicles, addVehicle, updateVehicle } = useDataStore();
   const [open, setOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [filter, setFilter] = useState<VehicleStatus | 'All'>('All');
   
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
   const [year, setYear] = useState('');
   const [vehicleNumber, setVehicleNumber] = useState('');
+  const [status, setStatus] = useState<VehicleStatus>('Active');
 
   useEffect(() => {
     if (editingVehicle) {
@@ -44,6 +49,7 @@ export function VehicleTable() {
       setModel(editingVehicle.model);
       setYear(String(editingVehicle.year));
       setVehicleNumber(editingVehicle.vehicleNumber);
+      setStatus(editingVehicle.status);
       setOpen(true);
     }
   }, [editingVehicle]);
@@ -61,6 +67,7 @@ export function VehicleTable() {
     setModel('');
     setYear('');
     setVehicleNumber('');
+    setStatus('Active');
   };
   
   const handleSaveVehicle = () => {
@@ -71,6 +78,7 @@ export function VehicleTable() {
         model,
         year: Number(year),
         vehicleNumber,
+        status,
       };
       updateVehicle(updatedVehicle);
     } else {
@@ -80,7 +88,7 @@ export function VehicleTable() {
         model,
         year: Number(year),
         vehicleNumber,
-        status: 'Active',
+        status,
       };
       addVehicle(newVehicle);
     }
@@ -93,6 +101,11 @@ export function VehicleTable() {
   const handleEditClick = (vehicle: Vehicle) => {
     setEditingVehicle(vehicle);
   };
+
+  const filteredVehicles = vehicles.filter(vehicle => {
+    if (filter === 'All') return true;
+    return vehicle.status === filter;
+  });
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
@@ -134,6 +147,21 @@ export function VehicleTable() {
                 </Label>
                 <Input id="vehicleNumber" value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} className="col-span-3" />
               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">
+                  Status
+                </Label>
+                <Select value={status} onValueChange={(value: VehicleStatus) => setStatus(value)}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Maintenance">Maintenance</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
@@ -144,8 +172,23 @@ export function VehicleTable() {
           </DialogContent>
         </Dialog>
       </div>
-      <Card>
+
+       <Card>
         <CardContent className="pt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Button variant={filter === 'All' ? 'default' : 'outline'} onClick={() => setFilter('All')}>
+              <ListFilter className="mr-2 h-4 w-4" /> All ({vehicles.length})
+            </Button>
+            <Button variant={filter === 'Active' ? 'default' : 'outline'} onClick={() => setFilter('Active')}>
+              <Truck className="mr-2 h-4 w-4" /> Active ({vehicles.filter(v => v.status === 'Active').length})
+            </Button>
+            <Button variant={filter === 'Maintenance' ? 'default' : 'outline'} onClick={() => setFilter('Maintenance')}>
+              <Wrench className="mr-2 h-4 w-4" /> Maintenance ({vehicles.filter(v => v.status === 'Maintenance').length})
+            </Button>
+            <Button variant={filter === 'Inactive' ? 'default' : 'outline'} onClick={() => setFilter('Inactive')}>
+              <Ban className="mr-2 h-4 w-4" /> Inactive ({vehicles.filter(v => v.status === 'Inactive').length})
+            </Button>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -158,8 +201,8 @@ export function VehicleTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {vehicles.length > 0 ? (
-                vehicles.map((vehicle) => (
+              {filteredVehicles.length > 0 ? (
+                filteredVehicles.map((vehicle) => (
                   <TableRow key={vehicle.id}>
                     <TableCell className="font-medium">{vehicle.vehicleNumber}</TableCell>
                     <TableCell>{vehicle.make}</TableCell>
@@ -188,7 +231,7 @@ export function VehicleTable() {
               ) : (
                  <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center">
-                    No vehicles found.
+                    No vehicles found for the selected filter.
                   </TableCell>
                 </TableRow>
               )}

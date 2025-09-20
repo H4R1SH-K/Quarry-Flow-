@@ -18,6 +18,7 @@ interface DataState {
   updateExpense: (expense: Expense) => void;
   addReminder: (reminder: Reminder) => void;
   updateReminder: (reminder: Reminder) => void;
+  deleteReminder: (id: string) => void;
   restoreData: (data: Partial<DataState>) => void;
   importData: (data: Partial<DataState>) => void;
 }
@@ -46,6 +47,7 @@ export const useDataStore = create<DataState>()(
       updateExpense: (expense) => set((state) => ({ expenses: state.expenses.map(e => e.id === expense.id ? expense : e) })),
       addReminder: (reminder) => set((state) => ({ reminders: [...state.reminders, reminder] })),
       updateReminder: (reminder) => set((state) => ({ reminders: state.reminders.map(r => r.id === reminder.id ? reminder : r) })),
+      deleteReminder: (id) => set((state) => ({ reminders: state.reminders.filter(r => r.id !== id) })),
       restoreData: (data) => set(data),
       importData: (data) => set((state) => ({
         sales: data.sales ? mergeById(state.sales, data.sales) : state.sales,

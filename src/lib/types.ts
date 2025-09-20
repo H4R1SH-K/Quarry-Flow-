@@ -50,7 +50,7 @@ export type Expense = {
     item: string;
     amount: number;
     date: string;
-    vehicleId?: string;
+    vehicle?: string;
 };
 
 export type Reminder = {
@@ -62,4 +62,5 @@ export type Reminder = {
   relatedTo?: string; // Can be customerId or vehicleId
   relatedToName?: string;
 };
+
 

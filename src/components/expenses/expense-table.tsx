@@ -28,7 +28,7 @@ import { useDataStore } from '@/lib/data-store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 export function ExpenseTable() {
-  const { expenses, addExpense, updateExpense, vehicles } = useDataStore();
+  const { expenses, addExpense, updateExpense } = useDataStore();
   const [open, setOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
@@ -36,7 +36,7 @@ export function ExpenseTable() {
   const [item, setItem] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
-  const [vehicleId, setVehicleId] = useState<string | undefined>(undefined);
+  const [vehicle, setVehicle] = useState('');
 
   useEffect(() => {
     if (editingExpense) {
@@ -44,7 +44,7 @@ export function ExpenseTable() {
       setItem(editingExpense.item);
       setAmount(String(editingExpense.amount));
       setDate(editingExpense.date);
-      setVehicleId(editingExpense.vehicleId);
+      setVehicle(editingExpense.vehicle || '');
       setOpen(true);
     }
   }, [editingExpense]);
@@ -62,7 +62,7 @@ export function ExpenseTable() {
     setItem('');
     setAmount('');
     setDate('');
-    setVehicleId(undefined);
+    setVehicle('');
   };
 
   const handleSaveExpense = () => {
@@ -73,7 +73,7 @@ export function ExpenseTable() {
         item,
         amount: Number(amount),
         date,
-        vehicleId,
+        vehicle,
       };
       updateExpense(updatedExpense);
     } else {
@@ -83,7 +83,7 @@ export function ExpenseTable() {
         item,
         amount: Number(amount),
         date,
-        vehicleId,
+        vehicle,
       };
       addExpense(newExpense);
     }
@@ -142,17 +142,7 @@ export function ExpenseTable() {
                 <Label htmlFor="vehicle" className="text-right">
                   Vehicle
                 </Label>
-                 <Select value={vehicleId} onValueChange={(value) => setVehicleId(value)}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a vehicle (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {vehicles.map(vehicle => (
-                      <SelectItem key={vehicle.id} value={vehicle.id}>{vehicle.vehicleNumber} - {vehicle.make} {vehicle.model}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                 <Input id="vehicle" value={vehicle} onChange={(e) => setVehicle(e.target.value)} placeholder="e.g. TN 01 AB 1234" className="col-span-3" />
               </div>
             </div>
             <DialogFooter>
@@ -180,12 +170,11 @@ export function ExpenseTable() {
             <TableBody>
               {expenses.length > 0 ? (
                 expenses.map((expense) => {
-                  const vehicle = vehicles.find(v => v.id === expense.vehicleId);
                   return (
                     <TableRow key={expense.id}>
                       <TableCell className="font-medium">{expense.category}</TableCell>
                       <TableCell>{expense.item}</TableCell>
-                      <TableCell>{vehicle ? `${vehicle.vehicleNumber}` : 'N/A'}</TableCell>
+                      <TableCell>{expense.vehicle || 'N/A'}</TableCell>
                       <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
                       <TableCell>{new Date(expense.date).toLocaleDateString('en-IN')}</TableCell>
                       <TableCell className="text-right">

@@ -28,7 +28,7 @@ import { addDays, format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, star
 import type { DateRange } from 'react-day-picker';
 
 export function ExpenseReport() {
-  const { expenses, vehicles } = useDataStore();
+  const { expenses } = useDataStore();
   const [filter, setFilter] = useState<'all' | 'today' | 'week' | 'month' | 'year' | 'custom'>('all');
   const [date, setDate] = useState<DateRange | undefined>({
     from: sub(new Date(), {days: 30}),
@@ -95,11 +95,10 @@ export function ExpenseReport() {
   const handleExport = () => {
     const doc = new jsPDF();
     const tableData = filteredExpenses.map(e => {
-      const vehicle = vehicles.find(v => v.id === e.vehicleId);
       return [
         e.category, 
         e.item, 
-        vehicle ? vehicle.vehicleNumber : 'N/A',
+        e.vehicle || 'N/A',
         `₹${e.amount.toLocaleString('en-IN')}`, 
         new Date(e.date).toLocaleDateString('en-IN')
       ]
@@ -274,14 +273,13 @@ export function ExpenseReport() {
                 <TableBody>
                   {filteredExpenses.length > 0 ? (
                     filteredExpenses.map(expense => {
-                      const vehicle = vehicles.find(v => v.id === expense.vehicleId);
                       return (
                       <TableRow key={expense.id}>
                         <TableCell className="font-medium">
                           {expense.category}
                         </TableCell>
                         <TableCell>{expense.item}</TableCell>
-                         <TableCell>{vehicle ? vehicle.vehicleNumber : 'N/A'}</TableCell>
+                         <TableCell>{expense.vehicle || 'N/A'}</TableCell>
                         <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
                         <TableCell>{new Date(expense.date).toLocaleDateString('en-IN')}</TableCell>
                       </TableRow>

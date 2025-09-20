@@ -114,8 +114,8 @@ export function SmartReminder() {
     setOpen(false);
   };
 
-  const upcomingReminders = reminders
-    .filter(r => r.status === 'Pending')
+  const upcomingRenewals = reminders
+    .filter(r => r.status === 'Pending' && (r.type === 'Vehicle Permit' || r.type === 'Insurance'))
     .sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
     .slice(0, 2);
 
@@ -128,7 +128,7 @@ export function SmartReminder() {
   }
 
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <div className="flex items-center gap-2">
           <Bell className="h-6 w-6" />
@@ -138,7 +138,7 @@ export function SmartReminder() {
           Use AI to set reminders for permits, insurance, and credit.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 flex-grow flex flex-col">
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold text-sm">Upcoming Renewals</h3>
@@ -146,26 +146,26 @@ export function SmartReminder() {
               View All <ArrowRight className='h-4 w-4 ml-1'/>
             </Link>
           </div>
-           {upcomingReminders.length > 0 ? (
+           {upcomingRenewals.length > 0 ? (
             <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-lg space-y-2">
-              {upcomingReminders.map((reminder, index) => (
+              {upcomingRenewals.map((reminder, index) => (
                 <React.Fragment key={reminder.id}>
                   <div className="flex items-center justify-between">
                     <p className='truncate max-w-[200px]'>{reminder.details}</p>
                     {getDaysLeft(reminder.dueDate)}
                   </div>
-                  {index < upcomingReminders.length - 1 && <Separator />}
+                  {index < upcomingRenewals.length - 1 && <Separator />}
                 </React.Fragment>
               ))}
             </div>
            ) : (
              <div className="text-sm text-center text-muted-foreground p-3 bg-muted/50 rounded-lg">
-                No pending reminders.
+                No pending renewals.
              </div>
            )}
         </div>
 
-        <form action={formAction} ref={formRef} className="space-y-4">
+        <form action={formAction} ref={formRef} className="space-y-4 mt-auto">
           <div>
             <Textarea
               name="prompt"
@@ -213,7 +213,7 @@ export function SmartReminder() {
                 <Label htmlFor="dueDate" className="text-right">Due Date</Label>
                 <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="col-span-3" />
               </div>
-              {type === 'Vehicle Permit' && (
+              {(type === 'Vehicle Permit' || type === 'Insurance') && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="relatedTo" className="text-right">Vehicle</Label>
                   <Select value={relatedTo} onValueChange={setRelatedTo}>

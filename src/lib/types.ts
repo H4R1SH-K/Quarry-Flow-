@@ -32,6 +32,7 @@ export type Customer = {
   email: string;
   phone: string;
   company: string;
+  address: string;
   status: "Active" | "Inactive";
 };
 
@@ -62,5 +63,3 @@ export type Reminder = {
   relatedTo?: string; // Can be customerId or vehicleId
   relatedToName?: string;
 };
-
-

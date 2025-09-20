@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -27,6 +28,7 @@ import { PlusCircle, Pencil } from "lucide-react";
 import type { Customer } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Textarea } from '../ui/textarea';
 
 export function CustomerTable() {
   const { customers, addCustomer, updateCustomer } = useDataStore();
@@ -37,6 +39,7 @@ export function CustomerTable() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [company, setCompany] = useState('');
+  const [address, setAddress] = useState('');
   const [status, setStatus] = useState<"Active" | "Inactive">('Active');
 
   useEffect(() => {
@@ -45,6 +48,7 @@ export function CustomerTable() {
       setEmail(editingCustomer.email);
       setPhone(editingCustomer.phone);
       setCompany(editingCustomer.company);
+      setAddress(editingCustomer.address);
       setStatus(editingCustomer.status);
       setOpen(true);
     }
@@ -63,6 +67,7 @@ export function CustomerTable() {
     setEmail('');
     setPhone('');
     setCompany('');
+    setAddress('');
     setStatus('Active');
   };
 
@@ -74,6 +79,7 @@ export function CustomerTable() {
         email,
         phone,
         company,
+        address,
         status,
       };
       updateCustomer(updatedCustomer);
@@ -84,6 +90,7 @@ export function CustomerTable() {
         email,
         phone,
         company,
+        address,
         status,
       };
       addCustomer(newCustomer);
@@ -137,6 +144,12 @@ export function CustomerTable() {
                 </Label>
                 <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} className="col-span-3" />
               </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="address" className="text-right pt-2">
+                  Address
+                </Label>
+                <Textarea id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="col-span-3" />
+              </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="status" className="text-right">
                   Status
@@ -167,8 +180,8 @@ export function CustomerTable() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Address</TableHead>
                 <TableHead>Company</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -179,8 +192,13 @@ export function CustomerTable() {
                 customers.map((customer) => (
                   <TableRow key={customer.id}>
                     <TableCell className="font-medium">{customer.name}</TableCell>
-                    <TableCell>{customer.email}</TableCell>
-                    <TableCell>{customer.phone}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="text-sm">{customer.email}</span>
+                        <span className="text-xs text-muted-foreground">{customer.phone}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="max-w-[200px] truncate">{customer.address}</TableCell>
                     <TableCell>{customer.company}</TableCell>
                     <TableCell>
                       <Badge variant={customer.status === "Active" ? "default" : "secondary"}>

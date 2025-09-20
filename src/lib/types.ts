@@ -16,3 +16,29 @@ export type CostRevenue = {
     revenue: number;
     dieselCost: number;
 };
+
+export type Customer = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  status: "Active" | "Inactive";
+};
+
+export type Vehicle = {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    vin: string;
+    status: "Active" | "Maintenance" | "Inactive";
+};
+
+export type Expense = {
+    id: string;
+    category: string;
+    item: string;
+    amount: string;
+    date: string;
+};

@@ -1,4 +1,9 @@
-import { ExpenseReport } from "@/components/reports/expense-report";
+import dynamic from 'next/dynamic';
+
+const ExpenseReport = dynamic(
+  () => import('@/components/reports/expense-report').then((mod) => mod.ExpenseReport),
+  { ssr: false }
+);
 
 export default function ReportsPage() {
   return (

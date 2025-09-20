@@ -9,14 +9,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '../ui/button';
-import { Download, Upload, Database } from 'lucide-react';
+import { Download, Upload, Database, Combine } from 'lucide-react';
 import { useDataStore } from '@/lib/data-store';
 import { useToast } from '@/hooks/use-toast';
+import { Separator } from '../ui/separator';
 
 export function DataManagement() {
-  const { sales, customers, vehicles, expenses, reminders, restoreData } = useDataStore();
+  const { sales, customers, vehicles, expenses, reminders, restoreData, importData } = useDataStore();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const importMode = useRef<'restore' | 'import' | null>(null);
 
   const handleBackup = () => {
     const data = {
@@ -38,37 +40,38 @@ export function DataManagement() {
     URL.revokeObjectURL(url);
      toast({
       title: "Backup Successful",
-      description: "Your data has been downloaded.",
-      variant: "default"
+      description: "Your data has been downloaded as a JSON file.",
     });
   };
 
-  const handleRestore = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const text = e.target?.result;
-      if (typeof text !== 'string') {
-        toast({
-          title: "Restore Failed",
-          description: "Could not read the file.",
-          variant: "destructive",
-        });
-        return;
-      }
       try {
+        const text = e.target?.result;
+        if (typeof text !== 'string') {
+          throw new Error("Could not read the file.");
+        }
         const data = JSON.parse(text);
         
         // Basic validation
         if (data.sales && data.customers && data.vehicles && data.expenses && data.reminders) {
-            restoreData(data);
-             toast({
-              title: "Restore Successful",
-              description: "Your data has been restored from the backup file.",
-              variant: "default",
-            });
+            if(importMode.current === 'import') {
+              importData(data);
+              toast({
+                title: "Import Successful",
+                description: "Your data has been merged from the backup file.",
+              });
+            } else {
+              restoreData(data);
+              toast({
+                title: "Restore Successful",
+                description: "Your data has been restored from the backup file.",
+              });
+            }
         } else {
              toast({
               title: "Invalid Backup File",
@@ -82,18 +85,20 @@ export function DataManagement() {
           description: "The selected file is not a valid JSON backup.",
           variant: "destructive",
         });
-        console.error("Restore failed:", error);
+        console.error("Restore/Import failed:", error);
+      } finally {
+         // Reset file input
+        if(fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+        importMode.current = null;
       }
     };
     reader.readAsText(file);
-    
-    // Reset file input
-    if(fileInputRef.current) {
-        fileInputRef.current.value = '';
-    }
   };
 
-  const handleRestoreClick = () => {
+  const triggerFilePicker = (mode: 'restore' | 'import') => {
+    importMode.current = mode;
     fileInputRef.current?.click();
   };
 
@@ -106,29 +111,42 @@ export function DataManagement() {
             <CardTitle className="font-headline">Data Management</CardTitle>
         </div>
         <CardDescription>
-          Backup your application data or restore it from a file.
+          Backup, restore, or import your application data.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className='text-sm text-muted-foreground'>
-            <p>Your data is automatically saved to this browser. Use these options to create a manual backup or restore data on a different device.</p>
+            <p>Your data is automatically saved. Use these options to create a manual backup, restore data, or import new records.</p>
         </div>
         <div className="flex flex-col gap-2">
           <Button onClick={handleBackup}>
             <Download className="mr-2 h-4 w-4" />
             Backup Data
           </Button>
-          <Button onClick={handleRestoreClick} variant="outline">
-            <Upload className="mr-2 h-4 w-4" />
-            Restore Data
+          
+          <Separator className='my-2'/>
+
+          <Button onClick={() => triggerFilePicker('import')} variant="outline">
+            <Combine className="mr-2 h-4 w-4" />
+            Import & Merge Data
           </Button>
+
+          <Button onClick={() => triggerFilePicker('restore')} variant="destructive">
+            <Upload className="mr-2 h-4 w-4" />
+            Restore (Overwrite)
+          </Button>
+
           <input
             type="file"
             ref={fileInputRef}
-            onChange={handleRestore}
+            onChange={handleFileSelected}
             className="hidden"
             accept=".json"
           />
+        </div>
+         <div className='text-xs text-muted-foreground pt-2'>
+            <p><span className='font-semibold'>Import & Merge:</span> Adds new records from a file without removing existing data.</p>
+            <p><span className='font-semibold'>Restore (Overwrite):</span> Replaces all current data with the data from a file.</p>
         </div>
       </CardContent>
     </Card>

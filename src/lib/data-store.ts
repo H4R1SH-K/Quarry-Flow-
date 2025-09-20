@@ -19,6 +19,13 @@ interface DataState {
   addReminder: (reminder: Reminder) => void;
   updateReminder: (reminder: Reminder) => void;
   restoreData: (data: Partial<DataState>) => void;
+  importData: (data: Partial<DataState>) => void;
+}
+
+const mergeById = <T extends { id: string }>(existing: T[], incoming: T[]): T[] => {
+  const existingIds = new Set(existing.map(item => item.id));
+  const newItems = incoming.filter(item => !existingIds.has(item.id));
+  return [...existing, ...newItems];
 }
 
 export const useDataStore = create<DataState>()(
@@ -40,6 +47,13 @@ export const useDataStore = create<DataState>()(
       addReminder: (reminder) => set((state) => ({ reminders: [...state.reminders, reminder] })),
       updateReminder: (reminder) => set((state) => ({ reminders: state.reminders.map(r => r.id === reminder.id ? reminder : r) })),
       restoreData: (data) => set(data),
+      importData: (data) => set((state) => ({
+        sales: data.sales ? mergeById(state.sales, data.sales) : state.sales,
+        customers: data.customers ? mergeById(state.customers, data.customers) : state.customers,
+        vehicles: data.vehicles ? mergeById(state.vehicles, data.vehicles) : state.vehicles,
+        expenses: data.expenses ? mergeById(state.expenses, data.expenses) : state.expenses,
+        reminders: data.reminders ? mergeById(state.reminders, data.reminders) : state.reminders,
+      })),
     }),
     {
       name: 'quarryflow-storage',

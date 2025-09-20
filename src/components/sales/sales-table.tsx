@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,15 +21,26 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Pencil } from "lucide-react";
+import { PlusCircle, Pencil, Trash2 } from "lucide-react";
 import { useDataStore } from '@/lib/data-store';
 import type { Sales } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 
 export function SalesTable() {
-    const { sales, addSale, updateSale } = useDataStore();
+    const { sales, addSale, updateSale, deleteSale } = useDataStore();
     const [open, setOpen] = useState(false);
     const [editingSale, setEditingSale] = useState<Sales | null>(null);
 
@@ -95,6 +107,10 @@ export function SalesTable() {
     const handleEditClick = (sale: Sales) => {
         setEditingSale(sale);
     };
+
+    const handleDelete = (id: string) => {
+        deleteSale(id);
+    }
 
     return (
        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
@@ -166,6 +182,25 @@ export function SalesTable() {
                                             <Button variant="ghost" size="icon" onClick={() => handleEditClick(sale)}>
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="ghost" size="icon">
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will permanently delete this sale record.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDelete(sale.id)}>Delete</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </TableCell>
                                     </TableRow>
                                 ))

@@ -22,9 +22,20 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Pencil, Truck, Wrench, Ban, ListFilter } from "lucide-react";
+import { PlusCircle, Pencil, Truck, Wrench, Ban, ListFilter, Trash2 } from "lucide-react";
 import type { Vehicle } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -32,7 +43,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 type VehicleStatus = "Active" | "Maintenance" | "Inactive";
 
 export function VehicleTable() {
-  const { vehicles, addVehicle, updateVehicle } = useDataStore();
+  const { vehicles, addVehicle, updateVehicle, deleteVehicle } = useDataStore();
   const [open, setOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [filter, setFilter] = useState<VehicleStatus | 'All'>('All');
@@ -101,6 +112,10 @@ export function VehicleTable() {
   const handleEditClick = (vehicle: Vehicle) => {
     setEditingVehicle(vehicle);
   };
+
+  const handleDelete = (id: string) => {
+    deleteVehicle(id);
+  }
 
   const filteredVehicles = vehicles.filter(vehicle => {
     if (filter === 'All') return true;
@@ -225,6 +240,25 @@ export function VehicleTable() {
                       <Button variant="ghost" size="icon" onClick={() => handleEditClick(vehicle)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete this vehicle record.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(vehicle.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </TableCell>
                   </TableRow>
                 ))

@@ -12,7 +12,7 @@ export function OverviewStats() {
     const totalCustomers = customers.length;
 
     const formatCurrency = (amount: number) => {
-        return `₹${amount.toLocaleString('en-IN')}`;
+        return `₹${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(amount)}`;
     }
 
     const stats = [
@@ -36,7 +36,7 @@ export function OverviewStats() {
         },
         {
             title: "Total Customers",
-            value: `+${totalCustomers}`,
+            value: `${totalCustomers}`,
             description: "Total number of customers",
             icon: Users
         }

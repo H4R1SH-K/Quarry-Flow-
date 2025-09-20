@@ -49,6 +49,8 @@ export function CostRevenueChart() {
         const month = new Date(expense.date).toLocaleString('default', { month: 'long' });
         if (dataByMonth[month]) {
           dataByMonth[month].dieselCost += expense.amount;
+        } else {
+          dataByMonth[month] = { revenue: 0, dieselCost: expense.amount };
         }
       }
     });
@@ -56,7 +58,10 @@ export function CostRevenueChart() {
     return Object.keys(dataByMonth).map(month => ({
       month,
       ...dataByMonth[month]
-    }));
+    })).sort((a, b) => {
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        return months.indexOf(a.month) - months.indexOf(b.month);
+    });
   }
 
   const chartData = getChartData();
@@ -90,7 +95,7 @@ export function CostRevenueChart() {
           </BarChart>
         </ChartContainer>
          ) : (
-          <div className="flex justify-center items-center h-[200px]">
+          <div className="flex flex-col justify-center items-center h-[200px] text-center">
             <p className="text-sm text-muted-foreground">No data to display for cost vs. revenue.</p>
             <p className="text-xs text-muted-foreground">Add sales and diesel expenses to see the chart.</p>
           </div>

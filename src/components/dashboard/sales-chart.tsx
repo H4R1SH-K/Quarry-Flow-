@@ -9,12 +9,14 @@ export function SalesChart() {
 
   const getSalesDataForChart = () => {
     const monthlySales: { [key: string]: number } = {
-      Jan: 0, Feb: 0, Mar: 0, Apr: 0, May: 0, Jun: 0, Jul: 0, Aug: 0, Sep: 0, Oct: 0, Nov: 0, Dec: 0
+      'Jan': 0, 'Feb': 0, 'Mar': 0, 'Apr': 0, 'May': 0, 'Jun': 0, 'Jul': 0, 'Aug': 0, 'Sep': 0, 'Oct': 0, 'Nov': 0, 'Dec': 0
     };
 
     sales.forEach(sale => {
       const month = new Date(sale.date).toLocaleString('default', { month: 'short' });
-      monthlySales[month] += sale.price;
+      if (month in monthlySales) {
+        monthlySales[month] += sale.price;
+      }
     });
 
     return Object.keys(monthlySales).map(month => ({
@@ -48,7 +50,7 @@ export function SalesChart() {
               fontSize={12}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `₹${value}`}
+              tickFormatter={(value) => `₹${value/1000}k`}
             />
             <Bar
               dataKey="total"

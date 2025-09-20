@@ -1,3 +1,5 @@
+'use client';
+
 import { OverviewStats } from "@/components/dashboard/overview-stats";
 import { RecentSales } from "@/components/dashboard/recent-sales";
 import { SalesChart } from "@/components/dashboard/sales-chart";
@@ -7,9 +9,12 @@ import { ExpenseBreakdownChart } from "@/components/dashboard/expense-breakdown-
 import { VehicleSummary } from "@/components/dashboard/vehicle-summary";
 import { RecentExpenses } from "@/components/dashboard/recent-expenses";
 import { UpcomingCollections } from "@/components/dashboard/upcoming-collections";
+import { useDataStore } from "@/lib/data-store";
 
 
 export default function DashboardPage() {
+  const { sales, expenses, customers } = useDataStore();
+
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between space-y-2">
@@ -39,7 +44,7 @@ export default function DashboardPage() {
           <RecentExpenses />
         </div>
         <div className="lg:col-span-3">
-           <ExpenseBreakdownChart />
+            <ExpenseBreakdownChart />
         </div>
       </div>
     </div>

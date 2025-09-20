@@ -21,9 +21,20 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Pencil, Bell } from "lucide-react";
+import { PlusCircle, Pencil, Bell, Trash2 } from "lucide-react";
 import type { Reminder } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -31,7 +42,7 @@ import { Textarea } from '../ui/textarea';
 import { differenceInDays, format } from 'date-fns';
 
 export function ReminderTable() {
-  const { reminders, addReminder, updateReminder } = useDataStore();
+  const { reminders, addReminder, updateReminder, deleteReminder } = useDataStore();
   const [open, setOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
 
@@ -95,6 +106,10 @@ export function ReminderTable() {
   const handleEditClick = (reminder: Reminder) => {
     setEditingReminder(reminder);
   };
+
+  const handleDelete = (id: string) => {
+    deleteReminder(id);
+  }
   
   const getRelatedName = (reminder: Reminder) => {
     return reminder.relatedToName || 'N/A';
@@ -203,6 +218,25 @@ export function ReminderTable() {
                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(reminder)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete this reminder.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(reminder.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </TableCell>
                   </TableRow>
                 ))

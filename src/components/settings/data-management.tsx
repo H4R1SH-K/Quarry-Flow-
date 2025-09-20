@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -9,19 +9,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '../ui/button';
-import { Download, Upload, Database, ArrowRight } from 'lucide-react';
+import { Download, Upload, Database, Combine } from 'lucide-react';
 import { useDataStore } from '@/lib/data-store';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '../ui/separator';
-import { migrateToFirestore, importToFirestore } from '@/lib/firebase';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 export function DataManagement() {
-  const { sales, customers, vehicles, expenses, reminders } = useDataStore();
+  const { sales, customers, vehicles, expenses, reminders, restoreData, importData } = useDataStore();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isMigrating, setIsMigrating] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
+  const importMode = useRef<'restore' | 'import' | null>(null);
 
   const handleBackup = () => {
     const data = {
@@ -43,7 +40,7 @@ export function DataManagement() {
     URL.revokeObjectURL(url);
      toast({
       title: "Backup Successful",
-      description: "Your local data has been downloaded as a JSON file.",
+      description: "Your data has been downloaded as a JSON file.",
     });
   };
 
@@ -52,7 +49,7 @@ export function DataManagement() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       try {
         const text = e.target?.result;
         if (typeof text !== 'string') {
@@ -60,62 +57,50 @@ export function DataManagement() {
         }
         const data = JSON.parse(text);
         
-        setIsImporting(true);
-        await importToFirestore(data);
-
-        toast({
-          title: "Import Successful",
-          description: "Your data has been imported to Firestore from the JSON file.",
-        });
-
-      } catch (error: any) {
+        // Basic validation
+        if (data.sales && data.customers && data.vehicles && data.expenses && data.reminders) {
+            if(importMode.current === 'import') {
+              importData(data);
+              toast({
+                title: "Import Successful",
+                description: "Your data has been merged from the backup file.",
+              });
+            } else {
+              restoreData(data);
+              toast({
+                title: "Restore Successful",
+                description: "Your data has been restored from the backup file.",
+              });
+            }
+        } else {
+             toast({
+              title: "Invalid Backup File",
+              description: "The selected file is not a valid backup.",
+              variant: "destructive",
+            });
+        }
+      } catch (error) {
          toast({
-          title: "Import Failed",
-          description: error.message || "The selected file is not a valid JSON backup or an error occurred during import.",
+          title: "Restore Failed",
+          description: "The selected file is not a valid JSON backup.",
           variant: "destructive",
         });
-        console.error("Import failed:", error);
+        console.error("Restore/Import failed:", error);
       } finally {
-         if(fileInputRef.current) {
+         // Reset file input
+        if(fileInputRef.current) {
             fileInputRef.current.value = '';
-         }
-         setIsImporting(false);
+        }
+        importMode.current = null;
       }
     };
-    reader.onerror = () => {
-       toast({
-          title: "File Read Error",
-          description: "Could not read the selected file.",
-          variant: "destructive",
-        });
-    }
     reader.readAsText(file);
   };
 
-  const triggerFilePicker = () => {
+  const triggerFilePicker = (mode: 'restore' | 'import') => {
+    importMode.current = mode;
     fileInputRef.current?.click();
   };
-
-  const handleMigration = async () => {
-    setIsMigrating(true);
-    try {
-        const data = { sales, customers, vehicles, expenses, reminders };
-        await migrateToFirestore(data);
-        toast({
-            title: "Migration Successful",
-            description: "Your local data has been migrated to Firestore.",
-        });
-    } catch (error) {
-        toast({
-            title: "Migration Failed",
-            description: "An error occurred while migrating your data to Firestore.",
-            variant: "destructive",
-        });
-        console.error("Migration failed:", error);
-    } finally {
-        setIsMigrating(false);
-    }
-  }
 
 
   return (
@@ -126,57 +111,43 @@ export function DataManagement() {
             <CardTitle className="font-headline">Data Management</CardTitle>
         </div>
         <CardDescription>
-          Migrate, backup, or import your application data to Firestore.
+          Backup, restore, or import your application data. Your data is stored locally in your browser.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <Alert>
-            <AlertTitle className='font-semibold'>Move to the Cloud</AlertTitle>
-            <AlertDescription>
-                Migrate your data from local browser storage to Firestore for a more permanent and secure solution. Once migrated, your app will work with cloud data.
-            </AlertDescription>
-        </Alert>
+      <CardContent className="space-y-4">
+        <div className='text-sm text-muted-foreground'>
+            <p>Your data is automatically saved in your browser. Use these options to create a manual backup or restore data from a file.</p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Button onClick={handleBackup}>
+            <Download className="mr-2 h-4 w-4" />
+            Backup Data
+          </Button>
+          
+          <Separator className='my-2'/>
 
-        <Card className='p-4 bg-muted/50'>
-            <CardTitle className='text-lg font-headline mb-2'>Migrate to Firestore</CardTitle>
-            <CardDescription className='mb-4 text-sm'>
-                Click the button below to move all your existing local data (customers, sales, etc.) to Firestore. This is a one-time process.
-            </CardDescription>
-            <Button onClick={handleMigration} disabled={isMigrating || isImporting}>
-                {isMigrating ? 'Migrating...' : 'Migrate Local Data to Firestore'}
-                <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-        </Card>
+          <Button onClick={() => triggerFilePicker('import')} variant="outline">
+            <Combine className="mr-2 h-4 w-4" />
+            Import & Merge Data
+          </Button>
 
-         <Card className='p-4 bg-muted/50'>
-            <CardTitle className='text-lg font-headline mb-2'>Import & Backup</CardTitle>
-            <div className="flex flex-col gap-4">
-                <div>
-                    <p className='text-sm text-muted-foreground mb-2'>Import new records into Firestore from a JSON backup file. This will merge data and not create duplicates.</p>
-                     <Button onClick={triggerFilePicker} variant="outline" disabled={isImporting || isMigrating}>
-                        {isImporting ? 'Importing...' : 'Import from JSON to Firestore'}
-                        <Upload className="ml-2 h-4 w-4" />
-                    </Button>
-                </div>
-                <Separator />
-                <div>
-                    <p className='text-sm text-muted-foreground mb-2'>Create a backup of your current local data. This is useful before migrating.</p>
-                     <Button onClick={handleBackup} variant='secondary' disabled={isMigrating || isImporting}>
-                        <Download className="mr-2 h-4 w-4" />
-                        Backup Local Data
-                    </Button>
-                </div>
+          <Button onClick={() => triggerFilePicker('restore')} variant="destructive">
+            <Upload className="mr-2 h-4 w-4" />
+            Restore (Overwrite)
+          </Button>
 
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileSelected}
-                    className="hidden"
-                    accept=".json"
-                />
-            </div>
-        </Card>
-
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelected}
+            className="hidden"
+            accept=".json"
+          />
+        </div>
+         <div className='text-xs text-muted-foreground pt-2'>
+            <p><span className='font-semibold'>Import & Merge:</span> Adds new records from a file without removing existing data.</p>
+            <p><span className='font-semibold'>Restore (Overwrite):</span> Replaces all current data with the data from a file.</p>
+        </div>
       </CardContent>
     </Card>
   );

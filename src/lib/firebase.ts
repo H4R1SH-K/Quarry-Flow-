@@ -1,8 +1,5 @@
-'use server';
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, writeBatch, getDocs, doc } from "firebase/firestore";
-import type { DataState } from "./data-store";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,75 +12,13 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
-
-const COLLECTIONS = {
-    CUSTOMERS: 'customers',
-    SALES: 'sales',
-    VEHICLES: 'vehicles',
-    EXPENSES: 'expenses',
-    REMINDERS: 'reminders',
-};
-
-type DataKeys = 'sales' | 'customers' | 'vehicles' | 'expenses' | 'reminders';
-
-
-const validateData = (data: any): data is Partial<DataState> => {
-    if (!data) return false;
-    const requiredKeys: DataKeys[] = ['sales', 'customers', 'vehicles', 'expenses', 'reminders'];
-    return requiredKeys.every(key => data[key] === undefined || Array.isArray(data[key]));
+function initializeFirebaseApp(): FirebaseApp {
+    if (getApps().length) {
+        return getApp();
+    }
+    return initializeApp(firebaseConfig);
 }
 
-
-export const migrateToFirestore = async (data: Partial<DataState>) => {
-    if (!validateData(data)) {
-        throw new Error("Invalid data structure for migration.");
-    }
-    const batch = writeBatch(db);
-
-    for (const key in data) {
-        const collectionName = COLLECTIONS[key.toUpperCase() as keyof typeof COLLECTIONS];
-        if (collectionName) {
-            const items = data[key as DataKeys] as any[];
-            if(items) {
-                items.forEach(item => {
-                    if(item.id) {
-                        const docRef = doc(db, collectionName, item.id);
-                        batch.set(docRef, item);
-                    }
-                });
-            }
-        }
-    }
-
-    await batch.commit();
-}
-
-
-export const importToFirestore = async (data: Partial<DataState>) => {
-    if (!validateData(data)) {
-        throw new Error("Invalid data structure for import. The file must contain arrays for keys like 'sales', 'customers', etc.");
-    }
-    const batch = writeBatch(db);
-
-     for (const key in data) {
-        const collectionName = COLLECTIONS[key.toUpperCase() as keyof typeof COLLECTIONS];
-        if (collectionName) {
-            const remoteDocs = await getDocs(collection(db, collectionName));
-            const remoteIds = new Set(remoteDocs.docs.map(d => d.id));
-            
-            const items = data[key as DataKeys] as any[];
-            if (items) {
-                items.forEach(item => {
-                    if (item.id && !remoteIds.has(item.id)) {
-                        const docRef = doc(db, collectionName, item.id);
-                        batch.set(docRef, item);
-                    }
-                });
-            }
-        }
-    }
-
-    await batch.commit();
+export function getFirebaseApp(): FirebaseApp {
+    return initializeFirebaseApp();
 }

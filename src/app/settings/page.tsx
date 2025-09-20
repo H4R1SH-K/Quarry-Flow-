@@ -13,7 +13,7 @@ import { Download, Upload, Database, Combine, Cloud } from 'lucide-react';
 import { useDataStore } from '@/lib/data-store';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { migrateToFirestore, importToFirestore } from '@/lib/firebase';
+import { migrateToFirestore, importToFirestore } from '@/app/settings/actions';
 
 export default function SettingsPage() {
     const { sales, customers, vehicles, expenses, reminders, restoreData, importData } = useDataStore();

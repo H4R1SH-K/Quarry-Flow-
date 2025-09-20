@@ -73,3 +73,20 @@ export type Profile = {
   companyName: string;
   address: string;
 };
+
+export type User = {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+};
+
+export type AuditLog = {
+  id: string;
+  timestamp: string;
+  userId: string;
+  userName: string;
+  action: "Created" | "Updated" | "Deleted";
+  entity: "Sale" | "Customer" | "Expense" | "Vehicle" | "Reminder" | "Collection" | "Profile";
+  entityId: string;
+  details: string;
+};

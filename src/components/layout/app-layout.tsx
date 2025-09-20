@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign, Banknote, User } from "lucide-react";
+import { Bell, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign, Banknote, User, History } from "lucide-react";
 import { Button } from "../ui/button";
 
 const menuItems = [
@@ -15,6 +15,7 @@ const menuItems = [
     { name: "Collections", icon: Banknote, href: "/collections" },
     { name: "Reminders", icon: Bell, href: "/reminders" },
     { name: "Reports", icon: LineChart, href: "/reports" },
+    { name: "Audit Log", icon: History, href: "/audit-log"},
     { name: "Profile", icon: User, href: "/profile"},
 ];
 

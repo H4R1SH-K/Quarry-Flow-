@@ -189,7 +189,10 @@ export function ExpenseReport() {
       ],
       theme: 'grid',
       styles: { cellPadding: 3 },
-      columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'right' } }
+      columnStyles: { 
+        0: { fontStyle: 'bold' }, 
+        1: { halign: 'right' } 
+      }
     });
     currentY = (doc as any).lastAutoTable.finalY + 15;
 

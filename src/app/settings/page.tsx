@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRef } from 'react';
@@ -228,7 +229,7 @@ export default function SettingsPage() {
                     <CardDescription>
                     Sync your data with your Google Account for backup and access across devices.
                     </CardDescription>
-                </Header>
+                </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex flex-col gap-2">
                         <Button onClick={handleCloudSync}>

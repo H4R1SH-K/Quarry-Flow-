@@ -118,12 +118,12 @@ export function ExpenseReport() {
     currentY += 8;
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Total Sales Revenue: ₹${totalRevenue.toLocaleString('en-IN')}`, 15, currentY);
+    doc.text(`Total Sales Revenue: Rs. ${totalRevenue.toLocaleString('en-IN')}`, 15, currentY);
     currentY += 6;
-    doc.text(`Total Expenses: ₹${totalExpenses.toLocaleString('en-IN')}`, 15, currentY);
+    doc.text(`Total Expenses: Rs. ${totalExpenses.toLocaleString('en-IN')}`, 15, currentY);
     currentY += 6;
     doc.setFont('helvetica', 'bold');
-    doc.text(`Net Profit/Loss: ₹${netProfit.toLocaleString('en-IN')}`, 15, currentY);
+    doc.text(`Net Profit/Loss: Rs. ${netProfit.toLocaleString('en-IN')}`, 15, currentY);
     currentY += 12;
 
     // Sales Details
@@ -134,9 +134,11 @@ export function ExpenseReport() {
       (doc as any).autoTable({
         startY: currentY + 2,
         head: [['Date', 'Customer', 'Vehicle', 'Load Size', 'Price']],
-        body: filteredSales.map(s => [s.date && isValid(new Date(s.date)) ? format(new Date(s.date), 'PP') : 'N/A', s.customer, s.vehicle, s.loadSize, `₹${s.price.toLocaleString('en-IN')}`]),
+        body: filteredSales.map(s => [s.date && isValid(new Date(s.date)) ? format(new Date(s.date), 'PP') : 'N/A', s.customer, s.vehicle, s.loadSize, `Rs. ${s.price.toLocaleString('en-IN')}`]),
         theme: 'grid',
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        bodyStyles: { fontStyle: 'normal' },
+        styles: { cellWidth: 'wrap' },
         didDrawPage: (data: any) => { currentY = data.cursor.y; }
       });
       currentY = (doc as any).lastAutoTable.finalY + 10;
@@ -150,9 +152,11 @@ export function ExpenseReport() {
       (doc as any).autoTable({
         startY: currentY + 2,
         head: [['Date', 'Category', 'Item/Description', 'Vehicle', 'Amount']],
-        body: filteredExpenses.map(e => [e.date && isValid(new Date(e.date)) ? format(new Date(e.date), 'PP') : 'N/A', e.category, e.item, e.vehicle || 'N/A', `₹${e.amount.toLocaleString('en-IN')}`]),
+        body: filteredExpenses.map(e => [e.date && isValid(new Date(e.date)) ? format(new Date(e.date), 'PP') : 'N/A', e.category, e.item, e.vehicle || 'N/A', `Rs. ${e.amount.toLocaleString('en-IN')}`]),
         theme: 'grid',
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        bodyStyles: { fontStyle: 'normal' },
+        styles: { cellWidth: 'wrap' },
         didDrawPage: (data: any) => { currentY = data.cursor.y; }
       });
       currentY = (doc as any).lastAutoTable.finalY + 10;
@@ -169,6 +173,8 @@ export function ExpenseReport() {
         body: pendingReminders.map(r => [r.type, r.details, r.dueDate && isValid(new Date(r.dueDate)) ? format(new Date(r.dueDate), 'PP') : 'N/A', r.relatedToName || 'N/A']),
         theme: 'grid',
         headStyles: { fillColor: [230, 126, 34], textColor: 255, fontStyle: 'bold' },
+        bodyStyles: { fontStyle: 'normal' },
+        styles: { cellWidth: 'wrap' },
         didDrawPage: (data: any) => { currentY = data.cursor.y; }
       });
       currentY = (doc as any).lastAutoTable.finalY + 10;
@@ -183,12 +189,12 @@ export function ExpenseReport() {
     (doc as any).autoTable({
       startY: currentY,
       body: [
-        ['Total Sales Revenue', `₹${totalRevenue.toLocaleString('en-IN')}`],
-        ['Total Expenses', `₹${totalExpenses.toLocaleString('en-IN')}`],
-        [{ content: 'Net Profit / Loss', styles: { fontStyle: 'bold' } }, { content: `₹${netProfit.toLocaleString('en-IN')}`, styles: { fontStyle: 'bold' } }],
+        ['Total Sales Revenue', `Rs. ${totalRevenue.toLocaleString('en-IN')}`],
+        ['Total Expenses', `Rs. ${totalExpenses.toLocaleString('en-IN')}`],
+        [{ content: 'Net Profit / Loss', styles: { fontStyle: 'bold' } }, { content: `Rs. ${netProfit.toLocaleString('en-IN')}`, styles: { fontStyle: 'bold' } }],
       ],
       theme: 'grid',
-      styles: { cellPadding: 3 },
+      styles: { cellPadding: 3, fontStyle: 'normal' },
       columnStyles: { 
         0: { fontStyle: 'bold' }, 
         1: { halign: 'right' } 

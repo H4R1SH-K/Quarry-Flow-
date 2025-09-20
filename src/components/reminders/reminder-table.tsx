@@ -39,7 +39,7 @@ import type { Reminder } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
-import { differenceInDays, format } from 'date-fns';
+import { differenceInDays, format, isValid } from 'date-fns';
 
 export function ReminderTable() {
   const { reminders, addReminder, updateReminder, deleteReminder } = useDataStore();
@@ -116,6 +116,7 @@ export function ReminderTable() {
   }
 
   const getDaysLeft = (dueDate: string) => {
+    if (!dueDate || !isValid(new Date(dueDate))) return 'N/A';
     const days = differenceInDays(new Date(dueDate), new Date());
     if (days < 0) return <span className="text-destructive">Overdue</span>
     if (days === 0) return <span className="text-destructive">Today</span>
@@ -206,7 +207,7 @@ export function ReminderTable() {
                   <TableRow key={reminder.id}>
                     <TableCell className="font-medium">{reminder.type}</TableCell>
                     <TableCell className="max-w-[250px] truncate">{reminder.details}</TableCell>
-                    <TableCell>{format(new Date(reminder.dueDate), 'PPP')}</TableCell>
+                    <TableCell>{reminder.dueDate && isValid(new Date(reminder.dueDate)) ? format(new Date(reminder.dueDate), 'PPP') : 'N/A'}</TableCell>
                     <TableCell>{getDaysLeft(reminder.dueDate)}</TableCell>
                     <TableCell>{getRelatedName(reminder)}</TableCell>
                     <TableCell>

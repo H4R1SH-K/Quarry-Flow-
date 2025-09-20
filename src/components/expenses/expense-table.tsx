@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { PlusCircle, Pencil, Trash2 } from "lucide-react";
 import type { Expense } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
+import { format, isValid } from 'date-fns';
 
 export function ExpenseTable() {
   const { expenses, addExpense, updateExpense, deleteExpense } = useDataStore();
@@ -190,7 +191,7 @@ export function ExpenseTable() {
                       <TableCell>{expense.item}</TableCell>
                       <TableCell>{expense.vehicle || 'N/A'}</TableCell>
                       <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
-                      <TableCell>{new Date(expense.date).toLocaleDateString('en-IN')}</TableCell>
+                      <TableCell>{expense.date && isValid(new Date(expense.date)) ? format(new Date(expense.date), 'PPP') : 'N/A'}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => handleEditClick(expense)}>
                           <Pencil className="h-4 w-4" />

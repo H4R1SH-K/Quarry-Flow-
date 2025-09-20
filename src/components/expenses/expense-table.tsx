@@ -23,12 +23,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { expenseData as initialExpenseData } from "@/lib/data";
 import { PlusCircle } from "lucide-react";
 import type { Expense } from '@/lib/types';
 
 export function ExpenseTable() {
-  const [expenseData, setExpenseData] = useState<Expense[]>(initialExpenseData);
+  const [expenseData, setExpenseData] = useState<Expense[]>([]);
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState('');
   const [item, setItem] = useState('');
@@ -113,14 +112,22 @@ export function ExpenseTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {expenseData.map((expense) => (
-                <TableRow key={expense.id}>
-                  <TableCell className="font-medium">{expense.category}</TableCell>
-                  <TableCell>{expense.item}</TableCell>
-                  <TableCell>{expense.amount}</TableCell>
-                  <TableCell>{expense.date}</TableCell>
+              {expenseData.length > 0 ? (
+                expenseData.map((expense) => (
+                  <TableRow key={expense.id}>
+                    <TableCell className="font-medium">{expense.category}</TableCell>
+                    <TableCell>{expense.item}</TableCell>
+                    <TableCell>{expense.amount}</TableCell>
+                    <TableCell>{expense.date}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    No expenses found.
+                  </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -24,12 +24,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { customerData as initialCustomerData } from "@/lib/data";
 import { PlusCircle } from "lucide-react";
 import type { Customer } from '@/lib/types';
 
 export function CustomerTable() {
-  const [customerData, setCustomerData] = useState<Customer[]>(initialCustomerData);
+  const [customerData, setCustomerData] = useState<Customer[]>([]);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -116,19 +115,27 @@ export function CustomerTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {customerData.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell className="font-medium">{customer.name}</TableCell>
-                  <TableCell>{customer.email}</TableCell>
-                  <TableCell>{customer.phone}</TableCell>
-                  <TableCell>{customer.company}</TableCell>
-                  <TableCell>
-                    <Badge variant={customer.status === "Active" ? "default" : "secondary"}>
-                      {customer.status}
-                    </Badge>
+              {customerData.length > 0 ? (
+                customerData.map((customer) => (
+                  <TableRow key={customer.id}>
+                    <TableCell className="font-medium">{customer.name}</TableCell>
+                    <TableCell>{customer.email}</TableCell>
+                    <TableCell>{customer.phone}</TableCell>
+                    <TableCell>{customer.company}</TableCell>
+                    <TableCell>
+                      <Badge variant={customer.status === "Active" ? "default" : "secondary"}>
+                        {customer.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    No customers found.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>

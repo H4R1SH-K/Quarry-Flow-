@@ -24,12 +24,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { vehicleData as initialVehicleData } from "@/lib/data";
 import { PlusCircle } from "lucide-react";
 import type { Vehicle } from '@/lib/types';
 
 export function VehicleTable() {
-  const [vehicleData, setVehicleData] = useState<Vehicle[]>(initialVehicleData);
+  const [vehicleData, setVehicleData] = useState<Vehicle[]>([]);
   const [open, setOpen] = useState(false);
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
@@ -116,27 +115,35 @@ export function VehicleTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {vehicleData.map((vehicle) => (
-                <TableRow key={vehicle.id}>
-                  <TableCell className="font-medium">{vehicle.make}</TableCell>
-                  <TableCell>{vehicle.model}</TableCell>
-                  <TableCell>{vehicle.year}</TableCell>
-                  <TableCell>{vehicle.vin}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        vehicle.status === "Active"
-                          ? "default"
-                          : vehicle.status === "Maintenance"
-                          ? "destructive"
-                          : "secondary"
-                      }
-                    >
-                      {vehicle.status}
-                    </Badge>
+              {vehicleData.length > 0 ? (
+                vehicleData.map((vehicle) => (
+                  <TableRow key={vehicle.id}>
+                    <TableCell className="font-medium">{vehicle.make}</TableCell>
+                    <TableCell>{vehicle.model}</TableCell>
+                    <TableCell>{vehicle.year}</TableCell>
+                    <TableCell>{vehicle.vin}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          vehicle.status === "Active"
+                            ? "default"
+                            : vehicle.status === "Maintenance"
+                            ? "destructive"
+                            : "secondary"
+                        }
+                      >
+                        {vehicle.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                 <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    No vehicles found.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -22,40 +22,81 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Pencil } from "lucide-react";
 import { useDataStore } from '@/lib/data-store';
 import type { Sales } from '@/lib/types';
 
 export default function SalesPage() {
-  const { sales, addSale } = useDataStore();
+  const { sales, addSale, updateSale } = useDataStore();
   const [open, setOpen] = useState(false);
+  const [editingSale, setEditingSale] = useState<Sales | null>(null);
+
   const [customer, setCustomer] = useState('');
   const [vehicle, setVehicle] = useState('');
   const [loadSize, setLoadSize] = useState('');
   const [price, setPrice] = useState('');
 
-  const handleAddSale = () => {
-    const newSale: Sales = {
-      id: String(sales.length + 1),
-      customer,
-      vehicle,
-      loadSize,
-      price: Number(price),
-      date: new Date().toLocaleDateString('en-IN'),
-    };
-    addSale(newSale);
+  useEffect(() => {
+    if (editingSale) {
+      setCustomer(editingSale.customer);
+      setVehicle(editingSale.vehicle);
+      setLoadSize(editingSale.loadSize);
+      setPrice(String(editingSale.price));
+      setOpen(true);
+    }
+  }, [editingSale]);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setEditingSale(null);
+      resetForm();
+    }
+    setOpen(isOpen);
+  };
+
+  const resetForm = () => {
     setCustomer('');
     setVehicle('');
     setLoadSize('');
     setPrice('');
+  };
+
+  const handleSaveSale = () => {
+    if (editingSale) {
+      const updatedSale: Sales = {
+        ...editingSale,
+        customer,
+        vehicle,
+        loadSize,
+        price: Number(price),
+      };
+      updateSale(updatedSale);
+    } else {
+      const newSale: Sales = {
+        id: String(Date.now()),
+        customer,
+        vehicle,
+        loadSize,
+        price: Number(price),
+        date: new Date().toLocaleDateString('en-IN'),
+      };
+      addSale(newSale);
+    }
+    
+    resetForm();
+    setEditingSale(null);
     setOpen(false);
+  };
+  
+  const handleEditClick = (sale: Sales) => {
+    setEditingSale(sale);
   };
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
        <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Sales</h2>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -64,7 +105,7 @@ export default function SalesPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Sale</DialogTitle>
+              <DialogTitle>{editingSale ? 'Edit Sale' : 'Add New Sale'}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -96,7 +137,7 @@ export default function SalesPage() {
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button type="submit" onClick={handleAddSale}>Save Sale</Button>
+              <Button type="submit" onClick={handleSaveSale}>Save Sale</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -111,6 +152,7 @@ export default function SalesPage() {
                 <TableHead>Load Size</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -122,11 +164,16 @@ export default function SalesPage() {
                     <TableCell>{sale.loadSize}</TableCell>
                     <TableCell>₹{sale.price.toLocaleString('en-IN')}</TableCell>
                     <TableCell>{sale.date}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditClick(sale)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     No sales found.
                   </TableCell>
                 </TableRow>

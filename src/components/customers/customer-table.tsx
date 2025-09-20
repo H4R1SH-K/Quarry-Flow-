@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -23,40 +23,80 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Pencil } from "lucide-react";
 import type { Customer } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 
 export function CustomerTable() {
-  const { customers, addCustomer } = useDataStore();
+  const { customers, addCustomer, updateCustomer } = useDataStore();
   const [open, setOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [company, setCompany] = useState('');
 
-  const handleAddCustomer = () => {
-    const newCustomer: Customer = {
-      id: String(customers.length + 1),
-      name,
-      email,
-      phone,
-      company,
-      status: 'Active',
-    };
-    addCustomer(newCustomer);
+  useEffect(() => {
+    if (editingCustomer) {
+      setName(editingCustomer.name);
+      setEmail(editingCustomer.email);
+      setPhone(editingCustomer.phone);
+      setCompany(editingCustomer.company);
+      setOpen(true);
+    }
+  }, [editingCustomer]);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setEditingCustomer(null);
+      resetForm();
+    }
+    setOpen(isOpen);
+  };
+  
+  const resetForm = () => {
     setName('');
     setEmail('');
     setPhone('');
     setCompany('');
+  };
+
+  const handleSaveCustomer = () => {
+    if (editingCustomer) {
+      const updatedCustomer: Customer = {
+        ...editingCustomer,
+        name,
+        email,
+        phone,
+        company,
+      };
+      updateCustomer(updatedCustomer);
+    } else {
+      const newCustomer: Customer = {
+        id: String(Date.now()),
+        name,
+        email,
+        phone,
+        company,
+        status: 'Active',
+      };
+      addCustomer(newCustomer);
+    }
+    resetForm();
+    setEditingCustomer(null);
     setOpen(false);
+  };
+
+  const handleEditClick = (customer: Customer) => {
+    setEditingCustomer(customer);
   };
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Customers</h2>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -65,7 +105,7 @@ export function CustomerTable() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Customer</DialogTitle>
+              <DialogTitle>{editingCustomer ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -97,7 +137,7 @@ export function CustomerTable() {
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button type="submit" onClick={handleAddCustomer}>Save Customer</Button>
+              <Button type="submit" onClick={handleSaveCustomer}>Save Customer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -112,6 +152,7 @@ export function CustomerTable() {
                 <TableHead>Phone</TableHead>
                 <TableHead>Company</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -127,11 +168,16 @@ export function CustomerTable() {
                         {customer.status}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-right">
+                       <Button variant="ghost" size="icon" onClick={() => handleEditClick(customer)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     No customers found.
                   </TableCell>
                 </TableRow>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -23,40 +23,81 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Pencil } from "lucide-react";
 import type { Vehicle } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 
 export function VehicleTable() {
-  const { vehicles, addVehicle } = useDataStore();
+  const { vehicles, addVehicle, updateVehicle } = useDataStore();
   const [open, setOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
   const [year, setYear] = useState('');
   const [vin, setVin] = useState('');
 
-  const handleAddVehicle = () => {
-    const newVehicle: Vehicle = {
-      id: String(vehicles.length + 1),
-      make,
-      model,
-      year: Number(year),
-      vin,
-      status: 'Active',
-    };
-    addVehicle(newVehicle);
+  useEffect(() => {
+    if (editingVehicle) {
+      setMake(editingVehicle.make);
+      setModel(editingVehicle.model);
+      setYear(String(editingVehicle.year));
+      setVin(editingVehicle.vin);
+      setOpen(true);
+    }
+  }, [editingVehicle]);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setEditingVehicle(null);
+      resetForm();
+    }
+    setOpen(isOpen);
+  };
+  
+  const resetForm = () => {
     setMake('');
     setModel('');
     setYear('');
     setVin('');
+  };
+  
+  const handleSaveVehicle = () => {
+    if (editingVehicle) {
+      const updatedVehicle: Vehicle = {
+        ...editingVehicle,
+        make,
+        model,
+        year: Number(year),
+        vin,
+      };
+      updateVehicle(updatedVehicle);
+    } else {
+      const newVehicle: Vehicle = {
+        id: String(Date.now()),
+        make,
+        model,
+        year: Number(year),
+        vin,
+        status: 'Active',
+      };
+      addVehicle(newVehicle);
+    }
+
+    resetForm();
+    setEditingVehicle(null);
     setOpen(false);
+  };
+
+  const handleEditClick = (vehicle: Vehicle) => {
+    setEditingVehicle(vehicle);
   };
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Vehicles</h2>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -65,7 +106,7 @@ export function VehicleTable() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Vehicle</DialogTitle>
+              <DialogTitle>{editingVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -97,7 +138,7 @@ export function VehicleTable() {
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button type="submit" onClick={handleAddVehicle}>Save Vehicle</Button>
+              <Button type="submit" onClick={handleSaveVehicle}>Save Vehicle</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -112,6 +153,7 @@ export function VehicleTable() {
                 <TableHead>Year</TableHead>
                 <TableHead>VIN</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -135,11 +177,16 @@ export function VehicleTable() {
                         {vehicle.status}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditClick(vehicle)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                  <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     No vehicles found.
                   </TableCell>
                 </TableRow>

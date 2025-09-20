@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -22,39 +22,81 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Pencil } from "lucide-react";
 import type { Expense } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 
 export function ExpenseTable() {
-  const { expenses, addExpense } = useDataStore();
+  const { expenses, addExpense, updateExpense } = useDataStore();
   const [open, setOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+
   const [category, setCategory] = useState('');
   const [item, setItem] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
 
-  const handleAddExpense = () => {
-    const newExpense: Expense = {
-      id: String(expenses.length + 1),
-      category,
-      item,
-      amount: Number(amount),
-      date,
-    };
-    addExpense(newExpense);
+  useEffect(() => {
+    if (editingExpense) {
+      setCategory(editingExpense.category);
+      setItem(editingExpense.item);
+      setAmount(String(editingExpense.amount));
+      setDate(editingExpense.date);
+      setOpen(true);
+    }
+  }, [editingExpense]);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setEditingExpense(null);
+      resetForm();
+    }
+    setOpen(isOpen);
+  };
+  
+  const resetForm = () => {
     setCategory('');
     setItem('');
     setAmount('');
     setDate('');
+  };
+
+  const handleSaveExpense = () => {
+    if (editingExpense) {
+      const updatedExpense: Expense = {
+        ...editingExpense,
+        category,
+        item,
+        amount: Number(amount),
+        date,
+      };
+      updateExpense(updatedExpense);
+    } else {
+      const newExpense: Expense = {
+        id: String(Date.now()),
+        category,
+        item,
+        amount: Number(amount),
+        date,
+      };
+      addExpense(newExpense);
+    }
+    
+    resetForm();
+    setEditingExpense(null);
     setOpen(false);
   };
+
+  const handleEditClick = (expense: Expense) => {
+    setEditingExpense(expense);
+  };
+
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
        <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Expenses</h2>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -63,7 +105,7 @@ export function ExpenseTable() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Expense</DialogTitle>
+              <DialogTitle>{editingExpense ? 'Edit Expense' : 'Add New Expense'}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -95,7 +137,7 @@ export function ExpenseTable() {
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button type="submit" onClick={handleAddExpense}>Save Expense</Button>
+              <Button type="submit" onClick={handleSaveExpense}>Save Expense</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -109,6 +151,7 @@ export function ExpenseTable() {
                 <TableHead>Item</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -119,11 +162,16 @@ export function ExpenseTable() {
                     <TableCell>{expense.item}</TableCell>
                     <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
                     <TableCell>{new Date(expense.date).toLocaleDateString('en-IN')}</TableCell>
+                    <TableCell className="text-right">
+                       <Button variant="ghost" size="icon" onClick={() => handleEditClick(expense)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={5} className="h-24 text-center">
                     No expenses found.
                   </TableCell>
                 </TableRow>

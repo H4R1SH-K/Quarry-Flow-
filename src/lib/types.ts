@@ -62,3 +62,4 @@ export type Reminder = {
   relatedTo?: string; // Can be customerId or vehicleId
   relatedToName?: string;
 };
+

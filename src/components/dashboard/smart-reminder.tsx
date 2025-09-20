@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
 import { createSmartReminder, type FormState } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,7 +27,7 @@ function SubmitButton() {
 }
 
 export function SmartReminder() {
-  const [state, formAction] = useFormState(createSmartReminder, initialState);
+  const [state, formAction] = useActionState(createSmartReminder, initialState);
   const formRef = React.useRef<HTMLFormElement>(null);
 
   React.useEffect(() => {

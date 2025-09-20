@@ -1,3 +1,7 @@
+
+'use client';
+
+import { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -20,15 +24,40 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { vehicleData } from "@/lib/data";
+import { vehicleData as initialVehicleData } from "@/lib/data";
 import { PlusCircle } from "lucide-react";
+import type { Vehicle } from '@/lib/types';
 
 export default function VehiclesPage() {
+  const [vehicleData, setVehicleData] = useState<Vehicle[]>(initialVehicleData);
+  const [open, setOpen] = useState(false);
+  const [make, setMake] = useState('');
+  const [model, setModel] = useState('');
+  const [year, setYear] = useState('');
+  const [vin, setVin] = useState('');
+
+  const handleAddVehicle = () => {
+    const newVehicle: Vehicle = {
+      id: String(vehicleData.length + 1),
+      make,
+      model,
+      year: Number(year),
+      vin,
+      status: 'Active',
+    };
+    setVehicleData([...vehicleData, newVehicle]);
+    setMake('');
+    setModel('');
+    setYear('');
+    setVin('');
+    setOpen(false);
+  };
+
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Vehicles</h2>
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -44,32 +73,32 @@ export default function VehiclesPage() {
                 <Label htmlFor="make" className="text-right">
                   Make
                 </Label>
-                <Input id="make" className="col-span-3" />
+                <Input id="make" value={make} onChange={(e) => setMake(e.target.value)} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="model" className="text-right">
                   Model
                 </Label>
-                <Input id="model" className="col-span-3" />
+                <Input id="model" value={model} onChange={(e) => setModel(e.target.value)} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="year" className="text-right">
                   Year
                 </Label>
-                <Input id="year" type="number" className="col-span-3" />
+                <Input id="year" type="number" value={year} onChange={(e) => setYear(e.target.value)} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="vin" className="text-right">
                   VIN
                 </Label>
-                <Input id="vin" className="col-span-3" />
+                <Input id="vin" value={vin} onChange={(e) => setVin(e.target.value)} className="col-span-3" />
               </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button type="submit">Save Vehicle</Button>
+              <Button type="submit" onClick={handleAddVehicle}>Save Vehicle</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

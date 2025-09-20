@@ -59,24 +59,23 @@ export default function SettingsPage() {
     };
 
     const handleCloudSync = async () => {
-        try {
-            const data = { sales, customers, vehicles, expenses, reminders };
-            await migrateToFirestore(data);
+        const data = { sales, customers, vehicles, expenses, reminders };
+        const result = await migrateToFirestore(data);
+        if (result.success) {
             toast({
                 title: 'Cloud Sync Successful',
-                description: 'Your local data has been synced to the cloud.',
+                description: result.message,
             });
-        } catch (error) {
-            console.error('Cloud Sync Error:', error);
+        } else {
             toast({
                 title: 'Cloud Sync Failed',
-                description: 'Could not sync data to the cloud. Please try again.',
+                description: result.message,
                 variant: 'destructive',
             });
         }
     };
 
-    const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
@@ -105,11 +104,19 @@ export default function SettingsPage() {
                         description: "Your data has been restored from the backup file.",
                     });
                 } else if (importMode.current === 'import_cloud') {
-                    await importToFirestore(data);
-                     toast({
-                        title: "Cloud Import Successful",
-                        description: "Backup has been imported to the cloud.",
-                    });
+                    const result = await importToFirestore(data);
+                    if (result.success) {
+                        toast({
+                            title: "Cloud Import Successful",
+                            description: result.message,
+                        });
+                    } else {
+                         toast({
+                            title: "Cloud Import Failed",
+                            description: result.message,
+                            variant: "destructive",
+                        });
+                    }
                 }
             } else {
                 toast({

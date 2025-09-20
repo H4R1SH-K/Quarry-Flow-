@@ -3,8 +3,6 @@ import { getFirestore, collection, writeBatch, getDocs, doc } from "firebase/fir
 import { getFirebaseApp } from "@/lib/firebase";
 import type { DataState } from "@/lib/data-store";
 
-const db = getFirestore(getFirebaseApp());
-
 const COLLECTIONS = {
     CUSTOMERS: 'customers',
     SALES: 'sales',
@@ -24,53 +22,77 @@ const validateData = (data: any): data is Partial<DataState> => {
 
 
 export const migrateToFirestore = async (data: Partial<DataState>) => {
-    if (!validateData(data)) {
-        throw new Error("Invalid data structure for migration.");
-    }
-    const batch = writeBatch(db);
+    try {
+        const app = getFirebaseApp();
+        if (!app) {
+            throw new Error("Firebase is not configured. Please set up Firebase in your project settings.");
+        }
+        const db = getFirestore(app);
+        
+        if (!validateData(data)) {
+            throw new Error("Invalid data structure for migration.");
+        }
+        const batch = writeBatch(db);
 
-    for (const key in data) {
-        const collectionName = COLLECTIONS[key.toUpperCase() as keyof typeof COLLECTIONS];
-        if (collectionName) {
-            const items = data[key as DataKeys] as any[];
-            if(items) {
-                items.forEach(item => {
-                    if(item.id) {
-                        const docRef = doc(db, collectionName, item.id);
-                        batch.set(docRef, item);
-                    }
-                });
+        for (const key in data) {
+            const collectionName = COLLECTIONS[key.toUpperCase() as keyof typeof COLLECTIONS];
+            if (collectionName) {
+                const items = data[key as DataKeys] as any[];
+                if(items) {
+                    items.forEach(item => {
+                        if(item.id) {
+                            const docRef = doc(db, collectionName, item.id);
+                            batch.set(docRef, item);
+                        }
+                    });
+                }
             }
         }
-    }
 
-    await batch.commit();
+        await batch.commit();
+        return { success: true, message: 'Your local data has been synced to the cloud.' };
+    } catch (error: any) {
+        console.error('Cloud Sync Error:', error);
+        return { success: false, message: error.message || 'Could not sync data to the cloud. Please try again.' };
+    }
 }
 
 
 export const importToFirestore = async (data: Partial<DataState>) => {
-    if (!validateData(data)) {
-        throw new Error("Invalid data structure for import. The file must contain arrays for keys like 'sales', 'customers', etc.");
-    }
-    const batch = writeBatch(db);
+     try {
+        const app = getFirebaseApp();
+        if (!app) {
+            throw new Error("Firebase is not configured. Please set up Firebase in your project settings.");
+        }
+        const db = getFirestore(app);
 
-     for (const key in data) {
-        const collectionName = COLLECTIONS[key.toUpperCase() as keyof typeof COLLECTIONS];
-        if (collectionName) {
-            const remoteDocs = await getDocs(collection(db, collectionName));
-            const remoteIds = new Set(remoteDocs.docs.map(d => d.id));
-            
-            const items = data[key as DataKeys] as any[];
-            if (items) {
-                items.forEach(item => {
-                    if (item.id && !remoteIds.has(item.id)) {
-                        const docRef = doc(db, collectionName, item.id);
-                        batch.set(docRef, item);
-                    }
-                });
+        if (!validateData(data)) {
+            throw new Error("Invalid data structure for import. The file must contain arrays for keys like 'sales', 'customers', etc.");
+        }
+        const batch = writeBatch(db);
+
+        for (const key in data) {
+            const collectionName = COLLECTIONS[key.toUpperCase() as keyof typeof COLLECTIONS];
+            if (collectionName) {
+                const remoteDocs = await getDocs(collection(db, collectionName));
+                const remoteIds = new Set(remoteDocs.docs.map(d => d.id));
+                
+                const items = data[key as DataKeys] as any[];
+                if (items) {
+                    items.forEach(item => {
+                        if (item.id && !remoteIds.has(item.id)) {
+                            const docRef = doc(db, collectionName, item.id);
+                            batch.set(docRef, item);
+                        }
+                    });
+                }
             }
         }
-    }
 
-    await batch.commit();
+        await batch.commit();
+        return { success: true, message: 'Backup has been imported to the cloud.' };
+    } catch (error: any) {
+        console.error('Cloud Import Error:', error);
+        return { success: false, message: error.message || 'Could not import data to the cloud. Please try again.' };
+    }
 }

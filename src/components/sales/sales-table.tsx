@@ -25,7 +25,7 @@ import { Label } from "@/components/ui/label";
 import { PlusCircle, Pencil } from "lucide-react";
 import { useDataStore } from '@/lib/data-store';
 import type { Sales } from '@/lib/types';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 
 export function SalesTable() {
     const { sales, addSale, updateSale } = useDataStore();
@@ -160,7 +160,7 @@ export function SalesTable() {
                                         <TableCell className="font-medium">{sale.customer}</TableCell>
                                         <TableCell>{sale.vehicle}</TableCell>
                                         <TableCell>{sale.loadSize}</TableCell>
-                                        <TableCell>{format(new Date(sale.date), 'PPP')}</TableCell>
+                                        <TableCell>{sale.date && isValid(new Date(sale.date)) ? format(new Date(sale.date), 'PPP') : 'N/A'}</TableCell>
                                         <TableCell className="text-right">₹{sale.price.toLocaleString('en-IN')}</TableCell>
                                         <TableCell className="text-right">
                                             <Button variant="ghost" size="icon" onClick={() => handleEditClick(sale)}>

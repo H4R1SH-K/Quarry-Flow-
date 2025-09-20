@@ -149,23 +149,40 @@ export function ReminderTable() {
                 <Label htmlFor="dueDate" className="text-right">Due Date</Label>
                 <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="col-span-3" />
               </div>
-              {type !== 'Insurance' && <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="relatedTo" className="text-right">
-                  {type === 'Credit' ? 'Customer' : 'Vehicle'}
-                </Label>
-                <Select value={relatedTo} onValueChange={setRelatedTo}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder={`Select a ${type === 'Credit' ? 'customer' : 'vehicle'}`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    { (type === 'Credit' ? customers : vehicles).map(item => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {type === 'Credit' ? (item as any).name : (item as any).vehicleNumber}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>}
+              {type === 'Vehicle Permit' && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="relatedTo" className="text-right">Vehicle</Label>
+                  <Select value={relatedTo} onValueChange={setRelatedTo}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a vehicle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vehicles.map(item => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.vehicleNumber}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {type === 'Credit' && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="relatedTo" className="text-right">Customer</Label>
+                  <Select value={relatedTo} onValueChange={setRelatedTo}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customers.map(item => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
                <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="status" className="text-right">Status</Label>
                 <Select value={status} onValueChange={(value: "Pending" | "Completed") => setStatus(value)}>

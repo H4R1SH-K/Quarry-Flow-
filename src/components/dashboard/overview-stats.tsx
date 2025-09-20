@@ -1,23 +1,23 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Users, CreditCard, TrendingUp } from "lucide-react";
+import { IndianRupee, Users, CreditCard, TrendingUp } from "lucide-react";
 
 export function OverviewStats() {
     const stats = [
         {
             title: "Total Revenue",
-            value: "$45,231.89",
+            value: "₹3,754,247",
             description: "+20.1% from last month",
-            icon: DollarSign
+            icon: IndianRupee
         },
         {
             title: "Total Expenses",
-            value: "$12,875.32",
+            value: "₹1,068,652",
             description: "+15.2% from last month",
             icon: CreditCard
         },
         {
             title: "Net Profit",
-            value: "$32,356.57",
+            value: "₹2,685,595",
             description: "+22.5% from last month",
             icon: TrendingUp
         },

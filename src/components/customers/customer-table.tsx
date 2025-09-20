@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { PlusCircle, Pencil } from "lucide-react";
 import type { Customer } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 export function CustomerTable() {
   const { customers, addCustomer, updateCustomer } = useDataStore();
@@ -36,6 +37,7 @@ export function CustomerTable() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [company, setCompany] = useState('');
+  const [status, setStatus] = useState<"Active" | "Inactive">('Active');
 
   useEffect(() => {
     if (editingCustomer) {
@@ -43,6 +45,7 @@ export function CustomerTable() {
       setEmail(editingCustomer.email);
       setPhone(editingCustomer.phone);
       setCompany(editingCustomer.company);
+      setStatus(editingCustomer.status);
       setOpen(true);
     }
   }, [editingCustomer]);
@@ -60,6 +63,7 @@ export function CustomerTable() {
     setEmail('');
     setPhone('');
     setCompany('');
+    setStatus('Active');
   };
 
   const handleSaveCustomer = () => {
@@ -70,6 +74,7 @@ export function CustomerTable() {
         email,
         phone,
         company,
+        status,
       };
       updateCustomer(updatedCustomer);
     } else {
@@ -79,7 +84,7 @@ export function CustomerTable() {
         email,
         phone,
         company,
-        status: 'Active',
+        status,
       };
       addCustomer(newCustomer);
     }
@@ -131,6 +136,20 @@ export function CustomerTable() {
                   Company
                 </Label>
                 <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">
+                  Status
+                </Label>
+                 <Select value={status} onValueChange={(value: "Active" | "Inactive") => setStatus(value)}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>

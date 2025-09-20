@@ -16,9 +16,18 @@ function initializeFirebaseApp(): FirebaseApp {
     if (getApps().length) {
         return getApp();
     }
+    if (!firebaseConfig.apiKey) {
+      console.warn("Firebase API key is missing. Cloud features will be disabled.");
+      // Return a dummy app object if config is missing
+      return {} as FirebaseApp;
+    }
     return initializeApp(firebaseConfig);
 }
 
-export function getFirebaseApp(): FirebaseApp {
-    return initializeFirebaseApp();
+export function getFirebaseApp(): FirebaseApp | null {
+    const app = initializeFirebaseApp();
+    if (!app.options?.apiKey) {
+      return null;
+    }
+    return app;
 }

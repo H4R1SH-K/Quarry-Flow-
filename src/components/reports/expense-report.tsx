@@ -18,12 +18,14 @@ import { IndianRupee } from "lucide-react";
 
 export function ExpenseReport() {
   const totalExpenses = expenseData.reduce((acc, expense) => {
-    return acc + parseInt(expense.amount.replace(/[^0-9]/g, ""));
+    // Ensure amount is a string and remove currency symbols/commas before parsing
+    const amount = Number(String(expense.amount).replace(/[^0-9.-]+/g,""));
+    return acc + amount;
   }, 0);
 
   const expensesByCategory = expenseData.reduce((acc, expense) => {
     const category = expense.category;
-    const amount = parseInt(expense.amount.replace(/[^0-9]/g, ""));
+    const amount = Number(String(expense.amount).replace(/[^0-9.-]+/g,""));
     if (!acc[category]) {
       acc[category] = 0;
     }
@@ -33,7 +35,7 @@ export function ExpenseReport() {
 
   const topCategory = Object.entries(expensesByCategory).sort(
     (a, b) => b[1] - a[1]
-  )[0];
+  )[0] || ["N/A", 0];
 
   return (
     <Card>

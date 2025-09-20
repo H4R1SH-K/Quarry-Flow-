@@ -1,3 +1,4 @@
+'use server';
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, writeBatch, getDocs, doc } from "firebase/firestore";
@@ -29,8 +30,9 @@ type DataKeys = 'sales' | 'customers' | 'vehicles' | 'expenses' | 'reminders';
 
 
 const validateData = (data: any): data is Partial<DataState> => {
+    if (!data) return false;
     const requiredKeys: DataKeys[] = ['sales', 'customers', 'vehicles', 'expenses', 'reminders'];
-    return requiredKeys.every(key => Array.isArray(data[key]));
+    return requiredKeys.every(key => data[key] === undefined || Array.isArray(data[key]));
 }
 
 
@@ -44,10 +46,14 @@ export const migrateToFirestore = async (data: Partial<DataState>) => {
         const collectionName = COLLECTIONS[key.toUpperCase() as keyof typeof COLLECTIONS];
         if (collectionName) {
             const items = data[key as DataKeys] as any[];
-            items.forEach(item => {
-                const docRef = doc(db, collectionName, item.id);
-                batch.set(docRef, item);
-            });
+            if(items) {
+                items.forEach(item => {
+                    if(item.id) {
+                        const docRef = doc(db, collectionName, item.id);
+                        batch.set(docRef, item);
+                    }
+                });
+            }
         }
     }
 
@@ -57,7 +63,7 @@ export const migrateToFirestore = async (data: Partial<DataState>) => {
 
 export const importToFirestore = async (data: Partial<DataState>) => {
     if (!validateData(data)) {
-        throw new Error("Invalid data structure for import.");
+        throw new Error("Invalid data structure for import. The file must contain arrays for keys like 'sales', 'customers', etc.");
     }
     const batch = writeBatch(db);
 
@@ -68,12 +74,14 @@ export const importToFirestore = async (data: Partial<DataState>) => {
             const remoteIds = new Set(remoteDocs.docs.map(d => d.id));
             
             const items = data[key as DataKeys] as any[];
-            items.forEach(item => {
-                if (!remoteIds.has(item.id)) {
-                    const docRef = doc(db, collectionName, item.id);
-                    batch.set(docRef, item);
-                }
-            });
+            if (items) {
+                items.forEach(item => {
+                    if (item.id && !remoteIds.has(item.id)) {
+                        const docRef = doc(db, collectionName, item.id);
+                        batch.set(docRef, item);
+                    }
+                });
+            }
         }
     }
 

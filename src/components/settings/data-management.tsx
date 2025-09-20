@@ -9,11 +9,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '../ui/button';
-import { Download, Upload, Database, Combine, ArrowRight } from 'lucide-react';
+import { Download, Upload, Database, ArrowRight } from 'lucide-react';
 import { useDataStore } from '@/lib/data-store';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '../ui/separator';
-import { migrateToFirestore, importToFirestore } from '@/lib/firestore';
+import { migrateToFirestore, importToFirestore } from '@/lib/firebase';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 export function DataManagement() {
@@ -68,10 +68,10 @@ export function DataManagement() {
           description: "Your data has been imported to Firestore from the JSON file.",
         });
 
-      } catch (error) {
+      } catch (error: any) {
          toast({
           title: "Import Failed",
-          description: "The selected file is not a valid JSON backup or an error occurred during import.",
+          description: error.message || "The selected file is not a valid JSON backup or an error occurred during import.",
           variant: "destructive",
         });
         console.error("Import failed:", error);
@@ -82,6 +82,13 @@ export function DataManagement() {
          setIsImporting(false);
       }
     };
+    reader.onerror = () => {
+       toast({
+          title: "File Read Error",
+          description: "Could not read the selected file.",
+          variant: "destructive",
+        });
+    }
     reader.readAsText(file);
   };
 
@@ -130,23 +137,23 @@ export function DataManagement() {
             </AlertDescription>
         </Alert>
 
-        <Card className='p-4'>
+        <Card className='p-4 bg-muted/50'>
             <CardTitle className='text-lg font-headline mb-2'>Migrate to Firestore</CardTitle>
-            <CardDescription className='mb-4'>
+            <CardDescription className='mb-4 text-sm'>
                 Click the button below to move all your existing local data (customers, sales, etc.) to Firestore. This is a one-time process.
             </CardDescription>
-            <Button onClick={handleMigration} disabled={isMigrating}>
+            <Button onClick={handleMigration} disabled={isMigrating || isImporting}>
                 {isMigrating ? 'Migrating...' : 'Migrate Local Data to Firestore'}
                 <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
         </Card>
 
-         <Card className='p-4'>
+         <Card className='p-4 bg-muted/50'>
             <CardTitle className='text-lg font-headline mb-2'>Import & Backup</CardTitle>
             <div className="flex flex-col gap-4">
                 <div>
-                    <p className='text-sm text-muted-foreground mb-2'>Import new records into Firestore from a JSON backup file.</p>
-                     <Button onClick={triggerFilePicker} variant="outline" disabled={isImporting}>
+                    <p className='text-sm text-muted-foreground mb-2'>Import new records into Firestore from a JSON backup file. This will merge data and not create duplicates.</p>
+                     <Button onClick={triggerFilePicker} variant="outline" disabled={isImporting || isMigrating}>
                         {isImporting ? 'Importing...' : 'Import from JSON to Firestore'}
                         <Upload className="ml-2 h-4 w-4" />
                     </Button>
@@ -154,7 +161,7 @@ export function DataManagement() {
                 <Separator />
                 <div>
                     <p className='text-sm text-muted-foreground mb-2'>Create a backup of your current local data. This is useful before migrating.</p>
-                     <Button onClick={handleBackup} variant='secondary'>
+                     <Button onClick={handleBackup} variant='secondary' disabled={isMigrating || isImporting}>
                         <Download className="mr-2 h-4 w-4" />
                         Backup Local Data
                     </Button>

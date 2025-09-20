@@ -5,7 +5,6 @@ import { TableSkeleton } from '@/components/ui/table-skeleton';
 const ExpenseTable = dynamic(
   () => import('@/components/expenses/expense-table').then((mod) => mod.ExpenseTable),
   { 
-    ssr: false,
     loading: () => <TableSkeleton />
   }
 );

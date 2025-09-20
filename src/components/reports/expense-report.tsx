@@ -37,7 +37,9 @@ export function ExpenseReport() {
   }, {} as Record<string, number>);
 
   const topCategory =
-    Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1])[0] || ['N/A', 0];
+    expenses.length > 0
+      ? Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1])[0]
+      : ['N/A', 0];
 
   const handleExport = () => {
     const doc = new jsPDF();

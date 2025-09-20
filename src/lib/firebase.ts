@@ -68,7 +68,7 @@ export const importToFirestore = async (data: Partial<DataState>) => {
     const batch = writeBatch(db);
 
      for (const key in data) {
-        const collectionName = COLLECTIONS[key.toUpperCase() as keyof typeof COLLELECTIONS];
+        const collectionName = COLLECTIONS[key.toUpperCase() as keyof typeof COLLECTIONS];
         if (collectionName) {
             const remoteDocs = await getDocs(collection(db, collectionName));
             const remoteIds = new Set(remoteDocs.docs.map(d => d.id));
@@ -87,5 +87,3 @@ export const importToFirestore = async (data: Partial<DataState>) => {
 
     await batch.commit();
 }
-
-export { db, COLLECTIONS };

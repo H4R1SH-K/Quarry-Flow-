@@ -12,12 +12,21 @@ export type RecentSale = {
     amount: string;
 };
 
+export type SalesItem = {
+  id: string;
+  description: string;
+  quantity: number;
+  unit: 'Ton' | 'KG' | 'Unit';
+  unitPrice: number;
+  total: number;
+};
+
 export type Sales = {
   id: string;
   customer: string;
   vehicle: string;
-  loadSize: string;
-  price: number;
+  items: SalesItem[];
+  price: number; // This will be the total price
   date: string;
   paymentMethod?: 'GPay' | 'Cash' | 'Card' | 'Internet Banking';
 }
@@ -29,7 +38,7 @@ export type CostRevenue = {
 };
 
 export type Customer = {
-  id: string;
+  id:string;
   name: string;
   email: string;
   phone: string;

@@ -1,4 +1,5 @@
 
+
 import type { Sales, Customer, Vehicle, Expense, Reminder } from '@/lib/types';
 
 // In a real application, this would fetch data from a database or API.
@@ -15,11 +16,11 @@ export async function getDashboardData(): Promise<{
 }> {
   
   const mockSales: Sales[] = [
-    { id: '1', customer: 'Olivia Martin', vehicle: 'TN 01 AB 1234', loadSize: '10 Ton', price: 25000, date: '2024-05-20' },
-    { id: '2', customer: 'Jackson Lee', vehicle: 'TN 02 CD 5678', loadSize: '12 Ton', price: 30000, date: '2024-05-19' },
-    { id: '3', customer: 'Isabella Nguyen', vehicle: 'TN 03 EF 9012', loadSize: '8 Ton', price: 20000, date: '2024-05-18' },
-    { id: '4', customer: 'William Kim', vehicle: 'TN 04 GH 3456', loadSize: '15 Ton', price: 37500, date: '2024-05-17' },
-    { id: '5', customer: 'Sofia Davis', vehicle: 'TN 05 IJ 7890', loadSize: '9 Ton', price: 22500, date: '2024-05-16' },
+    { id: '1', customer: 'Olivia Martin', vehicle: 'TN 01 AB 1234', items: [{id: '1', description: 'Sand', quantity: 10, unit: 'Ton', unitPrice: 2500, total: 25000}], price: 25000, date: '2024-05-20' },
+    { id: '2', customer: 'Jackson Lee', vehicle: 'TN 02 CD 5678', items: [{id: '1', description: 'Gravel', quantity: 12, unit: 'Ton', unitPrice: 2500, total: 30000}], price: 30000, date: '2024-05-19' },
+    { id: '3', customer: 'Isabella Nguyen', vehicle: 'TN 03 EF 9012', items: [{id: '1', description: 'Sand', quantity: 8, unit: 'Ton', unitPrice: 2500, total: 20000}], price: 20000, date: '2024-05-18' },
+    { id: '4', customer: 'William Kim', vehicle: 'TN 04 GH 3456', items: [{id: '1', description: 'Rock', quantity: 15, unit: 'Ton', unitPrice: 2500, total: 37500}], price: 37500, date: '2024-05-17' },
+    { id: '5', customer: 'Sofia Davis', vehicle: 'TN 05 IJ 7890', items: [{id: '1', description: 'Sand', quantity: 9, unit: 'Ton', unitPrice: 2500, total: 22500}], price: 22500, date: '2024-05-16' },
   ];
 
   const mockCustomers: Customer[] = [

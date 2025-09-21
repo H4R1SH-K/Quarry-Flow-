@@ -131,10 +131,26 @@ export function ExpenseReport() {
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       doc.text('Sales & Invoicing Details', 15, currentY);
+       
+      const salesBody = filteredSales.flatMap(s =>
+        s.items.map((item, index) =>
+          index === 0
+            ? [
+                s.date && isValid(new Date(s.date)) ? format(new Date(s.date), 'PP') : 'N/A',
+                s.customer,
+                s.vehicle,
+                item.description,
+                `${item.quantity} ${item.unit}`,
+                `Rs. ${s.price.toLocaleString('en-IN')}`,
+              ]
+            : ['', '', '', item.description, `${item.quantity} ${item.unit}`, '']
+        )
+      );
+
       (doc as any).autoTable({
         startY: currentY + 2,
-        head: [['Date', 'Customer', 'Vehicle', 'Load Size', 'Payment', 'Price']],
-        body: filteredSales.map(s => [s.date && isValid(new Date(s.date)) ? format(new Date(s.date), 'PP') : 'N/A', s.customer, s.vehicle, s.loadSize, s.paymentMethod || 'N/A', `Rs. ${s.price.toLocaleString('en-IN')}`]),
+        head: [['Date', 'Customer', 'Vehicle', 'Item', 'Quantity', 'Total Price']],
+        body: salesBody,
         theme: 'grid',
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
         bodyStyles: { fontStyle: 'normal' },

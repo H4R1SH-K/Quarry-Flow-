@@ -34,13 +34,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Pencil, Trash2 } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, X } from "lucide-react";
 import { useDataStore } from '@/lib/data-store';
-import type { Sales } from '@/lib/types';
+import type { Sales, SalesItem } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 type PaymentMethod = 'GPay' | 'Cash' | 'Card' | 'Internet Banking';
+const defaultItem: Omit<SalesItem, 'id'> = { description: '', quantity: 1, unit: 'Ton', unitPrice: 0, total: 0 };
+
 
 export function SalesTable() {
     const { sales, addSale, updateSale, deleteSale } = useDataStore();
@@ -49,22 +51,24 @@ export function SalesTable() {
 
     const [customer, setCustomer] = useState('');
     const [vehicle, setVehicle] = useState('');
-    const [loadSize, setLoadSize] = useState('');
-    const [unit, setUnit] = useState<'KG' | 'Ton'>('Ton');
-    const [price, setPrice] = useState('');
     const [date, setDate] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>(undefined);
+    const [items, setItems] = useState<Omit<SalesItem, 'id'>[]>([defaultItem]);
+    const [totalPrice, setTotalPrice] = useState(0);
+
+    useEffect(() => {
+        const total = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
+        setTotalPrice(total);
+    }, [items]);
 
     useEffect(() => {
         if (editingSale) {
-            const [size, unitValue] = editingSale.loadSize.split(' ');
             setCustomer(editingSale.customer);
             setVehicle(editingSale.vehicle);
-            setLoadSize(size || '');
-            setUnit((unitValue as 'KG' | 'Ton') || 'Ton');
-            setPrice(String(editingSale.price));
             setDate(editingSale.date);
             setPaymentMethod(editingSale.paymentMethod);
+            setItems(editingSale.items.map(({id, ...item}) => item));
+            setTotalPrice(editingSale.price);
             setOpen(true);
         }
     }, [editingSale]);
@@ -80,22 +84,40 @@ export function SalesTable() {
     const resetForm = () => {
         setCustomer('');
         setVehicle('');
-        setLoadSize('');
-        setUnit('Ton');
-        setPrice('');
         setDate('');
         setPaymentMethod(undefined);
+        setItems([defaultItem]);
+        setTotalPrice(0);
     };
 
+     const handleItemChange = (index: number, field: keyof Omit<SalesItem, 'id' | 'total'>, value: string | number | 'Ton' | 'KG' | 'Unit') => {
+        const newItems = [...items];
+        const item = { ...newItems[index] };
+        
+        if (field === 'quantity' || field === 'unitPrice') {
+            (item[field] as number) = Number(value);
+        } else {
+            (item[field] as string) = value as string;
+        }
+
+        item.total = item.quantity * item.unitPrice;
+        newItems[index] = item;
+        setItems(newItems);
+    };
+
+    const addItem = () => setItems([...items, defaultItem]);
+    const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index));
+
     const handleSaveSale = () => {
-        const fullLoadSize = `${loadSize} ${unit}`;
+        const saleItems = items.map((item, index) => ({ ...item, id: String(index) }));
+
         if (editingSale) {
             const updatedSale: Sales = {
                 ...editingSale,
                 customer,
                 vehicle,
-                loadSize: fullLoadSize,
-                price: Number(price),
+                items: saleItems,
+                price: totalPrice,
                 date,
                 paymentMethod,
             };
@@ -105,8 +127,8 @@ export function SalesTable() {
                 id: String(Date.now()),
                 customer,
                 vehicle,
-                loadSize: fullLoadSize,
-                price: Number(price),
+                items: saleItems,
+                price: totalPrice,
                 date,
                 paymentMethod,
             };
@@ -136,55 +158,62 @@ export function SalesTable() {
                             Add Sale
                         </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="max-w-3xl">
                         <DialogHeader>
                             <DialogTitle>{editingSale ? 'Edit Sale' : 'Add New Sale'}</DialogTitle>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="customer" className="text-right">Customer</Label>
-                                <Input id="customer" value={customer} onChange={(e) => setCustomer(e.target.value)} className="col-span-3" />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="vehicle" className="text-right">Vehicle</Label>
-                                <Input id="vehicle" value={vehicle} onChange={(e) => setVehicle(e.target.value)} className="col-span-3" />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="loadSize" className="text-right">Load Size</Label>
-                                <div className="col-span-3 flex items-center gap-2">
-                                    <Input id="loadSize" value={loadSize} onChange={(e) => setLoadSize(e.target.value)} className="flex-1" />
-                                    <Select value={unit} onValueChange={(value: "KG" | "Ton") => setUnit(value)}>
-                                      <SelectTrigger className="w-[80px]">
-                                        <SelectValue placeholder="Unit" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="KG">KG</SelectItem>
-                                        <SelectItem value="Ton">Ton</SelectItem>
-                                      </SelectContent>
+                           <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="customer">Customer</Label>
+                                    <Input id="customer" value={customer} onChange={(e) => setCustomer(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="vehicle">Vehicle</Label>
+                                    <Input id="vehicle" value={vehicle} onChange={(e) => setVehicle(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="date">Date</Label>
+                                    <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="paymentMethod">Payment Method</Label>
+                                    <Select value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)}>
+                                        <SelectTrigger><SelectValue placeholder="Select payment method" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Cash">Cash</SelectItem>
+                                            <SelectItem value="Card">Card</SelectItem>
+                                            <SelectItem value="GPay">GPay</SelectItem>
+                                            <SelectItem value="Internet Banking">Internet Banking</SelectItem>
+                                        </SelectContent>
                                     </Select>
                                 </div>
+                           </div>
+
+                            <div className="space-y-4 pt-4">
+                                <Label>Sale Items</Label>
+                                {items.map((item, index) => (
+                                    <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                                        <Input placeholder="Item description" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} className="col-span-4" />
+                                        <Input type="number" placeholder="Qty" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', e.target.value)} className="col-span-2" />
+                                        <Select value={item.unit} onValueChange={(value: "Ton" | "KG" | "Unit") => handleItemChange(index, 'unit', value)}>
+                                            <SelectTrigger className="col-span-2"><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Ton">Ton</SelectItem>
+                                                <SelectItem value="KG">KG</SelectItem>
+                                                <SelectItem value="Unit">Unit</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Input type="number" placeholder="Unit Price" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', e.target.value)} className="col-span-2" />
+                                        <p className="col-span-1 text-sm text-right">₹{item.total.toLocaleString()}</p>
+                                        <Button variant="ghost" size="icon" onClick={() => removeItem(index)} className="col-span-1" disabled={items.length === 1}><X className="h-4 w-4" /></Button>
+                                    </div>
+                                ))}
+                                <Button variant="outline" size="sm" onClick={addItem}><PlusCircle className="mr-2 h-4 w-4" /> Add Item</Button>
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="price" className="text-right">Price</Label>
-                                <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="col-span-3" />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="date" className="text-right">Date</Label>
-                                <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="col-span-3" />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="paymentMethod" className="text-right">Payment</Label>
-                                <Select value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)}>
-                                    <SelectTrigger className="col-span-3">
-                                        <SelectValue placeholder="Select payment method" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Cash">Cash</SelectItem>
-                                        <SelectItem value="Card">Card</SelectItem>
-                                        <SelectItem value="GPay">GPay</SelectItem>
-                                        <SelectItem value="Internet Banking">Internet Banking</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                            
+                            <div className="flex justify-end items-center pt-4">
+                                <p className="text-lg font-bold">Total: ₹{totalPrice.toLocaleString()}</p>
                             </div>
                         </div>
                         <DialogFooter>
@@ -201,10 +230,10 @@ export function SalesTable() {
                             <TableRow>
                                 <TableHead>Customer</TableHead>
                                 <TableHead>Vehicle</TableHead>
-                                <TableHead>Load Size</TableHead>
+                                <TableHead>Items</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Payment</TableHead>
-                                <TableHead className="text-right">Price</TableHead>
+                                <TableHead className="text-right">Total Price</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -214,7 +243,7 @@ export function SalesTable() {
                                     <TableRow key={sale.id}>
                                         <TableCell className="font-medium">{sale.customer}</TableCell>
                                         <TableCell>{sale.vehicle}</TableCell>
-                                        <TableCell>{sale.loadSize}</TableCell>
+                                        <TableCell>{sale.items?.length || 1} item(s)</TableCell>
                                         <TableCell>{sale.date && isValid(new Date(sale.date)) ? format(new Date(sale.date), 'PPP') : 'N/A'}</TableCell>
                                         <TableCell>{sale.paymentMethod || 'N/A'}</TableCell>
                                         <TableCell className="text-right">Rs. {sale.price.toLocaleString('en-IN')}</TableCell>
@@ -258,3 +287,4 @@ export function SalesTable() {
         </div>
     );
 }
+

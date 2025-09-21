@@ -34,14 +34,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Pencil, Trash2 } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, FileText } from "lucide-react";
 import { useDataStore } from '@/lib/data-store';
 import type { Sales } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 export function SalesTable() {
-    const { sales, addSale, updateSale, deleteSale } = useDataStore();
+    const { sales, customers, profile, addSale, updateSale, deleteSale } = useDataStore();
     const [open, setOpen] = useState(false);
     const [editingSale, setEditingSale] = useState<Sales | null>(null);
 
@@ -117,6 +119,76 @@ export function SalesTable() {
     const handleDelete = (id: string) => {
         deleteSale(id);
     }
+    
+    const handleGenerateBill = (sale: Sales) => {
+        const doc = new jsPDF();
+        const saleCustomer = customers.find(c => c.name === sale.customer);
+
+        // Header
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text(profile?.companyName || 'QuarryFlow', 14, 22);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(profile?.address || 'Company Address', 14, 30);
+        doc.text(profile?.email || 'company@email.com', 14, 35);
+        doc.text(profile?.phone || '123-456-7890', 14, 40);
+
+        doc.setFontSize(18);
+        doc.text('INVOICE', 200, 22, { align: 'right' });
+
+        // Bill To
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Bill To', 14, 60);
+        doc.setFont('helvetica', 'normal');
+        doc.text(sale.customer, 14, 68);
+        if (saleCustomer) {
+            doc.text(saleCustomer.address, 14, 74);
+            doc.text(saleCustomer.phone, 14, 80);
+        }
+
+        // Invoice Details
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Invoice #:', 140, 60);
+        doc.text('Date:', 140, 68);
+        doc.setFont('helvetica', 'normal');
+        doc.text(sale.id, 165, 60);
+        doc.text(format(new Date(sale.date), 'PP'), 165, 68);
+        
+        // Table
+        const tableColumn = ["Item Description", "Load Size", "Vehicle", "Unit Price", "Total"];
+        const tableRows = [[
+            `Sand/Material Supply`,
+            sale.loadSize,
+            sale.vehicle,
+            `Rs. ${sale.price.toLocaleString('en-IN')}`,
+            `Rs. ${sale.price.toLocaleString('en-IN')}`
+        ]];
+
+        (doc as any).autoTable({
+            startY: 95,
+            head: [tableColumn],
+            body: tableRows,
+            theme: 'striped',
+            headStyles: { fillColor: [22, 160, 133] },
+        });
+
+        // Total
+        const finalY = (doc as any).lastAutoTable.finalY;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Total Amount:', 140, finalY + 10);
+        doc.text(`Rs. ${sale.price.toLocaleString('en-IN')}`, 200, finalY + 10, { align: 'right' });
+        
+        // Footer Notes
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'italic');
+        doc.text('Thank you for your business!', 14, finalY + 40);
+
+        doc.save(`Invoice_${sale.id}_${sale.customer}.pdf`);
+    };
 
     return (
        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
@@ -196,6 +268,9 @@ export function SalesTable() {
                                         <TableCell>{sale.date && isValid(new Date(sale.date)) ? format(new Date(sale.date), 'PPP') : 'N/A'}</TableCell>
                                         <TableCell className="text-right">₹{sale.price.toLocaleString('en-IN')}</TableCell>
                                         <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon" onClick={() => handleGenerateBill(sale)} title="Generate Bill">
+                                                <FileText className="h-4 w-4" />
+                                            </Button>
                                             <Button variant="ghost" size="icon" onClick={() => handleEditClick(sale)}>
                                                 <Pencil className="h-4 w-4" />
                                             </Button>

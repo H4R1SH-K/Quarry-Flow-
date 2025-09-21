@@ -8,12 +8,10 @@ import { UpcomingCollections } from './upcoming-collections';
 
 const RecentSales = dynamic(() => import('@/components/dashboard/recent-sales').then(mod => mod.RecentSales), {
   loading: () => <RecentSalesSkeleton />,
-  ssr: false,
 });
 
 const RecentExpenses = dynamic(() => import('@/components/dashboard/recent-expenses').then(mod => mod.RecentExpenses), {
     loading: () => <RecentExpensesSkeleton />,
-    ssr: false,
 });
 
 
@@ -29,10 +27,10 @@ export function ClientDashboardComponents() {
                 </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                 <div className="lg:col-span-4">
+                 <div className="lg:col-span-3">
                     <ExpenseBreakdownChart />
                 </div>
-                <div className="lg:col-span-3">
+                <div className="lg:col-span-4">
                    <RecentExpenses />
                 </div>
             </div>

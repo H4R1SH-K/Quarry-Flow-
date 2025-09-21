@@ -1,7 +1,6 @@
 
 'use client';
 
-import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -10,14 +9,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { placeholderImages } from "@/lib/placeholder-images.json";
 import { useDataStore } from "@/lib/data-store";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 export function RecentSales() {
   const { sales, customers } = useDataStore();
 
-  const recentSales = sales.slice(-5).reverse();
-  const totalSales = sales.length;
+  const recentSales = sales.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 
   const getCustomerInitials = (name: string) => {
     const customer = customers.find(c => c.name === name);
@@ -39,22 +38,22 @@ export function RecentSales() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-headline">Recent Sales</CardTitle>
-        <CardDescription>You made {totalSales} sales this month.</CardDescription>
+        <div className="flex items-center justify-between">
+            <div>
+                <CardTitle className="font-headline">Recent Invoices</CardTitle>
+                <CardDescription>You have {sales.length} invoices this month.</CardDescription>
+            </div>
+            <Link href="/invoicing" className='text-sm text-primary hover:underline flex items-center'>
+              View All <ArrowRight className='h-4 w-4 ml-1'/>
+            </Link>
+        </div>
       </CardHeader>
       <CardContent>
         {recentSales.length > 0 ? (
           <div className="space-y-8">
-            {recentSales.map((sale, index) => {
-              const placeholder = placeholderImages[index % placeholderImages.length];
-              return (
+            {recentSales.map((sale) => (
                 <div className="flex items-center" key={sale.id}>
                   <Avatar className="h-9 w-9">
-                    <AvatarImage
-                      src={placeholder.imageUrl}
-                      alt="Avatar"
-                      data-ai-hint={placeholder.imageHint}
-                    />
                     <AvatarFallback>{getCustomerInitials(sale.customer)}</AvatarFallback>
                   </Avatar>
                   <div className="ml-4 space-y-1">
@@ -63,12 +62,12 @@ export function RecentSales() {
                   </div>
                   <div className="ml-auto font-medium">+{`₹${sale.price.toLocaleString('en-IN')}`}</div>
                 </div>
-              );
-            })}
+              )
+            )}
           </div>
         ) : (
           <div className="flex justify-center items-center h-48">
-            <p className="text-sm text-muted-foreground">No recent sales.</p>
+            <p className="text-sm text-muted-foreground">No recent invoices.</p>
           </div>
         )}
       </CardContent>

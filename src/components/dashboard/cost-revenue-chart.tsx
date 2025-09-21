@@ -1,6 +1,4 @@
 
-"use client"
-
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import {
@@ -18,7 +16,7 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart"
-import { useDataStore } from "@/lib/data-store"
+import { getDashboardData } from "@/lib/server/data";
 
 const chartConfig = {
   revenue: {
@@ -31,8 +29,8 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function CostRevenueChart() {
-  const { sales, expenses } = useDataStore();
+export async function CostRevenueChart() {
+  const { sales, expenses } = await getDashboardData();
 
   const getChartData = () => {
     const dataByMonth: { [key: string]: { revenue: number, dieselCost: number }} = {};
@@ -76,7 +74,7 @@ export function CostRevenueChart() {
       </CardHeader>
       <CardContent>
         {chartData.length > 0 ? (
-        <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+        <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
           <BarChart accessibilityLayer data={chartData}>
             <CartesianGrid vertical={false} />
             <XAxis
@@ -96,7 +94,7 @@ export function CostRevenueChart() {
           </BarChart>
         </ChartContainer>
          ) : (
-          <div className="flex flex-col justify-center items-center h-[200px] text-center">
+          <div className="flex flex-col justify-center items-center h-[300px] text-center">
             <p className="text-sm text-muted-foreground">No data to display for cost vs. revenue.</p>
             <p className="text-xs text-muted-foreground">Add sales and diesel expenses to see the chart.</p>
           </div>

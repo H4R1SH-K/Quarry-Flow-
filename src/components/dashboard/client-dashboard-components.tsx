@@ -3,6 +3,9 @@
 
 import dynamic from 'next/dynamic';
 import { RecentSalesSkeleton, RecentExpensesSkeleton } from '@/components/dashboard/skeletons';
+import { ExpenseBreakdownChart } from './expense-breakdown-chart';
+import { UpcomingCollections } from './upcoming-collections';
+import { Card } from '../ui/card';
 
 const RecentSales = dynamic(() => import('@/components/dashboard/recent-sales').then(mod => mod.RecentSales), {
   loading: () => <RecentSalesSkeleton />,
@@ -19,19 +22,19 @@ export function ClientDashboardComponents() {
     return (
         <>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <div className="lg:col-span-4">
-                    {/* Placeholder for SalesChart if it were client-side, but it's a server component */}
+                <div className="col-span-1 lg:col-span-4">
+                    <UpcomingCollections />
                 </div>
-                <div className="lg:col-span-3">
+                <div className="col-span-1 lg:col-span-3">
                     <RecentSales />
                 </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                  <div className="lg:col-span-4">
-                    {/* Placeholder for ExpenseBreakdownChart if it were client-side */}
+                    <ExpenseBreakdownChart />
                 </div>
                 <div className="lg:col-span-3">
-                    <RecentExpenses />
+                   <RecentExpenses />
                 </div>
             </div>
         </>

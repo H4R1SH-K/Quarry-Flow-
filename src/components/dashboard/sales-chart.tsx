@@ -1,12 +1,10 @@
 
-"use client"
-
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { useDataStore } from "@/lib/data-store";
+import { getDashboardData } from "@/lib/server/data";
 
-export function SalesChart() {
-  const { sales } = useDataStore();
+export async function SalesChart() {
+  const { sales } = await getDashboardData();
 
   const getSalesDataForChart = () => {
     const monthlySales: { [key: string]: number } = {
@@ -37,7 +35,7 @@ export function SalesChart() {
       </CardHeader>
       <CardContent className="pl-2">
       {sales.length > 0 ? (
-        <ResponsiveContainer width="100%" height={350}>
+        <ResponsiveContainer width="100%" height={300}>
           <BarChart data={salesData}>
             <XAxis
               dataKey="name"
@@ -61,7 +59,7 @@ export function SalesChart() {
           </BarChart>
         </ResponsiveContainer>
         ) : (
-          <div className="flex justify-center items-center h-[350px]">
+          <div className="flex justify-center items-center h-[300px]">
             <p className="text-sm text-muted-foreground">No sales data to display.</p>
           </div>
         )}

@@ -1,12 +1,10 @@
 
 import { OverviewStats } from '@/components/dashboard/overview-stats';
-import { SalesChart } from '@/components/dashboard/sales-chart';
 import { SmartReminder } from '@/components/dashboard/smart-reminder';
-import { CostRevenueChart } from '@/components/dashboard/cost-revenue-chart';
-import { ExpenseBreakdownChart } from '@/components/dashboard/expense-breakdown-chart';
 import { VehicleSummary } from '@/components/dashboard/vehicle-summary';
-import { UpcomingCollections } from '@/components/dashboard/upcoming-collections';
 import { ClientDashboardComponents } from '@/components/dashboard/client-dashboard-components';
+import { SalesChart } from '@/components/dashboard/sales-chart';
+import { CostRevenueChart } from '@/components/dashboard/cost-revenue-chart';
 
 
 export default function DashboardPage() {
@@ -16,24 +14,22 @@ export default function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard</h2>
       </div>
       <OverviewStats />
-      <ClientDashboardComponents />
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <SalesChart />
+          <CostRevenueChart />
+        </div>
+
+       <ClientDashboardComponents />
+
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 grid gap-4">
-            <CostRevenueChart />
-            <UpcomingCollections />
+            {/* <CostRevenueChart /> */}
+            {/* <UpcomingCollections /> */}
           </div>
           <div className="lg:col-span-1 grid gap-4">
             <SmartReminder />
             <VehicleSummary />
           </div>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="lg:col-span-4">
-          <ExpenseBreakdownChart />
-        </div>
-        <div className="lg:col-span-3">
-           {/* This is now handled in ClientDashboardComponents */}
-        </div>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+'use client';
 
 import dynamic from 'next/dynamic';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
@@ -5,7 +6,8 @@ import { TableSkeleton } from '@/components/ui/table-skeleton';
 const SalesTable = dynamic(
   () => import('@/components/sales/sales-table').then((mod) => mod.SalesTable),
   { 
-    loading: () => <TableSkeleton />
+    loading: () => <TableSkeleton />,
+    ssr: false,
   }
 );
 

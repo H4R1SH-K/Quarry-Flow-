@@ -23,7 +23,6 @@ const ClientOnlyDashboard = dynamic(
         </div>
       </div>
     ),
-    ssr: false,
   }
 );
 

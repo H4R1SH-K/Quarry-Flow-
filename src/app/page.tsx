@@ -2,10 +2,23 @@
 import { OverviewStats } from '@/components/dashboard/overview-stats';
 import { SmartReminder } from '@/components/dashboard/smart-reminder';
 import { VehicleSummary } from '@/components/dashboard/vehicle-summary';
-import { ClientDashboardComponents } from '@/components/dashboard/client-dashboard-components';
+import { getDashboardData } from '@/lib/server/data';
 import { SalesChart } from '@/components/dashboard/sales-chart';
 import { CostRevenueChart } from '@/components/dashboard/cost-revenue-chart';
-import { getDashboardData } from '@/lib/server/data';
+import dynamic from 'next/dynamic';
+import { DashboardCardSkeleton } from '@/components/dashboard/skeletons';
+
+const ClientDashboardComponents = dynamic(
+  () => import('@/components/dashboard/client-dashboard-components').then(mod => mod.ClientDashboardComponents),
+  { 
+    loading: () => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <DashboardCardSkeleton />
+        <DashboardCardSkeleton />
+      </div>
+    )
+  }
+);
 
 
 export default async function DashboardPage() {

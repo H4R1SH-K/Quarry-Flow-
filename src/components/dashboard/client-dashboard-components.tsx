@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import { RecentSalesSkeleton, RecentExpensesSkeleton } from '@/components/dashboard/skeletons';
 import { ExpenseBreakdownChart } from './expense-breakdown-chart';
 import { UpcomingCollections } from './upcoming-collections';
-import { Card } from '../ui/card';
 
 const RecentSales = dynamic(() => import('@/components/dashboard/recent-sales').then(mod => mod.RecentSales), {
   loading: () => <RecentSalesSkeleton />,

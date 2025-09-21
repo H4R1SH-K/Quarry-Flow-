@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign, Banknote, User, History } from "lucide-react";
+import { Bell, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign, Banknote, User, History, FileText } from "lucide-react";
 import { Button } from "../ui/button";
 
 const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/" },
     { name: "Sales", icon: ShoppingCart, href: "/sales" },
+    { name: "Invoicing", icon: FileText, href: "/invoicing"},
     { name: "Customers", icon: Users, href: "/customers" },
     { name: "Expenses", icon: DollarSign, href: "/expenses" },
     { name: "Vehicles", icon: Truck, href: "/vehicles" },

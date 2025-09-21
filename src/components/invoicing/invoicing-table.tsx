@@ -42,7 +42,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-export function SalesTable() {
+export function InvoicingTable() {
     const { sales, customers, profile, addSale, updateSale, deleteSale } = useDataStore();
     const [open, setOpen] = useState(false);
     const [editingSale, setEditingSale] = useState<Sales | null>(null);
@@ -193,12 +193,15 @@ export function SalesTable() {
     return (
        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
             <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight font-headline">Sales</h2>
+                <div className="flex items-center gap-2">
+                    <FileText className="h-6 w-6"/>
+                    <h2 className="text-3xl font-bold tracking-tight font-headline">Invoicing</h2>
+                </div>
                 <Dialog open={open} onOpenChange={handleOpenChange}>
                     <DialogTrigger asChild>
                         <Button>
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Sale
+                            Add Sale for Invoice
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -268,6 +271,9 @@ export function SalesTable() {
                                         <TableCell>{sale.date && isValid(new Date(sale.date)) ? format(new Date(sale.date), 'PPP') : 'N/A'}</TableCell>
                                         <TableCell className="text-right">Rs. {sale.price.toLocaleString('en-IN')}</TableCell>
                                         <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon" onClick={() => handleGenerateBill(sale)} title="Generate Bill">
+                                                <FileText className="h-4 w-4" />
+                                            </Button>
                                             <Button variant="ghost" size="icon" onClick={() => handleEditClick(sale)}>
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
@@ -296,7 +302,7 @@ export function SalesTable() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={6} className="h-24 text-center">
-                                        No sales found.
+                                        No sales found to invoice.
                                     </TableCell>
                                 </TableRow>
                             )}

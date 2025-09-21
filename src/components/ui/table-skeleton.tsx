@@ -1,7 +1,6 @@
 import {
   Card,
   CardContent,
-  CardHeader
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -25,23 +24,17 @@ export function TableSkeleton() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead><Skeleton className="h-5 w-24" /></TableHead>
-                <TableHead><Skeleton className="h-5 w-24" /></TableHead>
-                <TableHead><Skeleton className="h-5 w-24" /></TableHead>
-                <TableHead><Skeleton className="h-5 w-24" /></TableHead>
-                <TableHead><Skeleton className="h-5 w-24" /></TableHead>
-                <TableHead className="text-right"><Skeleton className="h-5 w-16" /></TableHead>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Array.from({ length: 5 }).map((_, i) => (
+              {Array.from({ length: 10 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                  <TableCell className="text-right"><Skeleton className="h-5 w-16" /></TableCell>
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
+                  ))}
                 </TableRow>
               ))}
             </TableBody>

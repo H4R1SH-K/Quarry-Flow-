@@ -98,7 +98,7 @@ export function InvoicingTable() {
         const item = { ...newItems[index] };
         
         if (field === 'quantity' || field === 'unitPrice') {
-            (item[field] as number) = Number(value) || 0;
+            (item[field] as number) = Number(value);
         } else {
             (item[field] as string) = value as string;
         }
@@ -373,7 +373,3 @@ export function InvoicingTable() {
         </div>
     );
 }
-
-    
-
-    

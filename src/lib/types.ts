@@ -16,7 +16,7 @@ export type SalesItem = {
   id: string;
   description: string;
   quantity: number;
-  unit: 'Ton' | 'KG' | 'Unit';
+  unit: 'Ton' | 'KG' | 'Load' | 'Trip';
   unitPrice: number;
   total: number;
 };

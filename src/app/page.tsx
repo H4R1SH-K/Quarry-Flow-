@@ -1,12 +1,22 @@
+
 import { OverviewStats } from '@/components/dashboard/overview-stats';
-import { RecentSales } from '@/components/dashboard/recent-sales';
 import { SalesChart } from '@/components/dashboard/sales-chart';
 import { SmartReminder } from '@/components/dashboard/smart-reminder';
 import { CostRevenueChart } from '@/components/dashboard/cost-revenue-chart';
 import { ExpenseBreakdownChart } from '@/components/dashboard/expense-breakdown-chart';
 import { VehicleSummary } from '@/components/dashboard/vehicle-summary';
-import { RecentExpenses } from '@/components/dashboard/recent-expenses';
 import { UpcomingCollections } from '@/components/dashboard/upcoming-collections';
+import dynamic from 'next/dynamic';
+import { RecentSalesSkeleton, RecentExpensesSkeleton } from '@/components/dashboard/skeletons';
+
+const RecentSales = dynamic(() => import('@/components/dashboard/recent-sales').then(mod => mod.RecentSales), {
+  loading: () => <RecentSalesSkeleton />,
+});
+
+const RecentExpenses = dynamic(() => import('@/components/dashboard/recent-expenses').then(mod => mod.RecentExpenses), {
+    loading: () => <RecentExpensesSkeleton />,
+});
+
 
 export default function DashboardPage() {
   return (
@@ -35,10 +45,10 @@ export default function DashboardPage() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <div className="lg:col-span-4">
-          <RecentExpenses />
+          <ExpenseBreakdownChart />
         </div>
         <div className="lg:col-span-3">
-            <ExpenseBreakdownChart />
+          <RecentExpenses />
         </div>
       </div>
     </div>

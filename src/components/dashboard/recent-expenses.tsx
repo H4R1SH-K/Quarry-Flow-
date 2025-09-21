@@ -1,4 +1,6 @@
 
+'use client';
+
 import {
   Card,
   CardContent,
@@ -14,12 +16,12 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { getDashboardData } from "@/lib/server/data";
+import { useDataStore } from "@/lib/data-store";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-export async function RecentExpenses() {
-  const { expenses } = await getDashboardData();
+export function RecentExpenses() {
+  const { expenses } = useDataStore();
 
   const recentExpenses = expenses.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
   const totalExpenses = expenses.length;

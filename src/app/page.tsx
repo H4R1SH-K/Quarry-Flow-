@@ -6,16 +6,7 @@ import { CostRevenueChart } from '@/components/dashboard/cost-revenue-chart';
 import { ExpenseBreakdownChart } from '@/components/dashboard/expense-breakdown-chart';
 import { VehicleSummary } from '@/components/dashboard/vehicle-summary';
 import { UpcomingCollections } from '@/components/dashboard/upcoming-collections';
-import dynamic from 'next/dynamic';
-import { RecentSalesSkeleton, RecentExpensesSkeleton } from '@/components/dashboard/skeletons';
-
-const RecentSales = dynamic(() => import('@/components/dashboard/recent-sales').then(mod => mod.RecentSales), {
-  loading: () => <RecentSalesSkeleton />,
-});
-
-const RecentExpenses = dynamic(() => import('@/components/dashboard/recent-expenses').then(mod => mod.RecentExpenses), {
-    loading: () => <RecentExpensesSkeleton />,
-});
+import { ClientDashboardComponents } from '@/components/dashboard/client-dashboard-components';
 
 
 export default function DashboardPage() {
@@ -25,14 +16,7 @@ export default function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard</h2>
       </div>
       <OverviewStats />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="lg:col-span-4">
-          <SalesChart />
-        </div>
-        <div className="lg:col-span-3">
-          <RecentSales />
-        </div>
-      </div>
+      <ClientDashboardComponents />
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 grid gap-4">
             <CostRevenueChart />
@@ -48,7 +32,7 @@ export default function DashboardPage() {
           <ExpenseBreakdownChart />
         </div>
         <div className="lg:col-span-3">
-          <RecentExpenses />
+           {/* This is now handled in ClientDashboardComponents */}
         </div>
       </div>
     </div>

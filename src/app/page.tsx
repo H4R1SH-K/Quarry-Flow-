@@ -8,15 +8,22 @@ import { CostRevenueChart } from '@/components/dashboard/cost-revenue-chart';
 import dynamic from 'next/dynamic';
 import { DashboardCardSkeleton } from '@/components/dashboard/skeletons';
 
-const ClientDashboardComponents = dynamic(
-  () => import('@/components/dashboard/client-dashboard-components').then(mod => mod.ClientDashboardComponents),
+const ClientOnlyDashboard = dynamic(
+  () => import('@/components/dashboard/client-only-dashboard').then(mod => mod.ClientOnlyDashboard),
   { 
     loading: () => (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <DashboardCardSkeleton />
-        <DashboardCardSkeleton />
+      <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+          <div className="lg:col-span-4"><DashboardCardSkeleton/></div>
+          <div className="lg:col-span-3"><DashboardCardSkeleton/></div>
+        </div>
+         <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+          <div className="lg:col-span-3"><DashboardCardSkeleton/></div>
+          <div className="lg:col-span-4"><DashboardCardSkeleton/></div>
+        </div>
       </div>
-    )
+    ),
+    ssr: false,
   }
 );
 
@@ -34,7 +41,7 @@ export default async function DashboardPage() {
           <CostRevenueChart sales={sales} expenses={expenses} />
         </div>
 
-       <ClientDashboardComponents />
+       <ClientOnlyDashboard />
 
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="grid gap-4">

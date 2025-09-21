@@ -19,6 +19,7 @@ export type Sales = {
   loadSize: string;
   price: number;
   date: string;
+  paymentMethod?: 'GPay' | 'Cash' | 'Card' | 'Internet Banking';
 }
 
 export type CostRevenue = {

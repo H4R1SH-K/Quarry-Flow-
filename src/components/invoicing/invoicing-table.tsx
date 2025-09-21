@@ -42,6 +42,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
+type PaymentMethod = 'GPay' | 'Cash' | 'Card' | 'Internet Banking';
+
 export function InvoicingTable() {
     const { sales, customers, profile, addSale, updateSale, deleteSale } = useDataStore();
     const [open, setOpen] = useState(false);
@@ -53,6 +55,7 @@ export function InvoicingTable() {
     const [unit, setUnit] = useState<'KG' | 'Ton'>('Ton');
     const [price, setPrice] = useState('');
     const [date, setDate] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>(undefined);
 
     useEffect(() => {
         if (editingSale) {
@@ -63,6 +66,7 @@ export function InvoicingTable() {
             setUnit((unitValue as 'KG' | 'Ton') || 'Ton');
             setPrice(String(editingSale.price));
             setDate(editingSale.date);
+            setPaymentMethod(editingSale.paymentMethod);
             setOpen(true);
         }
     }, [editingSale]);
@@ -82,6 +86,7 @@ export function InvoicingTable() {
         setUnit('Ton');
         setPrice('');
         setDate('');
+        setPaymentMethod(undefined);
     };
 
     const handleSaveSale = () => {
@@ -94,6 +99,7 @@ export function InvoicingTable() {
                 loadSize: fullLoadSize,
                 price: Number(price),
                 date,
+                paymentMethod,
             };
             updateSale(updatedSale);
         } else {
@@ -104,6 +110,7 @@ export function InvoicingTable() {
                 loadSize: fullLoadSize,
                 price: Number(price),
                 date,
+                paymentMethod,
             };
             addSale(newSale);
         }
@@ -153,9 +160,15 @@ export function InvoicingTable() {
         doc.setFont('helvetica', 'bold');
         doc.text('Invoice #:', 140, 60);
         doc.text('Date:', 140, 68);
+        if (sale.paymentMethod) {
+          doc.text('Payment via:', 140, 76);
+        }
         doc.setFont('helvetica', 'normal');
         doc.text(sale.id, 165, 60);
         doc.text(format(new Date(sale.date), 'PP'), 165, 68);
+        if (sale.paymentMethod) {
+            doc.text(sale.paymentMethod, 165, 76);
+        }
         
         // Table
         const tableColumn = ["Item Description", "Load Size", "Vehicle", "Unit Price", "Total"];
@@ -240,6 +253,20 @@ export function InvoicingTable() {
                                 <Label htmlFor="date" className="text-right">Date</Label>
                                 <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="col-span-3" />
                             </div>
+                             <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="paymentMethod" className="text-right">Payment</Label>
+                                <Select value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)}>
+                                    <SelectTrigger className="col-span-3">
+                                        <SelectValue placeholder="Select payment method" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Cash">Cash</SelectItem>
+                                        <SelectItem value="Card">Card</SelectItem>
+                                        <SelectItem value="GPay">GPay</SelectItem>
+                                        <SelectItem value="Internet Banking">Internet Banking</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                         <DialogFooter>
                             <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
@@ -257,6 +284,7 @@ export function InvoicingTable() {
                                 <TableHead>Vehicle</TableHead>
                                 <TableHead>Load Size</TableHead>
                                 <TableHead>Date</TableHead>
+                                <TableHead>Payment</TableHead>
                                 <TableHead className="text-right">Price</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
@@ -269,6 +297,7 @@ export function InvoicingTable() {
                                         <TableCell>{sale.vehicle}</TableCell>
                                         <TableCell>{sale.loadSize}</TableCell>
                                         <TableCell>{sale.date && isValid(new Date(sale.date)) ? format(new Date(sale.date), 'PPP') : 'N/A'}</TableCell>
+                                        <TableCell>{sale.paymentMethod || 'N/A'}</TableCell>
                                         <TableCell className="text-right">Rs. {sale.price.toLocaleString('en-IN')}</TableCell>
                                         <TableCell className="text-right">
                                             <Button variant="ghost" size="icon" onClick={() => handleGenerateBill(sale)} title="Generate Bill">
@@ -301,7 +330,7 @@ export function InvoicingTable() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center">
+                                    <TableCell colSpan={7} className="h-24 text-center">
                                         No sales found to invoice.
                                     </TableCell>
                                 </TableRow>

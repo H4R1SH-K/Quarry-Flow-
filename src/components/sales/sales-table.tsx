@@ -39,6 +39,7 @@ import { useDataStore } from '@/lib/data-store';
 import type { Sales, SalesItem } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { cn } from '@/lib/utils';
 
 type PaymentMethod = 'GPay' | 'Cash' | 'Card' | 'Internet Banking';
 const defaultItem: Omit<SalesItem, 'id'> = { description: '', quantity: 1, unit: 'Ton', unitPrice: 0, total: 0 };
@@ -53,11 +54,11 @@ export function SalesTable() {
     const [vehicle, setVehicle] = useState('');
     const [date, setDate] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>(undefined);
-    const [items, setItems] = useState<Omit<SalesItem, 'id'>[]>([defaultItem]);
+    const [items, setItems] = useState<SalesItem[]>([]);
     const [totalPrice, setTotalPrice] = useState(0);
 
     useEffect(() => {
-        const total = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
+        const total = items.reduce((acc, item) => acc + item.total, 0);
         setTotalPrice(total);
     }, [items]);
 
@@ -67,7 +68,7 @@ export function SalesTable() {
             setVehicle(editingSale.vehicle);
             setDate(editingSale.date);
             setPaymentMethod(editingSale.paymentMethod);
-            setItems(editingSale.items?.map(({id, ...item}) => item) || [defaultItem]);
+            setItems(editingSale.items?.map(item => ({...item})) || [{...defaultItem, id: '0'}]);
             setTotalPrice(editingSale.price);
             setOpen(true);
         }
@@ -86,11 +87,11 @@ export function SalesTable() {
         setVehicle('');
         setDate('');
         setPaymentMethod(undefined);
-        setItems([defaultItem]);
+        setItems([{...defaultItem, id: '0'}]);
         setTotalPrice(0);
     };
 
-     const handleItemChange = (index: number, field: keyof Omit<SalesItem, 'id' | 'total'>, value: string | number | 'Ton' | 'KG' | 'Unit') => {
+     const handleItemChange = (index: number, field: keyof SalesItem, value: string | number) => {
         const newItems = [...items];
         const item = { ...newItems[index] };
         
@@ -105,18 +106,16 @@ export function SalesTable() {
         setItems(newItems);
     };
 
-    const addItem = () => setItems([...items, defaultItem]);
+    const addItem = () => setItems([...items, {...defaultItem, id: String(items.length)}]);
     const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index));
 
     const handleSaveSale = () => {
-        const saleItems = items.map((item, index) => ({ ...item, id: String(index) }));
-
         if (editingSale) {
             const updatedSale: Sales = {
                 ...editingSale,
                 customer,
                 vehicle,
-                items: saleItems,
+                items,
                 price: totalPrice,
                 date,
                 paymentMethod,
@@ -127,7 +126,7 @@ export function SalesTable() {
                 id: String(Date.now()),
                 customer,
                 vehicle,
-                items: saleItems,
+                items,
                 price: totalPrice,
                 date,
                 paymentMethod,
@@ -153,16 +152,16 @@ export function SalesTable() {
                 <h2 className="text-3xl font-bold tracking-tight font-headline">Sales</h2>
                 <Dialog open={open} onOpenChange={handleOpenChange}>
                     <DialogTrigger asChild>
-                        <Button>
+                        <Button onClick={resetForm}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Sale
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-3xl">
+                    <DialogContent className="max-w-4xl">
                         <DialogHeader>
                             <DialogTitle>{editingSale ? 'Edit Sale' : 'Add New Sale'}</DialogTitle>
                         </DialogHeader>
-                        <div className="grid gap-4 py-4">
+                        <div className="grid gap-6 py-4">
                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="customer">Customer</Label>
@@ -190,8 +189,9 @@ export function SalesTable() {
                                 </div>
                            </div>
 
-                            <div className="space-y-4 pt-4">
+                            <div className="space-y-4">
                                 <Label>Sale Items</Label>
+                                <div className='space-y-2'>
                                 {items.map((item, index) => (
                                     <div key={index} className="grid grid-cols-12 gap-2 items-center">
                                         <Input placeholder="Item description" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} className="col-span-4" />
@@ -205,14 +205,15 @@ export function SalesTable() {
                                             </SelectContent>
                                         </Select>
                                         <Input type="number" placeholder="Unit Price" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', e.target.value)} className="col-span-2" />
-                                        <p className="col-span-1 text-sm text-right">₹{item.total.toLocaleString()}</p>
+                                        <p className={cn("col-span-1 text-sm text-right font-medium", item.total > 0 ? "text-foreground" : "text-muted-foreground")}>₹{item.total.toLocaleString()}</p>
                                         <Button variant="ghost" size="icon" onClick={() => removeItem(index)} className="col-span-1" disabled={items.length === 1}><X className="h-4 w-4" /></Button>
                                     </div>
                                 ))}
+                                </div>
                                 <Button variant="outline" size="sm" onClick={addItem}><PlusCircle className="mr-2 h-4 w-4" /> Add Item</Button>
                             </div>
                             
-                            <div className="flex justify-end items-center pt-4">
+                            <div className="flex justify-end items-center pt-4 border-t mt-4">
                                 <p className="text-lg font-bold">Total: ₹{totalPrice.toLocaleString()}</p>
                             </div>
                         </div>
@@ -288,3 +289,4 @@ export function SalesTable() {
     );
 }
 
+    

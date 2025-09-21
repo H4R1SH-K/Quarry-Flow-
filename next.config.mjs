@@ -1,6 +1,13 @@
 /** @type {import('next').NextConfig} */
+import withPWA from '@ducanh2912/next-pwa';
+
+const pwaConfig = withPWA({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+});
+
 const nextConfig = {
-  /* config options here */
   images: {
     remotePatterns: [
       {
@@ -16,7 +23,7 @@ const nextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https' as const,
+        protocol: 'https' ,
         hostname: 'picsum.photos',
         port: '',
         pathname: '/**',
@@ -25,4 +32,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default pwaConfig(nextConfig);

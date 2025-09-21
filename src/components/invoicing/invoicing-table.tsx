@@ -69,7 +69,7 @@ export function InvoicingTable() {
             setVehicle(editingSale.vehicle);
             setDate(editingSale.date);
             setPaymentMethod(editingSale.paymentMethod);
-            setItems(editingSale.items.map(({id, ...item}) => item));
+            setItems(editingSale.items?.map(({id, ...item}) => item) || [defaultItem]);
             setTotalPrice(editingSale.price);
             setOpen(true);
         }
@@ -194,7 +194,7 @@ export function InvoicingTable() {
         
         // Table
         const tableColumn = ["Item Description", "Quantity", "Unit", "Unit Price", "Total"];
-        const tableRows = sale.items.map(item => [
+        const tableRows = (sale.items || []).map(item => [
             item.description,
             item.quantity,
             item.unit,

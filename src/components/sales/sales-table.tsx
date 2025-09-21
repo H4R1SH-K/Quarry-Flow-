@@ -67,7 +67,7 @@ export function SalesTable() {
             setVehicle(editingSale.vehicle);
             setDate(editingSale.date);
             setPaymentMethod(editingSale.paymentMethod);
-            setItems(editingSale.items.map(({id, ...item}) => item));
+            setItems(editingSale.items?.map(({id, ...item}) => item) || [defaultItem]);
             setTotalPrice(editingSale.price);
             setOpen(true);
         }

@@ -1,10 +1,14 @@
+'use client';
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { getDashboardData } from "@/lib/server/data";
+import type { Sales } from "@/lib/types";
 
-export async function SalesChart() {
-  const { sales } = await getDashboardData();
+interface SalesChartProps {
+  sales: Sales[];
+}
+
+export function SalesChart({ sales }: SalesChartProps) {
 
   const getSalesDataForChart = () => {
     const monthlySales: { [key: string]: number } = {
@@ -49,7 +53,7 @@ export async function SalesChart() {
               fontSize={12}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `₹${value/1000}k`}
+              tickFormatter={(value) => `₹${Number(value)/1000}k`}
             />
             <Bar
               dataKey="total"

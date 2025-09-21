@@ -5,9 +5,11 @@ import { VehicleSummary } from '@/components/dashboard/vehicle-summary';
 import { ClientDashboardComponents } from '@/components/dashboard/client-dashboard-components';
 import { SalesChart } from '@/components/dashboard/sales-chart';
 import { CostRevenueChart } from '@/components/dashboard/cost-revenue-chart';
+import { getDashboardData } from '@/lib/server/data';
 
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const { sales, expenses } = await getDashboardData();
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between space-y-2">
@@ -15,8 +17,8 @@ export default function DashboardPage() {
       </div>
       <OverviewStats />
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <SalesChart />
-          <CostRevenueChart />
+          <SalesChart sales={sales} />
+          <CostRevenueChart sales={sales} expenses={expenses} />
         </div>
 
        <ClientDashboardComponents />

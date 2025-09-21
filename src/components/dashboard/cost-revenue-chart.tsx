@@ -1,3 +1,4 @@
+'use client';
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
@@ -16,7 +17,7 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart"
-import { getDashboardData } from "@/lib/server/data";
+import type { Sales, Expense } from "@/lib/types";
 
 const chartConfig = {
   revenue: {
@@ -29,8 +30,12 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export async function CostRevenueChart() {
-  const { sales, expenses } = await getDashboardData();
+interface CostRevenueChartProps {
+  sales: Sales[];
+  expenses: Expense[];
+}
+
+export function CostRevenueChart({ sales, expenses }: CostRevenueChartProps) {
 
   const getChartData = () => {
     const dataByMonth: { [key: string]: { revenue: number, dieselCost: number }} = {};
@@ -85,7 +90,7 @@ export async function CostRevenueChart() {
               tickFormatter={(value) => value.slice(0, 3)}
             />
              <YAxis
-              tickFormatter={(value) => `₹${value / 1000}k`}
+              tickFormatter={(value) => `₹${Number(value) / 1000}k`}
             />
             <ChartTooltip content={<ChartTooltipContent />} />
             <ChartLegend content={<ChartLegendContent />} />

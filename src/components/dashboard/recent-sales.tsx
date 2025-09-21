@@ -1,4 +1,4 @@
-'use client';
+
 import Image from "next/image";
 import {
   Card,
@@ -9,10 +9,10 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { placeholderImages } from "@/lib/placeholder-images.json";
-import { useDataStore } from "@/lib/data-store";
+import { getDashboardData } from "@/lib/server/data";
 
-export function RecentSales() {
-  const { sales, customers } = useDataStore();
+export async function RecentSales() {
+  const { sales, customers } = await getDashboardData();
 
   const recentSales = sales.slice(-5).reverse();
   const totalSales = sales.length;

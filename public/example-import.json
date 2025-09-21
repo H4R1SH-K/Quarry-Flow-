@@ -1,0 +1,87 @@
+{
+  "sales": [
+    {
+      "id": "SALE1001",
+      "customer": "New Customer Inc",
+      "vehicle": "TS 09 XY 5678",
+      "loadSize": "15 Ton",
+      "price": 45000,
+      "date": "2024-07-20"
+    },
+    {
+      "id": "SALE1002",
+      "customer": "Civil Works Co",
+      "vehicle": "AP 05 AB 1234",
+      "loadSize": "10 Ton",
+      "price": 30000,
+      "date": "2024-07-21"
+    }
+  ],
+  "customers": [
+    {
+      "id": "CUST001",
+      "name": "New Customer Inc",
+      "email": "contact@newcustomer.com",
+      "phone": "9876543210",
+      "company": "New Customer Inc",
+      "address": "123 Industrial Area, City",
+      "status": "Active"
+    },
+    {
+      "id": "CUST002",
+      "name": "Civil Works Co",
+      "email": "accounts@civilworks.co",
+      "phone": "8765432109",
+      "company": "Civil Works Co",
+      "address": "456 Construction Lane, Town",
+      "status": "Active"
+    }
+  ],
+  "vehicles": [
+    {
+      "id": "VEH001",
+      "make": "Eicher",
+      "model": "Pro 6025",
+      "year": 2022,
+      "vehicleNumber": "TS 09 XY 5678",
+      "status": "Active"
+    }
+  ],
+  "expenses": [
+    {
+      "id": "EXP001",
+      "category": "Diesel",
+      "item": "Fuel for TS 09 XY 5678",
+      "amount": 7500,
+      "date": "2024-07-20",
+      "vehicle": "TS 09 XY 5678"
+    },
+    {
+      "id": "EXP002",
+      "category": "Maintenance",
+      "item": "Oil Change",
+      "amount": 2500,
+      "date": "2024-07-21",
+      "vehicle": "AP 05 AB 1234"
+    }
+  ],
+  "reminders": [
+    {
+      "id": "REM001",
+      "type": "Insurance",
+      "details": "Renew insurance for Eicher Pro",
+      "dueDate": "2025-01-15",
+      "status": "Pending",
+      "relatedToName": "TS 09 XY 5678"
+    },
+    {
+      "id": "REM002",
+      "type": "Credit",
+      "details": "Follow up on payment for Invoice #SALE1001",
+      "dueDate": "2024-08-20",
+      "status": "Pending",
+      "relatedToName": "New Customer Inc",
+      "amount": 45000
+    }
+  ]
+}

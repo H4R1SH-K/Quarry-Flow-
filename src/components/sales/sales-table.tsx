@@ -34,16 +34,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Pencil, Trash2, FileText } from "lucide-react";
+import { PlusCircle, Pencil, Trash2 } from "lucide-react";
 import { useDataStore } from '@/lib/data-store';
 import type { Sales } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+
+type PaymentMethod = 'GPay' | 'Cash' | 'Card' | 'Internet Banking';
 
 export function SalesTable() {
-    const { sales, customers, profile, addSale, updateSale, deleteSale } = useDataStore();
+    const { sales, addSale, updateSale, deleteSale } = useDataStore();
     const [open, setOpen] = useState(false);
     const [editingSale, setEditingSale] = useState<Sales | null>(null);
 
@@ -53,6 +53,7 @@ export function SalesTable() {
     const [unit, setUnit] = useState<'KG' | 'Ton'>('Ton');
     const [price, setPrice] = useState('');
     const [date, setDate] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>(undefined);
 
     useEffect(() => {
         if (editingSale) {
@@ -63,6 +64,7 @@ export function SalesTable() {
             setUnit((unitValue as 'KG' | 'Ton') || 'Ton');
             setPrice(String(editingSale.price));
             setDate(editingSale.date);
+            setPaymentMethod(editingSale.paymentMethod);
             setOpen(true);
         }
     }, [editingSale]);
@@ -82,6 +84,7 @@ export function SalesTable() {
         setUnit('Ton');
         setPrice('');
         setDate('');
+        setPaymentMethod(undefined);
     };
 
     const handleSaveSale = () => {
@@ -94,6 +97,7 @@ export function SalesTable() {
                 loadSize: fullLoadSize,
                 price: Number(price),
                 date,
+                paymentMethod,
             };
             updateSale(updatedSale);
         } else {
@@ -104,6 +108,7 @@ export function SalesTable() {
                 loadSize: fullLoadSize,
                 price: Number(price),
                 date,
+                paymentMethod,
             };
             addSale(newSale);
         }
@@ -119,76 +124,6 @@ export function SalesTable() {
     const handleDelete = (id: string) => {
         deleteSale(id);
     }
-    
-    const handleGenerateBill = (sale: Sales) => {
-        const doc = new jsPDF();
-        const saleCustomer = customers.find(c => c.name === sale.customer);
-
-        // Header
-        doc.setFontSize(20);
-        doc.setFont('helvetica', 'bold');
-        doc.text(profile?.companyName || 'QuarryFlow', 14, 22);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(profile?.address || 'Company Address', 14, 30);
-        doc.text(profile?.email || 'company@email.com', 14, 35);
-        doc.text(profile?.phone || '123-456-7890', 14, 40);
-
-        doc.setFontSize(18);
-        doc.text('INVOICE', 200, 22, { align: 'right' });
-
-        // Bill To
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Bill To', 14, 60);
-        doc.setFont('helvetica', 'normal');
-        doc.text(sale.customer, 14, 68);
-        if (saleCustomer) {
-            doc.text(saleCustomer.address, 14, 74);
-            doc.text(saleCustomer.phone, 14, 80);
-        }
-
-        // Invoice Details
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Invoice #:', 140, 60);
-        doc.text('Date:', 140, 68);
-        doc.setFont('helvetica', 'normal');
-        doc.text(sale.id, 165, 60);
-        doc.text(format(new Date(sale.date), 'PP'), 165, 68);
-        
-        // Table
-        const tableColumn = ["Item Description", "Load Size", "Vehicle", "Unit Price", "Total"];
-        const tableRows = [[
-            `Sand/Material Supply`,
-            sale.loadSize,
-            sale.vehicle,
-            `Rs. ${sale.price.toLocaleString('en-IN')}`,
-            `Rs. ${sale.price.toLocaleString('en-IN')}`
-        ]];
-
-        (doc as any).autoTable({
-            startY: 95,
-            head: [tableColumn],
-            body: tableRows,
-            theme: 'striped',
-            headStyles: { fillColor: [22, 160, 133] },
-        });
-
-        // Total
-        const finalY = (doc as any).lastAutoTable.finalY;
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Total Amount:', 140, finalY + 10);
-        doc.text(`Rs. ${sale.price.toLocaleString('en-IN')}`, 200, finalY + 10, { align: 'right' });
-        
-        // Footer Notes
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'italic');
-        doc.text('Thank you for your business!', 14, finalY + 40);
-
-        doc.save(`Invoice_${sale.id}_${sale.customer}.pdf`);
-    };
 
     return (
        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
@@ -237,6 +172,20 @@ export function SalesTable() {
                                 <Label htmlFor="date" className="text-right">Date</Label>
                                 <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="col-span-3" />
                             </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="paymentMethod" className="text-right">Payment</Label>
+                                <Select value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)}>
+                                    <SelectTrigger className="col-span-3">
+                                        <SelectValue placeholder="Select payment method" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Cash">Cash</SelectItem>
+                                        <SelectItem value="Card">Card</SelectItem>
+                                        <SelectItem value="GPay">GPay</SelectItem>
+                                        <SelectItem value="Internet Banking">Internet Banking</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                         <DialogFooter>
                             <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
@@ -254,6 +203,7 @@ export function SalesTable() {
                                 <TableHead>Vehicle</TableHead>
                                 <TableHead>Load Size</TableHead>
                                 <TableHead>Date</TableHead>
+                                <TableHead>Payment</TableHead>
                                 <TableHead className="text-right">Price</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
@@ -266,6 +216,7 @@ export function SalesTable() {
                                         <TableCell>{sale.vehicle}</TableCell>
                                         <TableCell>{sale.loadSize}</TableCell>
                                         <TableCell>{sale.date && isValid(new Date(sale.date)) ? format(new Date(sale.date), 'PPP') : 'N/A'}</TableCell>
+                                        <TableCell>{sale.paymentMethod || 'N/A'}</TableCell>
                                         <TableCell className="text-right">Rs. {sale.price.toLocaleString('en-IN')}</TableCell>
                                         <TableCell className="text-right">
                                             <Button variant="ghost" size="icon" onClick={() => handleEditClick(sale)}>
@@ -295,7 +246,7 @@ export function SalesTable() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center">
+                                    <TableCell colSpan={7} className="h-24 text-center">
                                         No sales found.
                                     </TableCell>
                                 </TableRow>

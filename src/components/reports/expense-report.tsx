@@ -130,11 +130,11 @@ export function ExpenseReport() {
     if (filteredSales.length > 0) {
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text('Sales Details', 15, currentY);
+      doc.text('Sales & Invoicing Details', 15, currentY);
       (doc as any).autoTable({
         startY: currentY + 2,
-        head: [['Date', 'Customer', 'Vehicle', 'Load Size', 'Price']],
-        body: filteredSales.map(s => [s.date && isValid(new Date(s.date)) ? format(new Date(s.date), 'PP') : 'N/A', s.customer, s.vehicle, s.loadSize, `Rs. ${s.price.toLocaleString('en-IN')}`]),
+        head: [['Date', 'Customer', 'Vehicle', 'Load Size', 'Payment', 'Price']],
+        body: filteredSales.map(s => [s.date && isValid(new Date(s.date)) ? format(new Date(s.date), 'PP') : 'N/A', s.customer, s.vehicle, s.loadSize, s.paymentMethod || 'N/A', `Rs. ${s.price.toLocaleString('en-IN')}`]),
         theme: 'grid',
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
         bodyStyles: { fontStyle: 'normal' },

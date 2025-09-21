@@ -96,7 +96,7 @@ export function SalesTable() {
         const item = { ...newItems[index] };
         
         if (field === 'quantity' || field === 'unitPrice') {
-            (item[field] as number) = Number(value);
+            (item[field] as number) = Number(value) || 0;
         } else {
             (item[field] as string) = value as string;
         }
@@ -195,7 +195,7 @@ export function SalesTable() {
                                 {items.map((item, index) => (
                                     <div key={index} className="grid grid-cols-12 gap-2 items-center">
                                         <Input placeholder="Item description" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} className="col-span-4" />
-                                        <Input type="number" placeholder="Qty" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', Number(e.target.value))} className="col-span-2" />
+                                        <Input type="number" placeholder="Qty" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', e.target.value)} className="col-span-2" />
                                         <Select value={item.unit} onValueChange={(value: 'Ton' | 'KG' | 'Load' | 'Trip') => handleItemChange(index, 'unit', value)}>
                                             <SelectTrigger className="col-span-2"><SelectValue /></SelectTrigger>
                                             <SelectContent>
@@ -205,7 +205,7 @@ export function SalesTable() {
                                                 <SelectItem value="Trip">Trip</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <Input type="number" placeholder="Unit Price" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', Number(e.target.value))} className="col-span-2" />
+                                        <Input type="number" placeholder="Unit Price" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', e.target.value)} className="col-span-2" />
                                         <p className={cn("col-span-1 text-sm text-right font-medium", item.total > 0 ? "text-foreground" : "text-muted-foreground")}>₹{item.total.toLocaleString()}</p>
                                         <Button variant="ghost" size="icon" onClick={() => removeItem(index)} className="col-span-1" disabled={items.length === 1}><X className="h-4 w-4" /></Button>
                                     </div>
@@ -289,5 +289,7 @@ export function SalesTable() {
         </div>
     );
 }
+
+    
 
     

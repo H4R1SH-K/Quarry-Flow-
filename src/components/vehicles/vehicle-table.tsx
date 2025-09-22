@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Pencil, Truck, Wrench, Ban, ListFilter, Trash2 } from "lucide-react";
+import { PlusCircle, Pencil, Truck, Wrench, Ban, ListFilter, Trash2, Search } from "lucide-react";
 import type { Vehicle } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -47,6 +47,7 @@ export function VehicleTable() {
   const [open, setOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [filter, setFilter] = useState<VehicleStatus | 'All'>('All');
+  const [searchTerm, setSearchTerm] = useState('');
   
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
@@ -117,10 +118,17 @@ export function VehicleTable() {
     deleteVehicle(id);
   }
 
-  const filteredVehicles = vehicles.filter(vehicle => {
+  const baseVehicles = vehicles.filter(vehicle => {
     if (filter === 'All') return true;
     return vehicle.status === filter;
   });
+
+  const filteredVehicles = baseVehicles.filter(vehicle =>
+    vehicle.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
@@ -190,19 +198,31 @@ export function VehicleTable() {
 
        <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Button variant={filter === 'All' ? 'default' : 'outline'} onClick={() => setFilter('All')}>
-              <ListFilter className="mr-2 h-4 w-4" /> All ({vehicles.length})
-            </Button>
-            <Button variant={filter === 'Active' ? 'default' : 'outline'} onClick={() => setFilter('Active')}>
-              <Truck className="mr-2 h-4 w-4" /> Active ({vehicles.filter(v => v.status === 'Active').length})
-            </Button>
-            <Button variant={filter === 'Maintenance' ? 'default' : 'outline'} onClick={() => setFilter('Maintenance')}>
-              <Wrench className="mr-2 h-4 w-4" /> Maintenance ({vehicles.filter(v => v.status === 'Maintenance').length})
-            </Button>
-            <Button variant={filter === 'Inactive' ? 'default' : 'outline'} onClick={() => setFilter('Inactive')}>
-              <Ban className="mr-2 h-4 w-4" /> Inactive ({vehicles.filter(v => v.status === 'Inactive').length})
-            </Button>
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+            <div className="relative flex-grow">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search by make, model, number..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 w-full sm:w-[300px]"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant={filter === 'All' ? 'default' : 'outline'} onClick={() => setFilter('All')}>
+                <ListFilter className="mr-2 h-4 w-4" /> All
+              </Button>
+              <Button variant={filter === 'Active' ? 'default' : 'outline'} onClick={() => setFilter('Active')}>
+                <Truck className="mr-2 h-4 w-4" /> Active
+              </Button>
+              <Button variant={filter === 'Maintenance' ? 'default' : 'outline'} onClick={() => setFilter('Maintenance')}>
+                <Wrench className="mr-2 h-4 w-4" /> Maint.
+              </Button>
+              <Button variant={filter === 'Inactive' ? 'default' : 'outline'} onClick={() => setFilter('Inactive')}>
+                <Ban className="mr-2 h-4 w-4" /> Inactive
+              </Button>
+            </div>
           </div>
           <Table>
             <TableHeader>

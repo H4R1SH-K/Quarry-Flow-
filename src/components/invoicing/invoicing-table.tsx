@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Pencil, Trash2, FileText, X } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, FileText, X, Search } from "lucide-react";
 import { useDataStore } from '@/lib/data-store';
 import type { Sales, SalesItem } from '@/lib/types';
 import { format, isValid } from 'date-fns';
@@ -51,6 +51,7 @@ export function InvoicingTable() {
     const { sales, customers, profile, addSale, updateSale, deleteSale } = useDataStore();
     const [open, setOpen] = useState(false);
     const [editingSale, setEditingSale] = useState<Sales | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [customer, setCustomer] = useState('');
     const [vehicle, setVehicle] = useState('');
@@ -224,6 +225,12 @@ export function InvoicingTable() {
         doc.save(`Invoice_${sale.id}_${sale.customer}.pdf`);
     };
 
+    const filteredSales = sales.filter(sale =>
+        sale.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sale.vehicle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (sale.paymentMethod && sale.paymentMethod.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
     return (
        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
             <div className="flex items-center justify-between">
@@ -308,6 +315,18 @@ export function InvoicingTable() {
             </div>
             <Card>
                 <CardContent className="pt-6">
+                    <div className="mb-4">
+                        <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search invoices..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-8 sm:w-[300px]"
+                        />
+                        </div>
+                    </div>
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -321,8 +340,8 @@ export function InvoicingTable() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {sales.length > 0 ? (
-                                sales.map((sale) => (
+                            {filteredSales.length > 0 ? (
+                                filteredSales.map((sale) => (
                                     <TableRow key={sale.id}>
                                         <TableCell className="font-medium">{sale.customer}</TableCell>
                                         <TableCell>{sale.vehicle}</TableCell>
@@ -373,5 +392,3 @@ export function InvoicingTable() {
         </div>
     );
 }
-
-    

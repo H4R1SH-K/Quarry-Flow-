@@ -1,5 +1,7 @@
+
 'use client';
 
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -18,12 +20,14 @@ import {
 import { useDataStore } from '@/lib/data-store';
 import { Badge } from '@/components/ui/badge';
 import { format, formatDistanceToNow } from 'date-fns';
-import { History, User, Calendar, Edit, Trash2, PlusCircle } from 'lucide-react';
+import { History, User, Calendar, Edit, Trash2, PlusCircle, Search } from 'lucide-react';
 import type { AuditLog } from '@/lib/types';
+import { Input } from '../ui/input';
 
 
 export function AuditLogTable() {
   const { auditLogs } = useDataStore();
+  const [searchTerm, setSearchTerm] = useState('');
 
   const getActionIcon = (action: AuditLog['action']) => {
     switch (action) {
@@ -51,11 +55,19 @@ export function AuditLogTable() {
       }
   }
 
+  const filteredLogs = auditLogs.filter(log => 
+    log.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.entity.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.userName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-      <div className="flex items-center gap-2">
-        <History className="h-6 w-6" />
-        <h2 className="text-3xl font-bold tracking-tight font-headline">Audit Log</h2>
+      <div className="flex items-center justify-between">
+        <div className='flex items-center gap-2'>
+          <History className="h-6 w-6" />
+          <h2 className="text-3xl font-bold tracking-tight font-headline">Audit Log</h2>
+        </div>
       </div>
 
       <Card>
@@ -66,6 +78,18 @@ export function AuditLogTable() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search logs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 sm:w-[300px]"
+              />
+            </div>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -77,8 +101,8 @@ export function AuditLogTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {auditLogs.length > 0 ? (
-                auditLogs.map((log) => (
+              {filteredLogs.length > 0 ? (
+                filteredLogs.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell>
                       <Badge variant={getActionVariant(log.action)} className="gap-1 pl-1">

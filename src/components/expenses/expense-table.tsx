@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Pencil, Trash2 } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, Search } from "lucide-react";
 import type { Expense } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 import { format, isValid } from 'date-fns';
@@ -43,6 +43,7 @@ export function ExpenseTable() {
   const { expenses, addExpense, updateExpense, deleteExpense } = useDataStore();
   const [open, setOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [category, setCategory] = useState('');
   const [item, setItem] = useState('');
@@ -113,6 +114,12 @@ export function ExpenseTable() {
     deleteExpense(id);
   }
 
+  const filteredExpenses = expenses.filter(expense =>
+    expense.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    expense.item.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (expense.vehicle && expense.vehicle.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
        <div className="flex items-center justify-between">
@@ -171,6 +178,18 @@ export function ExpenseTable() {
       </div>
       <Card>
         <CardContent className="pt-6">
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search expenses..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 sm:w-[300px]"
+              />
+            </div>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -183,8 +202,8 @@ export function ExpenseTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {expenses.length > 0 ? (
-                expenses.map((expense) => {
+              {filteredExpenses.length > 0 ? (
+                filteredExpenses.map((expense) => {
                   return (
                     <TableRow key={expense.id}>
                       <TableCell className="font-medium">{expense.category}</TableCell>

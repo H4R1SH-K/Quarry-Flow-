@@ -259,7 +259,7 @@ export function ExpenseReport() {
           <CardDescription>Generate a detailed financial report for the selected period.</CardDescription>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-           <Button onClick={handleExport} disabled={sales.length === 0 && expenses.length === 0}>
+           <Button onClick={handleExport}>
              <FileDown className="mr-2 h-4 w-4" />
              Export as PDF
            </Button>

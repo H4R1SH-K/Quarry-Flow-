@@ -2,6 +2,7 @@
 import { Sales, Customer, Vehicle, Expense, Reminder, Profile, AuditLog, User } from '@/lib/types';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { initialState as sampleData } from '@/lib/sample-data';
 
 interface DataState {
   sales: Sales[];
@@ -35,11 +36,7 @@ interface DataState {
 }
 
 const initialState = {
-  sales: [],
-  customers: [],
-  vehicles: [],
-  expenses: [],
-  reminders: [],
+  ...sampleData,
   profile: null,
   auditLogs: [],
   currentUser: { id: 'system', name: 'System' },
@@ -168,7 +165,7 @@ export const useDataStore = create<DataState>()(
         profile: data.profile || state.profile,
         auditLogs: data.auditLogs ? mergeById(state.auditLogs, data.auditLogs) : state.auditLogs,
       })),
-      clearData: () => set({...initialState}),
+      clearData: () => set({...initialState, sales: [], customers: [], vehicles: [], expenses: [], reminders: [], auditLogs: [] }),
     }),
     {
       name: 'quarryflow-storage',

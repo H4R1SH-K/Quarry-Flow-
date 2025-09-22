@@ -1,6 +1,7 @@
 
 
 import type { Sales, Customer, Vehicle, Expense, Reminder } from '@/lib/types';
+import { initialState } from '@/lib/sample-data';
 
 // In a real application, this would fetch data from a database or API.
 // For this local-first app, we'll return mock data on the server
@@ -14,22 +15,13 @@ export async function getDashboardData(): Promise<{
   expenses: Expense[];
   reminders: Reminder[];
 }> {
-  
-  const mockSales: Sales[] = [];
-
-  const mockCustomers: Customer[] = [];
-
-  const mockVehicles: Vehicle[] = [];
-  
-  const mockExpenses: Expense[] = [];
-
-  const mockReminders: Reminder[] = [];
-
+  // We return the sample data here for server-side rendering consistency.
+  // The client will hydrate with its own state from localStorage.
   return {
-    sales: mockSales,
-    customers: mockCustomers,
-    vehicles: mockVehicles,
-    expenses: mockExpenses,
-    reminders: mockReminders,
+    sales: initialState.sales,
+    customers: initialState.customers,
+    vehicles: initialState.vehicles,
+    expenses: initialState.expenses,
+    reminders: initialState.reminders,
   };
 }

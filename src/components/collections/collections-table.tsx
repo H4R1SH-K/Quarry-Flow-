@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -25,7 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Pencil, Banknote, Trash2, Search } from "lucide-react";
+import { Banknote, Trash2, Search } from "lucide-react";
 import type { Reminder } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 import { differenceInDays, format, isValid } from 'date-fns';
@@ -33,21 +33,9 @@ import { CollectionForm } from './collection-form';
 
 export function CollectionsTable() {
   const { reminders, deleteReminder } = useDataStore();
-  const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isFormOpen, setIsFormOpen] = useState(false);
   
   const collections = reminders.filter(r => r.type === 'Credit');
-
-  const handleEditClick = (reminder: Reminder) => {
-    setEditingReminder(reminder);
-    setIsFormOpen(true);
-  };
-  
-  const handleFormClose = () => {
-    setEditingReminder(null);
-    setIsFormOpen(false);
-  }
 
   const handleDelete = (id: string) => {
     deleteReminder(id);
@@ -75,13 +63,7 @@ export function CollectionsTable() {
             <Banknote className="h-6 w-6"/>
             <h2 className="text-3xl font-bold tracking-tight font-headline">Collections</h2>
         </div>
-        <CollectionForm 
-            isOpen={isFormOpen} 
-            onOpenChange={setIsFormOpen}
-            onFormClose={handleFormClose}
-            reminder={editingReminder}
-            trigger={<Button><PlusCircle className="mr-2 h-4 w-4" /> Add Collection</Button>}
-        />
+        <CollectionForm />
       </div>
       <Card>
         <CardContent className="pt-6">
@@ -124,9 +106,7 @@ export function CollectionsTable() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                       <Button variant="ghost" size="icon" onClick={() => handleEditClick(reminder)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                       <CollectionForm reminderToEdit={reminder} />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon">

@@ -25,7 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Pencil, Truck, Wrench, Ban, ListFilter, Trash2, Search } from "lucide-react";
+import { Truck, Wrench, Ban, ListFilter, Trash2, Search } from "lucide-react";
 import type { Vehicle } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 import { VehicleForm } from './vehicle-form';
@@ -34,21 +34,9 @@ type VehicleStatus = "Active" | "Maintenance" | "Inactive";
 
 export function VehicleTable() {
   const { vehicles, deleteVehicle } = useDataStore();
-  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [filter, setFilter] = useState<VehicleStatus | 'All'>('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isFormOpen, setIsFormOpen] = useState(false);
   
-  const handleEditClick = (vehicle: Vehicle) => {
-    setEditingVehicle(vehicle);
-    setIsFormOpen(true);
-  };
-  
-  const handleFormClose = () => {
-    setEditingVehicle(null);
-    setIsFormOpen(false);
-  }
-
   const handleDelete = (id: string) => {
     deleteVehicle(id);
   }
@@ -69,13 +57,7 @@ export function VehicleTable() {
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Vehicles</h2>
-        <VehicleForm 
-            isOpen={isFormOpen}
-            onOpenChange={setIsFormOpen}
-            onFormClose={handleFormClose}
-            vehicle={editingVehicle}
-            trigger={<Button><PlusCircle className="mr-2 h-4 w-4" /> Add Vehicle</Button>}
-        />
+        <VehicleForm />
       </div>
 
        <Card>
@@ -139,9 +121,7 @@ export function VehicleTable() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => handleEditClick(vehicle)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                      <VehicleForm vehicleToEdit={vehicle} />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon">

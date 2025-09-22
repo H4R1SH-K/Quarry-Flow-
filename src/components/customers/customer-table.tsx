@@ -25,26 +25,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Pencil, Trash2, Search } from "lucide-react";
+import { Trash2, Search } from "lucide-react";
 import type { Customer } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 import { CustomerForm } from './customer-form';
 
 export function CustomerTable() {
   const { customers, deleteCustomer } = useDataStore();
-  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isFormOpen, setIsFormOpen] = useState(false);
-
-  const handleEditClick = (customer: Customer) => {
-    setEditingCustomer(customer);
-    setIsFormOpen(true);
-  };
-
-  const handleFormClose = () => {
-    setEditingCustomer(null);
-    setIsFormOpen(false);
-  };
 
   const handleDelete = (id: string) => {
     deleteCustomer(id);
@@ -62,13 +50,7 @@ export function CustomerTable() {
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Customers</h2>
-        <CustomerForm 
-          isOpen={isFormOpen}
-          onOpenChange={setIsFormOpen}
-          onFormClose={handleFormClose}
-          customer={editingCustomer}
-          trigger={<Button><PlusCircle className="mr-2 h-4 w-4" /> Add Customer</Button>}
-        />
+        <CustomerForm />
       </div>
       <Card>
         <CardContent className="pt-6">
@@ -114,9 +96,7 @@ export function CustomerTable() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                       <Button variant="ghost" size="icon" onClick={() => handleEditClick(customer)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                       <CustomerForm customerToEdit={customer} />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon">

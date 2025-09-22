@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Pencil, Trash2, Search } from "lucide-react";
+import { Trash2, Search } from "lucide-react";
 import { useDataStore } from '@/lib/data-store';
 import type { Sales } from '@/lib/types';
 import { format, isValid } from 'date-fns';
@@ -32,20 +32,7 @@ import { SaleForm } from './sale-form';
 
 export function SalesTable() {
     const { sales, deleteSale } = useDataStore();
-    const [editingSale, setEditingSale] = useState<Sales | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [isFormOpen, setIsFormOpen] = useState(false);
-
-
-    const handleEditClick = (sale: Sales) => {
-        setEditingSale(sale);
-        setIsFormOpen(true);
-    };
-
-    const handleFormClose = () => {
-      setEditingSale(null);
-      setIsFormOpen(false);
-    }
 
     const handleDelete = (id: string) => {
         deleteSale(id);
@@ -61,13 +48,7 @@ export function SalesTable() {
        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
             <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold tracking-tight font-headline">Sales</h2>
-                <SaleForm 
-                    isOpen={isFormOpen}
-                    onOpenChange={setIsFormOpen}
-                    onFormClose={handleFormClose}
-                    sale={editingSale}
-                    trigger={<Button><PlusCircle className="mr-2 h-4 w-4" /> Add Sale</Button>}
-                />
+                <SaleForm />
             </div>
             <Card>
                 <CardContent className="pt-6">
@@ -106,9 +87,7 @@ export function SalesTable() {
                                         <TableCell>{sale.paymentMethod || 'N/A'}</TableCell>
                                         <TableCell className="text-right">Rs. {sale.price.toLocaleString('en-IN')}</TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => handleEditClick(sale)}>
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
+                                            <SaleForm saleToEdit={sale} />
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button variant="ghost" size="icon">

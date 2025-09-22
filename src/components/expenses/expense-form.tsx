@@ -16,18 +16,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDataStore } from '@/lib/data-store';
 import type { Expense } from '@/lib/types';
+import { PlusCircle, Pencil } from 'lucide-react';
 
 
 interface ExpenseFormProps {
-    isOpen: boolean;
-    onOpenChange: (isOpen: boolean) => void;
-    onFormClose: () => void;
-    expense: Expense | null;
-    trigger: React.ReactNode;
+    expenseToEdit?: Expense;
 }
 
-export function ExpenseForm({ isOpen, onOpenChange, onFormClose, expense, trigger }: ExpenseFormProps) {
+export function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
   const { addExpense, updateExpense } = useDataStore();
+  const [isOpen, setIsOpen] = useState(false);
   
   const [category, setCategory] = useState('');
   const [item, setItem] = useState('');
@@ -36,16 +34,16 @@ export function ExpenseForm({ isOpen, onOpenChange, onFormClose, expense, trigge
   const [vehicle, setVehicle] = useState('');
 
   useEffect(() => {
-    if (expense) {
-      setCategory(expense.category);
-      setItem(expense.item);
-      setAmount(String(expense.amount));
-      setDate(expense.date);
-      setVehicle(expense.vehicle || '');
-    } else {
+    if (isOpen && expenseToEdit) {
+      setCategory(expenseToEdit.category);
+      setItem(expenseToEdit.item);
+      setAmount(String(expenseToEdit.amount));
+      setDate(expenseToEdit.date);
+      setVehicle(expenseToEdit.vehicle || '');
+    } else if (!isOpen) {
         resetForm();
     }
-  }, [expense, isOpen]);
+  }, [expenseToEdit, isOpen]);
 
   const resetForm = () => {
     setCategory('');
@@ -56,9 +54,9 @@ export function ExpenseForm({ isOpen, onOpenChange, onFormClose, expense, trigge
   };
 
   const handleSave = () => {
-    if (expense) {
+    if (expenseToEdit) {
       const updatedExpense: Expense = {
-        ...expense,
+        ...expenseToEdit,
         category,
         item,
         amount: Number(amount),
@@ -77,15 +75,23 @@ export function ExpenseForm({ isOpen, onOpenChange, onFormClose, expense, trigge
       };
       addExpense(newExpense);
     }
-    onFormClose();
+    setIsOpen(false);
   };
+  
+  const triggerButton = expenseToEdit ? (
+    <Button variant="ghost" size="icon">
+      <Pencil className="h-4 w-4" />
+    </Button>
+  ) : (
+    <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Expense</Button>
+  );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>{triggerButton}</DialogTrigger>
         <DialogContent>
             <DialogHeader>
-              <DialogTitle>{expense ? 'Edit Expense' : 'Add New Expense'}</DialogTitle>
+              <DialogTitle>{expenseToEdit ? 'Edit Expense' : 'Add New Expense'}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -120,7 +126,7 @@ export function ExpenseForm({ isOpen, onOpenChange, onFormClose, expense, trigge
               </div>
             </div>
             <DialogFooter>
-              <DialogClose asChild><Button variant="outline" onClick={onFormClose}>Cancel</Button></DialogClose>
+              <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
               <Button type="submit" onClick={handleSave}>Save Expense</Button>
             </DialogFooter>
         </DialogContent>

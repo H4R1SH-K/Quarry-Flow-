@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useDataStore } from '@/lib/data-store';
 import type { Sales, SalesItem } from '@/lib/types';
-import { PlusCircle, X } from 'lucide-react';
+import { PlusCircle, X, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type PaymentMethod = 'GPay' | 'Cash' | 'Card' | 'Internet Banking';
@@ -25,15 +25,12 @@ const defaultItem: Omit<SalesItem, 'id'> = { description: '', quantity: 1, unit:
 
 
 interface SaleFormProps {
-    isOpen: boolean;
-    onOpenChange: (isOpen: boolean) => void;
-    onFormClose: () => void;
-    sale: Sales | null;
-    trigger: React.ReactNode;
+    saleToEdit?: Sales;
 }
 
-export function SaleForm({ isOpen, onOpenChange, onFormClose, sale, trigger }: SaleFormProps) {
+export function SaleForm({ saleToEdit }: SaleFormProps) {
   const { addSale, updateSale } = useDataStore();
+  const [isOpen, setIsOpen] = useState(false);
   
   const [customer, setCustomer] = useState('');
   const [vehicle, setVehicle] = useState('');
@@ -48,16 +45,16 @@ export function SaleForm({ isOpen, onOpenChange, onFormClose, sale, trigger }: S
   }, [items]);
     
   useEffect(() => {
-    if (sale) {
-        setCustomer(sale.customer);
-        setVehicle(sale.vehicle);
-        setDate(sale.date);
-        setPaymentMethod(sale.paymentMethod);
-        setItems(sale.items?.map(item => ({...item})) || [{...defaultItem, id: '0'}]);
-    } else {
+    if (isOpen && saleToEdit) {
+        setCustomer(saleToEdit.customer);
+        setVehicle(saleToEdit.vehicle);
+        setDate(saleToEdit.date);
+        setPaymentMethod(saleToEdit.paymentMethod);
+        setItems(saleToEdit.items?.map(item => ({...item})) || [{...defaultItem, id: '0'}]);
+    } else if (!isOpen) {
       resetForm();
     }
-  }, [sale, isOpen]);
+  }, [saleToEdit, isOpen]);
 
   const resetForm = () => {
     setCustomer('');
@@ -86,9 +83,9 @@ export function SaleForm({ isOpen, onOpenChange, onFormClose, sale, trigger }: S
   const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index));
 
   const handleSave = () => {
-    if (sale) {
+    if (saleToEdit) {
         const updatedSale: Sales = {
-            ...sale,
+            ...saleToEdit,
             customer,
             vehicle,
             items,
@@ -109,15 +106,23 @@ export function SaleForm({ isOpen, onOpenChange, onFormClose, sale, trigger }: S
         };
         addSale(newSale);
     }
-    onFormClose();
+    setIsOpen(false);
   };
 
+  const triggerButton = saleToEdit ? (
+    <Button variant="ghost" size="icon">
+      <Pencil className="h-4 w-4" />
+    </Button>
+  ) : (
+    <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Sale</Button>
+  );
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>{triggerButton}</DialogTrigger>
         <DialogContent className="max-w-4xl">
             <DialogHeader>
-                <DialogTitle>{sale ? 'Edit Sale' : 'Add New Sale'}</DialogTitle>
+                <DialogTitle>{saleToEdit ? 'Edit Sale' : 'Add New Sale'}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-6 py-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -177,7 +182,7 @@ export function SaleForm({ isOpen, onOpenChange, onFormClose, sale, trigger }: S
                 </div>
             </div>
             <DialogFooter>
-                <DialogClose asChild><Button variant="outline" onClick={onFormClose}>Cancel</Button></DialogClose>
+                <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
                 <Button type="submit" onClick={handleSave}>Save Sale</Button>
             </DialogFooter>
         </DialogContent>

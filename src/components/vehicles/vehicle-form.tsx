@@ -17,19 +17,17 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useDataStore } from '@/lib/data-store';
 import type { Vehicle } from '@/lib/types';
+import { PlusCircle, Pencil } from 'lucide-react';
 
 type VehicleStatus = "Active" | "Maintenance" | "Inactive";
 
 interface VehicleFormProps {
-    isOpen: boolean;
-    onOpenChange: (isOpen: boolean) => void;
-    onFormClose: () => void;
-    vehicle: Vehicle | null;
-    trigger: React.ReactNode;
+    vehicleToEdit?: Vehicle;
 }
 
-export function VehicleForm({ isOpen, onOpenChange, onFormClose, vehicle, trigger }: VehicleFormProps) {
+export function VehicleForm({ vehicleToEdit }: VehicleFormProps) {
   const { addVehicle, updateVehicle } = useDataStore();
+  const [isOpen, setIsOpen] = useState(false);
   
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
@@ -38,16 +36,16 @@ export function VehicleForm({ isOpen, onOpenChange, onFormClose, vehicle, trigge
   const [status, setStatus] = useState<VehicleStatus>('Active');
 
   useEffect(() => {
-    if (vehicle) {
-      setMake(vehicle.make);
-      setModel(vehicle.model);
-      setYear(String(vehicle.year));
-      setVehicleNumber(vehicle.vehicleNumber);
-      setStatus(vehicle.status);
-    } else {
+    if (isOpen && vehicleToEdit) {
+      setMake(vehicleToEdit.make);
+      setModel(vehicleToEdit.model);
+      setYear(String(vehicleToEdit.year));
+      setVehicleNumber(vehicleToEdit.vehicleNumber);
+      setStatus(vehicleToEdit.status);
+    } else if (!isOpen) {
         resetForm();
     }
-  }, [vehicle, isOpen]);
+  }, [vehicleToEdit, isOpen]);
 
   const resetForm = () => {
     setMake('');
@@ -58,9 +56,9 @@ export function VehicleForm({ isOpen, onOpenChange, onFormClose, vehicle, trigge
   };
   
   const handleSave = () => {
-    if (vehicle) {
+    if (vehicleToEdit) {
       const updatedVehicle: Vehicle = {
-        ...vehicle,
+        ...vehicleToEdit,
         make,
         model,
         year: Number(year),
@@ -79,15 +77,23 @@ export function VehicleForm({ isOpen, onOpenChange, onFormClose, vehicle, trigge
       };
       addVehicle(newVehicle);
     }
-    onFormClose();
+    setIsOpen(false);
   };
+  
+  const triggerButton = vehicleToEdit ? (
+    <Button variant="ghost" size="icon">
+      <Pencil className="h-4 w-4" />
+    </Button>
+  ) : (
+    <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Vehicle</Button>
+  );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>{triggerButton}</DialogTrigger>
         <DialogContent>
             <DialogHeader>
-              <DialogTitle>{vehicle ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
+              <DialogTitle>{vehicleToEdit ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -131,7 +137,7 @@ export function VehicleForm({ isOpen, onOpenChange, onFormClose, vehicle, trigge
               </div>
             </div>
             <DialogFooter>
-              <DialogClose asChild><Button variant="outline" onClick={onFormClose}>Cancel</Button></DialogClose>
+              <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
               <Button type="submit" onClick={handleSave}>Save Vehicle</Button>
             </DialogFooter>
         </DialogContent>

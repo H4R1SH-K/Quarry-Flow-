@@ -18,18 +18,16 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useDataStore } from '@/lib/data-store';
 import type { Reminder } from '@/lib/types';
+import { PlusCircle, Pencil } from 'lucide-react';
 
 
 interface CollectionFormProps {
-    isOpen: boolean;
-    onOpenChange: (isOpen: boolean) => void;
-    onFormClose: () => void;
-    reminder: Reminder | null;
-    trigger: React.ReactNode;
+    reminderToEdit?: Reminder;
 }
 
-export function CollectionForm({ isOpen, onOpenChange, onFormClose, reminder, trigger }: CollectionFormProps) {
+export function CollectionForm({ reminderToEdit }: CollectionFormProps) {
   const { addReminder, updateReminder } = useDataStore();
+  const [isOpen, setIsOpen] = useState(false);
   
   const [details, setDetails] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -38,16 +36,16 @@ export function CollectionForm({ isOpen, onOpenChange, onFormClose, reminder, tr
   const [amount, setAmount] = useState('');
 
   useEffect(() => {
-    if (reminder) {
-      setDetails(reminder.details);
-      setDueDate(reminder.dueDate);
-      setStatus(reminder.status);
-      setRelatedToName(reminder.relatedToName || '');
-      setAmount(reminder.amount ? String(reminder.amount) : '');
-    } else {
+    if (isOpen && reminderToEdit) {
+      setDetails(reminderToEdit.details);
+      setDueDate(reminderToEdit.dueDate);
+      setStatus(reminderToEdit.status);
+      setRelatedToName(reminderToEdit.relatedToName || '');
+      setAmount(reminderToEdit.amount ? String(reminderToEdit.amount) : '');
+    } else if (!isOpen) {
         resetForm();
     }
-  }, [reminder, isOpen]);
+  }, [reminderToEdit, isOpen]);
 
   const resetForm = () => {
     setDetails('');
@@ -67,20 +65,28 @@ export function CollectionForm({ isOpen, onOpenChange, onFormClose, reminder, tr
       amount: Number(amount) || 0,
     };
 
-    if (reminder) {
-      updateReminder({ ...reminder, ...reminderData });
+    if (reminderToEdit) {
+      updateReminder({ ...reminderToEdit, ...reminderData });
     } else {
       addReminder({ id: String(Date.now()), ...reminderData });
     }
-    onFormClose();
+    setIsOpen(false);
   };
 
+  const triggerButton = reminderToEdit ? (
+    <Button variant="ghost" size="icon">
+      <Pencil className="h-4 w-4" />
+    </Button>
+  ) : (
+    <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Collection</Button>
+  );
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>{triggerButton}</DialogTrigger>
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>{reminder ? 'Edit Collection' : 'Add New Collection'}</DialogTitle>
+                <DialogTitle>{reminderToEdit ? 'Edit Collection' : 'Add New Collection'}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -113,7 +119,7 @@ export function CollectionForm({ isOpen, onOpenChange, onFormClose, reminder, tr
                 </div>
             </div>
             <DialogFooter>
-                <DialogClose asChild><Button variant="outline" onClick={onFormClose}>Cancel</Button></DialogClose>
+                <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
                 <Button type="submit" onClick={handleSave}>Save Collection</Button>
             </DialogFooter>
         </DialogContent>

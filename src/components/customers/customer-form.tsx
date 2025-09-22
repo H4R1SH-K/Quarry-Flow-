@@ -18,18 +18,16 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useDataStore } from '@/lib/data-store';
 import type { Customer } from '@/lib/types';
+import { PlusCircle, Pencil } from 'lucide-react';
 
 
 interface CustomerFormProps {
-    isOpen: boolean;
-    onOpenChange: (isOpen: boolean) => void;
-    onFormClose: () => void;
-    customer: Customer | null;
-    trigger: React.ReactNode;
+    customerToEdit?: Customer;
 }
 
-export function CustomerForm({ isOpen, onOpenChange, onFormClose, customer, trigger }: CustomerFormProps) {
+export function CustomerForm({ customerToEdit }: CustomerFormProps) {
   const { addCustomer, updateCustomer } = useDataStore();
+  const [isOpen, setIsOpen] = useState(false);
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -39,17 +37,17 @@ export function CustomerForm({ isOpen, onOpenChange, onFormClose, customer, trig
   const [status, setStatus] = useState<"Active" | "Inactive">('Active');
 
   useEffect(() => {
-    if (customer) {
-      setName(customer.name);
-      setEmail(customer.email);
-      setPhone(customer.phone);
-      setCompany(customer.company);
-      setAddress(customer.address);
-      setStatus(customer.status);
-    } else {
+    if (isOpen && customerToEdit) {
+      setName(customerToEdit.name);
+      setEmail(customerToEdit.email);
+      setPhone(customerToEdit.phone);
+      setCompany(customerToEdit.company);
+      setAddress(customerToEdit.address);
+      setStatus(customerToEdit.status);
+    } else if (!isOpen) {
         resetForm();
     }
-  }, [customer, isOpen]);
+  }, [customerToEdit, isOpen]);
 
   const resetForm = () => {
     setName('');
@@ -61,9 +59,9 @@ export function CustomerForm({ isOpen, onOpenChange, onFormClose, customer, trig
   };
 
   const handleSave = () => {
-    if (customer) {
+    if (customerToEdit) {
       const updatedCustomer: Customer = {
-        ...customer,
+        ...customerToEdit,
         name,
         email,
         phone,
@@ -84,15 +82,23 @@ export function CustomerForm({ isOpen, onOpenChange, onFormClose, customer, trig
       };
       addCustomer(newCustomer);
     }
-    onFormClose();
+    setIsOpen(false);
   };
+  
+  const triggerButton = customerToEdit ? (
+    <Button variant="ghost" size="icon">
+      <Pencil className="h-4 w-4" />
+    </Button>
+  ) : (
+    <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Customer</Button>
+  );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>{triggerButton}</DialogTrigger>
         <DialogContent>
             <DialogHeader>
-              <DialogTitle>{customer ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>
+              <DialogTitle>{customerToEdit ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -142,7 +148,7 @@ export function CustomerForm({ isOpen, onOpenChange, onFormClose, customer, trig
             </div>
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" onClick={onFormClose}>Cancel</Button>
+                <Button variant="outline">Cancel</Button>
               </DialogClose>
               <Button type="submit" onClick={handleSave}>Save Customer</Button>
             </DialogFooter>

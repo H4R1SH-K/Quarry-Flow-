@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Pencil, Trash2, Search } from "lucide-react";
+import { Trash2, Search } from "lucide-react";
 import type { Expense } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 import { format, isValid } from 'date-fns';
@@ -32,19 +32,7 @@ import { ExpenseForm } from './expense-form';
 
 export function ExpenseTable() {
   const { expenses, deleteExpense } = useDataStore();
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isFormOpen, setIsFormOpen] = useState(false);
-
-  const handleEditClick = (expense: Expense) => {
-    setEditingExpense(expense);
-    setIsFormOpen(true);
-  };
-  
-  const handleFormClose = () => {
-    setEditingExpense(null);
-    setIsFormOpen(false);
-  }
 
   const handleDelete = (id: string) => {
     deleteExpense(id);
@@ -60,13 +48,7 @@ export function ExpenseTable() {
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
        <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Expenses</h2>
-        <ExpenseForm 
-            isOpen={isFormOpen}
-            onOpenChange={setIsFormOpen}
-            onFormClose={handleFormClose}
-            expense={editingExpense}
-            trigger={<Button><PlusCircle className="mr-2 h-4 w-4" /> Add Expense</Button>}
-        />
+        <ExpenseForm />
       </div>
       <Card>
         <CardContent className="pt-6">
@@ -104,9 +86,7 @@ export function ExpenseTable() {
                       <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
                       <TableCell>{expense.date && isValid(new Date(expense.date)) ? format(new Date(expense.date), 'PPP') : 'N/A'}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(expense)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        <ExpenseForm expenseToEdit={expense} />
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon">

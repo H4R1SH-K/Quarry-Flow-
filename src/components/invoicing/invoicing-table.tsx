@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Pencil, Trash2, FileText, Search } from "lucide-react";
+import { Trash2, FileText, Search } from "lucide-react";
 import { useDataStore } from '@/lib/data-store';
 import type { Sales } from '@/lib/types';
 import { format, isValid } from 'date-fns';
@@ -34,19 +34,7 @@ import { SaleForm } from './sale-form';
 
 export function InvoicingTable() {
     const { sales, customers, profile, deleteSale } = useDataStore();
-    const [editingSale, setEditingSale] = useState<Sales | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [isFormOpen, setIsFormOpen] = useState(false);
-
-    const handleEditClick = (sale: Sales) => {
-        setEditingSale(sale);
-        setIsFormOpen(true);
-    };
-
-    const handleFormClose = () => {
-      setEditingSale(null);
-      setIsFormOpen(false);
-    }
 
     const handleDelete = (id: string) => {
         deleteSale(id);
@@ -141,13 +129,7 @@ export function InvoicingTable() {
                     <FileText className="h-6 w-6"/>
                     <h2 className="text-3xl font-bold tracking-tight font-headline">Invoicing</h2>
                 </div>
-                 <SaleForm 
-                    isOpen={isFormOpen}
-                    onOpenChange={setIsFormOpen}
-                    onFormClose={handleFormClose}
-                    sale={editingSale}
-                    trigger={<Button><PlusCircle className="mr-2 h-4 w-4" /> Add Sale for Invoice</Button>}
-                />
+                 <SaleForm />
             </div>
             <Card>
                 <CardContent className="pt-6">
@@ -189,9 +171,7 @@ export function InvoicingTable() {
                                             <Button variant="ghost" size="icon" onClick={() => handleGenerateBill(sale)} title="Generate Bill">
                                                 <FileText className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" onClick={() => handleEditClick(sale)}>
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
+                                            <SaleForm saleToEdit={sale} />
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button variant="ghost" size="icon">

@@ -18,18 +18,16 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useDataStore } from '@/lib/data-store';
 import type { Reminder } from '@/lib/types';
+import { PlusCircle, Pencil } from 'lucide-react';
 
 
 interface ReminderFormProps {
-    isOpen: boolean;
-    onOpenChange: (isOpen: boolean) => void;
-    onFormClose: () => void;
-    reminder: Reminder | null;
-    trigger: React.ReactNode;
+    reminderToEdit?: Reminder;
 }
 
-export function ReminderForm({ isOpen, onOpenChange, onFormClose, reminder, trigger }: ReminderFormProps) {
+export function ReminderForm({ reminderToEdit }: ReminderFormProps) {
   const { addReminder, updateReminder } = useDataStore();
+  const [isOpen, setIsOpen] = useState(false);
   
   const [type, setType] = useState<"Vehicle Permit" | "Insurance">("Vehicle Permit");
   const [details, setDetails] = useState('');
@@ -39,17 +37,17 @@ export function ReminderForm({ isOpen, onOpenChange, onFormClose, reminder, trig
   const [relatedToName, setRelatedToName] = useState('');
 
   useEffect(() => {
-    if (reminder) {
-      setType(reminder.type as "Vehicle Permit" | "Insurance");
-      setDetails(reminder.details);
-      setDueDate(reminder.dueDate);
-      setStatus(reminder.status);
-      setRelatedTo(reminder.relatedTo);
-      setRelatedToName(reminder.relatedToName || '');
-    } else {
+    if (isOpen && reminderToEdit) {
+      setType(reminderToEdit.type as "Vehicle Permit" | "Insurance");
+      setDetails(reminderToEdit.details);
+      setDueDate(reminderToEdit.dueDate);
+      setStatus(reminderToEdit.status);
+      setRelatedTo(reminderToEdit.relatedTo);
+      setRelatedToName(reminderToEdit.relatedToName || '');
+    } else if (!isOpen) {
         resetForm();
     }
-  }, [reminder, isOpen]);
+  }, [reminderToEdit, isOpen]);
 
   const resetForm = () => {
     setType("Vehicle Permit");
@@ -69,20 +67,28 @@ export function ReminderForm({ isOpen, onOpenChange, onFormClose, reminder, trig
       relatedTo,
       relatedToName,
     };
-    if (reminder) {
-      updateReminder({ ...reminder, ...reminderData });
+    if (reminderToEdit) {
+      updateReminder({ ...reminderToEdit, ...reminderData });
     } else {
       addReminder({ id: String(Date.now()), ...reminderData, type: reminderData.type as any });
     }
-    onFormClose();
+    setIsOpen(false);
   };
+  
+  const triggerButton = reminderToEdit ? (
+    <Button variant="ghost" size="icon">
+      <Pencil className="h-4 w-4" />
+    </Button>
+  ) : (
+    <Button><PlusCircle className="mr-2 h-4 w-4" />Add Reminder</Button>
+  );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>{triggerButton}</DialogTrigger>
         <DialogContent>
             <DialogHeader>
-              <DialogTitle>{reminder ? 'Edit Reminder' : 'Add New Reminder'}</DialogTitle>
+              <DialogTitle>{reminderToEdit ? 'Edit Reminder' : 'Add New Reminder'}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -123,7 +129,7 @@ export function ReminderForm({ isOpen, onOpenChange, onFormClose, reminder, trig
               </div>
             </div>
             <DialogFooter>
-              <DialogClose asChild><Button variant="outline" onClick={onFormClose}>Cancel</Button></DialogClose>
+              <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
               <Button type="submit" onClick={handleSave}>Save Reminder</Button>
             </DialogFooter>
         </DialogContent>

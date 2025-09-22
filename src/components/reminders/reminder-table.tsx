@@ -25,7 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Pencil, Bell, Trash2, Search } from "lucide-react";
+import { Bell, Trash2, Search } from "lucide-react";
 import type { Reminder } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 import { differenceInDays, format, isValid } from 'date-fns';
@@ -33,21 +33,9 @@ import { ReminderForm } from './reminder-form';
 
 export function ReminderTable() {
   const { reminders, deleteReminder } = useDataStore();
-  const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const allReminders = reminders.filter(r => r.type !== 'Credit');
-
-  const handleEditClick = (reminder: Reminder) => {
-    setEditingReminder(reminder);
-    setIsFormOpen(true);
-  };
-  
-  const handleFormClose = () => {
-    setEditingReminder(null);
-    setIsFormOpen(false);
-  }
 
   const handleDelete = (id: string) => {
     deleteReminder(id);
@@ -78,13 +66,7 @@ export function ReminderTable() {
             <Bell className="h-6 w-6"/>
             <h2 className="text-3xl font-bold tracking-tight font-headline">Reminders</h2>
         </div>
-        <ReminderForm
-            isOpen={isFormOpen}
-            onOpenChange={setIsFormOpen}
-            onFormClose={handleFormClose}
-            reminder={editingReminder}
-            trigger={<Button><PlusCircle className="mr-2 h-4 w-4" />Add Reminder</Button>}
-        />
+        <ReminderForm />
       </div>
       <Card>
         <CardContent className="pt-6">
@@ -127,9 +109,7 @@ export function ReminderTable() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                       <Button variant="ghost" size="icon" onClick={() => handleEditClick(reminder)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                       <ReminderForm reminderToEdit={reminder} />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon">

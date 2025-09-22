@@ -133,7 +133,7 @@ export function ExpenseReport() {
       doc.text('Sales & Invoicing Details', 15, currentY);
        
       const salesBody = filteredSales.flatMap(s =>
-        s.items.map((item, index) =>
+        (s.items || []).map((item, index) =>
           index === 0
             ? [
                 s.date && isValid(new Date(s.date)) ? format(new Date(s.date), 'PP') : 'N/A',

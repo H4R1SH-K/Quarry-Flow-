@@ -132,21 +132,28 @@ export function ExpenseReport() {
       doc.setFont('helvetica', 'bold');
       doc.text('Sales & Invoicing Details', 15, currentY);
        
-      const salesBody = filteredSales.flatMap(s =>
-        (s.items || []).map((item, index) =>
-          index === 0
-            ? [
-                s.date && isValid(new Date(s.date)) ? format(new Date(s.date), 'PP') : 'N/A',
-                s.customer,
-                s.vehicle,
-                item.description,
-                `${item.quantity} ${item.unit}`,
-                s.paymentMethod || 'N/A',
-                `Rs. ${s.price.toLocaleString('en-IN')}`,
-              ]
-            : ['', '', '', item.description, `${item.quantity} ${item.unit}`, '', '']
-        )
-      );
+      const salesBody = filteredSales.flatMap(s => {
+        const saleItems = s.items && s.items.length > 0 ? s.items : [{ description: 'N/A', quantity: 1, unit: 'N/A' as any, unitPrice: s.price, total: s.price, id: 'legacy' }];
+        return saleItems.map((item, index) => {
+          if (index === 0) {
+            return [
+              s.date && isValid(new Date(s.date)) ? format(new Date(s.date), 'PP') : 'N/A',
+              s.customer,
+              s.vehicle,
+              item.description,
+              `${item.quantity} ${item.unit}`,
+              s.paymentMethod || 'N/A',
+              `Rs. ${s.price.toLocaleString('en-IN')}`,
+            ];
+          }
+          return [
+            '', '', '', // Empty cells for subsequent items of the same sale
+            item.description,
+            `${item.quantity} ${item.unit}`,
+            '', ''
+          ];
+        });
+      });
 
       (doc as any).autoTable({
         startY: currentY + 2,

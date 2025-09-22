@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -14,15 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -34,80 +25,29 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PlusCircle, Pencil, Bell, Trash2, Search } from "lucide-react";
 import type { Reminder } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Textarea } from '../ui/textarea';
 import { differenceInDays, format, isValid } from 'date-fns';
+import { ReminderForm } from './reminder-form';
 
 export function ReminderTable() {
-  const { reminders, addReminder, updateReminder, deleteReminder } = useDataStore();
-  const [open, setOpen] = useState(false);
+  const { reminders, deleteReminder } = useDataStore();
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-
-  const [type, setType] = useState<"Vehicle Permit" | "Insurance">("Vehicle Permit");
-  const [details, setDetails] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [status, setStatus] = useState<"Pending" | "Completed">('Pending');
-  const [relatedTo, setRelatedTo] = useState<string | undefined>(undefined);
-  const [relatedToName, setRelatedToName] = useState('');
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const allReminders = reminders.filter(r => r.type !== 'Credit');
 
-  useEffect(() => {
-    if (editingReminder) {
-      setType(editingReminder.type as "Vehicle Permit" | "Insurance");
-      setDetails(editingReminder.details);
-      setDueDate(editingReminder.dueDate);
-      setStatus(editingReminder.status);
-      setRelatedTo(editingReminder.relatedTo);
-      setRelatedToName(editingReminder.relatedToName || '');
-      setOpen(true);
-    }
-  }, [editingReminder]);
-
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      setEditingReminder(null);
-      resetForm();
-    }
-    setOpen(isOpen);
-  };
-  
-  const resetForm = () => {
-    setType("Vehicle Permit");
-    setDetails('');
-    setDueDate('');
-    setStatus('Pending');
-    setRelatedTo(undefined);
-    setRelatedToName('');
-  };
-
-  const handleSaveReminder = () => {
-    const reminderData = {
-      type,
-      details,
-      dueDate,
-      status,
-      relatedTo,
-      relatedToName,
-    };
-    if (editingReminder) {
-      updateReminder({ ...editingReminder, ...reminderData });
-    } else {
-      addReminder({ id: String(Date.now()), ...reminderData, type: reminderData.type as any });
-    }
-    resetForm();
-    setEditingReminder(null);
-    setOpen(false);
-  };
-
   const handleEditClick = (reminder: Reminder) => {
     setEditingReminder(reminder);
+    setIsFormOpen(true);
   };
+  
+  const handleFormClose = () => {
+    setEditingReminder(null);
+    setIsFormOpen(false);
+  }
 
   const handleDelete = (id: string) => {
     deleteReminder(id);
@@ -138,61 +78,13 @@ export function ReminderTable() {
             <Bell className="h-6 w-6"/>
             <h2 className="text-3xl font-bold tracking-tight font-headline">Reminders</h2>
         </div>
-        <Dialog open={open} onOpenChange={handleOpenChange}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Reminder
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingReminder ? 'Edit Reminder' : 'Add New Reminder'}</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="type" className="text-right">Type</Label>
-                <Select value={type} onValueChange={(value: "Vehicle Permit" | "Insurance") => setType(value)}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Vehicle Permit">Vehicle Permit</SelectItem>
-                    <SelectItem value="Insurance">Insurance</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="details" className="text-right">Details</Label>
-                <Textarea id="details" value={details} onChange={(e) => setDetails(e.target.value)} className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="dueDate" className="text-right">Due Date</Label>
-                <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="relatedToName" className="text-right">Vehicle</Label>
-                <Input id="relatedToName" value={relatedToName} onChange={(e) => setRelatedToName(e.target.value)} placeholder="Enter vehicle number" className="col-span-3" />
-              </div>
-               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">Status</Label>
-                <Select value={status} onValueChange={(value: "Pending" | "Completed") => setStatus(value)}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-              <Button type="submit" onClick={handleSaveReminder}>Save Reminder</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ReminderForm
+            isOpen={isFormOpen}
+            onOpenChange={setIsFormOpen}
+            onFormClose={handleFormClose}
+            reminder={editingReminder}
+            trigger={<Button><PlusCircle className="mr-2 h-4 w-4" />Add Reminder</Button>}
+        />
       </div>
       <Card>
         <CardContent className="pt-6">

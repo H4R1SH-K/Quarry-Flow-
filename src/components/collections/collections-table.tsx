@@ -14,15 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -34,77 +25,29 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PlusCircle, Pencil, Banknote, Trash2, Search } from "lucide-react";
 import type { Reminder } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Textarea } from '../ui/textarea';
 import { differenceInDays, format, isValid } from 'date-fns';
+import { CollectionForm } from './collection-form';
 
 export function CollectionsTable() {
-  const { reminders, addReminder, updateReminder, deleteReminder } = useDataStore();
-  const [open, setOpen] = useState(false);
+  const { reminders, deleteReminder } = useDataStore();
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-
-  const [details, setDetails] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [status, setStatus] = useState<"Pending" | "Completed">('Pending');
-  const [relatedToName, setRelatedToName] = useState('');
-  const [amount, setAmount] = useState('');
+  const [isFormOpen, setIsFormOpen] = useState(false);
   
   const collections = reminders.filter(r => r.type === 'Credit');
 
-  useEffect(() => {
-    if (editingReminder) {
-      setDetails(editingReminder.details);
-      setDueDate(editingReminder.dueDate);
-      setStatus(editingReminder.status);
-      setRelatedToName(editingReminder.relatedToName || '');
-      setAmount(editingReminder.amount ? String(editingReminder.amount) : '');
-      setOpen(true);
-    }
-  }, [editingReminder]);
-
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      setEditingReminder(null);
-      resetForm();
-    }
-    setOpen(isOpen);
-  };
-  
-  const resetForm = () => {
-    setDetails('');
-    setDueDate('');
-    setStatus('Pending');
-    setRelatedToName('');
-    setAmount('');
-  };
-
-  const handleSaveReminder = () => {
-    const reminderData = {
-      type: 'Credit' as const,
-      details,
-      dueDate,
-      status,
-      relatedToName,
-      amount: Number(amount) || 0,
-    };
-    if (editingReminder) {
-      updateReminder({ ...editingReminder, ...reminderData });
-    } else {
-      addReminder({ id: String(Date.now()), ...reminderData });
-    }
-    resetForm();
-    setEditingReminder(null);
-    setOpen(false);
-  };
-
   const handleEditClick = (reminder: Reminder) => {
     setEditingReminder(reminder);
+    setIsFormOpen(true);
   };
+  
+  const handleFormClose = () => {
+    setEditingReminder(null);
+    setIsFormOpen(false);
+  }
 
   const handleDelete = (id: string) => {
     deleteReminder(id);
@@ -132,53 +75,13 @@ export function CollectionsTable() {
             <Banknote className="h-6 w-6"/>
             <h2 className="text-3xl font-bold tracking-tight font-headline">Collections</h2>
         </div>
-        <Dialog open={open} onOpenChange={handleOpenChange}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Collection
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingReminder ? 'Edit Collection' : 'Add New Collection'}</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="details" className="text-right">Details</Label>
-                <Textarea id="details" value={details} onChange={(e) => setDetails(e.target.value)} className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="amount" className="text-right">Amount</Label>
-                <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount to collect" className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="dueDate" className="text-right">Due Date</Label>
-                <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="relatedToName" className="text-right">Customer</Label>
-                <Input id="relatedToName" value={relatedToName} onChange={(e) => setRelatedToName(e.target.value)} placeholder="Enter customer name" className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">Status</Label>
-                <Select value={status} onValueChange={(value: "Pending" | "Completed") => setStatus(value)}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-              <Button type="submit" onClick={handleSaveReminder}>Save Collection</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CollectionForm 
+            isOpen={isFormOpen} 
+            onOpenChange={setIsFormOpen}
+            onFormClose={handleFormClose}
+            reminder={editingReminder}
+            trigger={<Button><PlusCircle className="mr-2 h-4 w-4" /> Add Collection</Button>}
+        />
       </div>
       <Card>
         <CardContent className="pt-6">

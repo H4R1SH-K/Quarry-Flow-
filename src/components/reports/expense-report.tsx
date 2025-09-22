@@ -141,15 +141,16 @@ export function ExpenseReport() {
                 s.vehicle,
                 item.description,
                 `${item.quantity} ${item.unit}`,
+                s.paymentMethod || 'N/A',
                 `Rs. ${s.price.toLocaleString('en-IN')}`,
               ]
-            : ['', '', '', item.description, `${item.quantity} ${item.unit}`, '']
+            : ['', '', '', item.description, `${item.quantity} ${item.unit}`, '', '']
         )
       );
 
       (doc as any).autoTable({
         startY: currentY + 2,
-        head: [['Date', 'Customer', 'Vehicle', 'Item', 'Quantity', 'Total Price']],
+        head: [['Date', 'Customer', 'Vehicle', 'Item', 'Quantity', 'Payment via', 'Total Price']],
         body: salesBody,
         theme: 'grid',
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },

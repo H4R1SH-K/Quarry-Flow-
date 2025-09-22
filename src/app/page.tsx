@@ -1,8 +1,6 @@
 'use client';
 
-import { OverviewStats } from '@/components/dashboard/overview-stats';
 import { SmartReminder } from '@/components/dashboard/smart-reminder';
-import { VehicleSummary } from '@/components/dashboard/vehicle-summary';
 import { getDashboardData } from '@/lib/server/data';
 import { SalesChart } from '@/components/dashboard/sales-chart';
 import { CostRevenueChart } from '@/components/dashboard/cost-revenue-chart';
@@ -10,6 +8,7 @@ import dynamic from 'next/dynamic';
 import { DashboardCardSkeleton } from '@/components/dashboard/skeletons';
 import { useEffect, useState } from 'react';
 import type { Sales, Expense } from '@/lib/types';
+import { ServerDashboard } from '@/components/dashboard/server-dashboard';
 
 const ClientOnlyDashboard = dynamic(
   () => import('@/components/dashboard/client-only-dashboard').then(mod => mod.ClientOnlyDashboard),
@@ -47,7 +46,9 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard</h2>
       </div>
-      <OverviewStats />
+      
+      <ServerDashboard />
+
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <SalesChart sales={serverData.sales} />
           <CostRevenueChart sales={serverData.sales} expenses={serverData.expenses} />
@@ -58,9 +59,6 @@ export default function DashboardPage() {
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="grid gap-4">
             <SmartReminder />
-          </div>
-          <div className="grid gap-4">
-            <VehicleSummary />
           </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import type { Sales } from "@/lib/types";
@@ -8,7 +9,7 @@ interface SalesChartProps {
   sales: Sales[];
 }
 
-export function SalesChart({ sales }: SalesChartProps) {
+const SalesChartComponent = React.memo(function SalesChartComponent({ sales }: SalesChartProps) {
 
   const getSalesDataForChart = () => {
     const monthlySales: { [key: string]: number } = {
@@ -70,4 +71,6 @@ export function SalesChart({ sales }: SalesChartProps) {
       </CardContent>
     </Card>
   )
-}
+});
+
+export const SalesChart = (props: SalesChartProps) => <SalesChartComponent {...props} />;

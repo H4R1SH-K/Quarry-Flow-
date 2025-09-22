@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import {
@@ -35,7 +36,7 @@ interface CostRevenueChartProps {
   expenses: Expense[];
 }
 
-export function CostRevenueChart({ sales, expenses }: CostRevenueChartProps) {
+const CostRevenueChartComponent = React.memo(function CostRevenueChartComponent({ sales, expenses }: CostRevenueChartProps) {
 
   const getChartData = () => {
     const dataByMonth: { [key: string]: { revenue: number, dieselCost: number }} = {};
@@ -49,7 +50,7 @@ export function CostRevenueChart({ sales, expenses }: CostRevenueChartProps) {
     });
 
     expenses.forEach(expense => {
-      if (expense.category.toLowerCase() === 'diesel') {
+      if (expense.category.toLowerCase() === 'fuel') { // Changed to fuel to be more generic
         const month = new Date(expense.date).toLocaleString('default', { month: 'long' });
         if (dataByMonth[month]) {
           dataByMonth[month].dieselCost += expense.amount;
@@ -75,7 +76,7 @@ export function CostRevenueChart({ sales, expenses }: CostRevenueChartProps) {
     <Card>
       <CardHeader>
         <CardTitle className="font-headline">Cost vs. Revenue</CardTitle>
-        <CardDescription>A comparison of diesel costs and total revenue.</CardDescription>
+        <CardDescription>A comparison of fuel costs and total revenue.</CardDescription>
       </CardHeader>
       <CardContent>
         {chartData.length > 0 ? (
@@ -101,10 +102,12 @@ export function CostRevenueChart({ sales, expenses }: CostRevenueChartProps) {
          ) : (
           <div className="flex flex-col justify-center items-center h-[300px] text-center">
             <p className="text-sm text-muted-foreground">No data to display for cost vs. revenue.</p>
-            <p className="text-xs text-muted-foreground">Add sales and diesel expenses to see the chart.</p>
+            <p className="text-xs text-muted-foreground">Add sales and fuel expenses to see the chart.</p>
           </div>
         )}
       </CardContent>
     </Card>
   )
-}
+});
+
+export const CostRevenueChart = (props: CostRevenueChartProps) => <CostRevenueChartComponent {...props} />;

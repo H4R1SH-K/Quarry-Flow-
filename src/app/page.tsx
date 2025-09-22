@@ -6,7 +6,8 @@ import { ClientOnlyDashboard } from '@/components/dashboard/client-only-dashboar
 import { Suspense } from 'react';
 import { OverviewStats } from '@/components/dashboard/overview-stats';
 import { VehicleSummary } from '@/components/dashboard/vehicle-summary';
-import { DashboardCardSkeleton, OverviewStatsSkeleton } from '@/components/dashboard/skeletons';
+import { OverviewStatsSkeleton } from '@/components/dashboard/skeletons';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 export default async function DashboardPage() {
   const { sales, expenses } = await getDashboardData();
@@ -33,7 +34,7 @@ export default async function DashboardPage() {
             <SmartReminder />
           </div>
           <div className="lg:col-span-4">
-             <Suspense fallback={<DashboardCardSkeleton />}>
+             <Suspense fallback={<TableSkeleton />}>
                 <VehicleSummary />
              </Suspense>
           </div>

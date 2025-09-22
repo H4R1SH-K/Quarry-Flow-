@@ -1,45 +1,15 @@
-'use client';
-
 import { SmartReminder } from '@/components/dashboard/smart-reminder';
 import { getDashboardData } from '@/lib/server/data';
 import { SalesChart } from '@/components/dashboard/sales-chart';
 import { CostRevenueChart } from '@/components/dashboard/cost-revenue-chart';
-import dynamic from 'next/dynamic';
-import { DashboardCardSkeleton } from '@/components/dashboard/skeletons';
-import { useEffect, useState } from 'react';
-import type { Sales, Expense } from '@/lib/types';
-import { ServerDashboard } from '@/components/dashboard/server-dashboard';
+import { ClientOnlyDashboard } from '@/components/dashboard/client-only-dashboard';
+import { Suspense } from 'react';
+import { OverviewStats } from '@/components/dashboard/overview-stats';
+import { VehicleSummary } from '@/components/dashboard/vehicle-summary';
+import { DashboardCardSkeleton, OverviewStatsSkeleton } from '@/components/dashboard/skeletons';
 
-const ClientOnlyDashboard = dynamic(
-  () => import('@/components/dashboard/client-only-dashboard').then(mod => mod.ClientOnlyDashboard),
-  { 
-    ssr: false,
-    loading: () => (
-      <div className="grid grid-cols-1 gap-4">
-        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
-          <div className="lg:col-span-4"><DashboardCardSkeleton/></div>
-          <div className="lg:col-span-3"><DashboardCardSkeleton/></div>
-        </div>
-         <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
-          <div className="lg:col-span-3"><DashboardCardSkeleton/></div>
-          <div className="lg:col-span-4"><DashboardCardSkeleton/></div>
-        </div>
-      </div>
-    ),
-  }
-);
-
-
-export default function DashboardPage() {
-  const [serverData, setServerData] = useState<{ sales: Sales[]; expenses: Expense[] }>({ sales: [], expenses: [] });
-
-  useEffect(() => {
-    // Fetch server data on the client to avoid hydration mismatch for charts
-    // while still having them rendered initially on the server.
-    getDashboardData().then(data => {
-      setServerData({ sales: data.sales, expenses: data.expenses });
-    });
-  }, []);
+export default async function DashboardPage() {
+  const { sales, expenses } = await getDashboardData();
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
@@ -47,18 +17,25 @@ export default function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard</h2>
       </div>
       
-      <ServerDashboard />
+      <Suspense fallback={<OverviewStatsSkeleton />}>
+        <OverviewStats />
+      </Suspense>
 
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <SalesChart sales={serverData.sales} />
-          <CostRevenueChart sales={serverData.sales} expenses={serverData.expenses} />
-        </div>
+          <SalesChart sales={sales} />
+          <CostRevenueChart sales={sales} expenses={expenses} />
+       </div>
 
        <ClientOnlyDashboard />
 
-       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="grid gap-4">
+       <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+          <div className="lg:col-span-3 grid gap-4">
             <SmartReminder />
+          </div>
+          <div className="lg:col-span-4">
+             <Suspense fallback={<DashboardCardSkeleton />}>
+                <VehicleSummary />
+             </Suspense>
           </div>
       </div>
     </div>

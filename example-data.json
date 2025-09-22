@@ -1,0 +1,87 @@
+{
+  "sales": [
+    {
+      "id": "1721542800000",
+      "customer": "Global Constructions",
+      "vehicle": "TN 01 AB 1234",
+      "items": [
+        {
+          "id": "1",
+          "description": "River Sand",
+          "quantity": 10,
+          "unit": "Ton",
+          "unitPrice": 2500,
+          "total": 25000
+        },
+        {
+          "id": "2",
+          "description": "Transport Charges",
+          "quantity": 1,
+          "unit": "Trip",
+          "unitPrice": 1500,
+          "total": 1500
+        }
+      ],
+      "price": 26500,
+      "date": "2024-07-21",
+      "paymentMethod": "GPay"
+    }
+  ],
+  "customers": [
+    {
+      "id": "101",
+      "name": "Global Constructions",
+      "email": "contact@globalconstructions.com",
+      "phone": "9876543210",
+      "company": "Global Constructions Inc.",
+      "address": "123 Main Street, Anytown, AN 12345",
+      "status": "Active"
+    }
+  ],
+  "vehicles": [
+    {
+      "id": "201",
+      "make": "Tata",
+      "model": "Prima",
+      "year": 2023,
+      "vehicleNumber": "TN 01 AB 1234",
+      "status": "Active"
+    }
+  ],
+  "expenses": [
+    {
+      "id": "301",
+      "category": "Fuel",
+      "item": "Diesel",
+      "amount": 12000,
+      "date": "2024-07-20",
+      "vehicle": "TN 01 AB 1234"
+    }
+  ],
+  "reminders": [
+    {
+      "id": "401",
+      "type": "Insurance",
+      "details": "Renew vehicle insurance",
+      "dueDate": "2024-08-30",
+      "status": "Pending",
+      "relatedToName": "TN 01 AB 1234"
+    },
+    {
+      "id": "402",
+      "type": "Credit",
+      "details": "Collect payment for Invoice #1721542800000",
+      "dueDate": "2024-08-15",
+      "status": "Pending",
+      "relatedToName": "Global Constructions",
+      "amount": 26500
+    }
+  ],
+  "profile": {
+    "name": "Your Name",
+    "email": "your.email@example.com",
+    "phone": "123-456-7890",
+    "companyName": "Your Quarry Business",
+    "address": "Your Company Address"
+  }
+}

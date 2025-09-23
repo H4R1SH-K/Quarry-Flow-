@@ -13,7 +13,8 @@ import {
   query,
   where,
   limit,
-  orderBy
+  orderBy,
+  getDoc
 } from 'firebase/firestore';
 import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from './types';
 
@@ -47,49 +48,81 @@ async function deleteDocument(collectionName: string, id: string): Promise<void>
 }
 
 // Customer functions
-export const getCustomers = () => getCollection<Customer>('customers');
-export const saveCustomer = (customer: Customer) => setDocument('customers', customer);
-export const deleteCustomerById = (id: string) => deleteDocument('customers', id);
+export async function getCustomers(): Promise<Customer[]> {
+  return getCollection<Customer>('customers');
+}
+export async function saveCustomer(customer: Customer): Promise<void> {
+  return setDocument('customers', customer);
+}
+export async function deleteCustomerById(id: string): Promise<void> {
+  return deleteDocument('customers', id);
+}
 
 // Sales functions
-export const getSales = () => getCollection<Sales>('sales');
-export const getRecentSales = async (count: number = 5): Promise<Sales[]> => {
+export async function getSales(): Promise<Sales[]> {
+    return getCollection<Sales>('sales');
+}
+export async function getRecentSales(count: number = 5): Promise<Sales[]> {
     const db = getDb();
     const salesCollection = collection(db, 'sales');
     const q = query(salesCollection, orderBy('date', 'desc'), limit(count));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sales));
 };
-export const saveSale = (sale: Sales) => setDocument('sales', sale);
-export const deleteSaleById = (id: string) => deleteDocument('sales', id);
+export async function saveSale(sale: Sales): Promise<void> {
+    return setDocument('sales', sale);
+}
+export async function deleteSaleById(id: string): Promise<void> {
+    return deleteDocument('sales', id);
+}
 
 
 // Vehicle functions
-export const getVehicles = () => getCollection<Vehicle>('vehicles');
-export const saveVehicle = (vehicle: Vehicle) => setDocument('vehicles', vehicle);
-export const deleteVehicleById = (id: string) => deleteDocument('vehicles', id);
+export async function getVehicles(): Promise<Vehicle[]> {
+    return getCollection<Vehicle>('vehicles');
+}
+export async function saveVehicle(vehicle: Vehicle): Promise<void> {
+    return setDocument('vehicles', vehicle);
+}
+export async function deleteVehicleById(id: string): Promise<void> {
+    return deleteDocument('vehicles', id);
+}
 
 // Expense functions
-export const getExpenses = () => getCollection<Expense>('expenses');
-export const saveExpense = (expense: Expense) => setDocument('expenses', expense);
-export const deleteExpenseById = (id: string) => deleteDocument('expenses', id);
+export async function getExpenses(): Promise<Expense[]> {
+    return getCollection<Expense>('expenses');
+}
+export async function saveExpense(expense: Expense): Promise<void> {
+    return setDocument('expenses', expense);
+}
+export async function deleteExpenseById(id: string): Promise<void> {
+    return deleteDocument('expenses', id);
+}
 
 
 // Reminder functions
-export const getReminders = () => getCollection<Reminder>('reminders');
-export const saveReminder = (reminder: Reminder) => setDocument('reminders', reminder);
-export const deleteReminderById = (id: string) => deleteDocument('reminders', id);
+export async function getReminders(): Promise<Reminder[]> {
+    return getCollection<Reminder>('reminders');
+}
+export async function saveReminder(reminder: Reminder): Promise<void> {
+    return setDocument('reminders', reminder);
+}
+export async function deleteReminderById(id: string): Promise<void> {
+    return deleteDocument('reminders', id);
+}
 
 // Profile functions
-export const getProfile = async (): Promise<Profile | null> => {
-    // For simplicity, assuming one profile doc with a known ID
+export async function getProfile(): Promise<Profile | null> {
     const db = getDb();
     const docRef = doc(db, 'profile', 'user_profile');
-    const docSnap = await import('firebase/firestore').then(mod => mod.getDoc(docRef));
+    const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
         return docSnap.data() as Profile;
     }
     return null;
 }
-export const saveProfile = (profile: Profile) => setDocument('profile', { id: 'user_profile', ...profile });
+export async function saveProfile(profile: Profile): Promise<void> {
+    return setDocument('profile', { id: 'user_profile', ...profile });
+}
+
 

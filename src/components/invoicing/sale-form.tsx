@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useDataStore } from '@/lib/data-store';
+import { useToast } from '@/hooks/use-toast';
+import { saveSale } from '@/lib/firebase-service';
 import type { Sales, SalesItem } from '@/lib/types';
 import { PlusCircle, X, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -26,11 +27,13 @@ const defaultItem: Omit<SalesItem, 'id'> = { description: '', quantity: 1, unit:
 
 interface SaleFormProps {
     saleToEdit?: Sales;
+    onSave?: () => void;
+    trigger?: React.ReactNode;
 }
 
-export function SaleForm({ saleToEdit }: SaleFormProps) {
-  const { addSale, updateSale } = useDataStore();
+export function SaleForm({ saleToEdit, onSave, trigger }: SaleFormProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
   
   const [customer, setCustomer] = useState('');
   const [vehicle, setVehicle] = useState('');
@@ -82,39 +85,42 @@ export function SaleForm({ saleToEdit }: SaleFormProps) {
   const addItem = () => setItems([...items, {...defaultItem, id: String(items.length)}]);
   const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index));
 
-  const handleSave = () => {
-    if (saleToEdit) {
-        const updatedSale: Sales = {
-            ...saleToEdit,
-            customer,
-            vehicle,
-            items,
-            price: totalPrice,
-            date,
-            paymentMethod,
-        };
-        updateSale(updatedSale);
-    } else {
-        const newSale: Sales = {
-            id: String(Date.now()),
-            customer,
-            vehicle,
-            items,
-            price: totalPrice,
-            date,
-            paymentMethod,
-        };
-        addSale(newSale);
+  const handleSave = async () => {
+    const id = saleToEdit ? saleToEdit.id : String(Date.now());
+    const saleData: Sales = {
+      id,
+      customer,
+      vehicle,
+      items,
+      price: totalPrice,
+      date,
+      paymentMethod,
+    };
+
+    try {
+      await saveSale(saleData);
+      toast({
+        title: saleToEdit ? 'Sale Updated' : 'Sale Added',
+        description: `The sale for "${customer}" has been saved.`,
+      });
+      onSave?.();
+      setIsOpen(false);
+    } catch (error) {
+      console.error("Failed to save sale:", error);
+      toast({
+        title: 'Error',
+        description: 'Could not save the sale.',
+        variant: 'destructive',
+      });
     }
-    setIsOpen(false);
   };
 
-  const triggerButton = saleToEdit ? (
+  const triggerButton = trigger ? trigger : saleToEdit ? (
     <Button variant="ghost" size="icon">
       <Pencil className="h-4 w-4" />
     </Button>
   ) : (
-    <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Sale for Invoice</Button>
+    <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Sale</Button>
   );
 
   return (

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -24,20 +24,54 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Trash2, FileText, Search } from "lucide-react";
-import { useDataStore } from '@/lib/data-store';
-import type { Sales } from '@/lib/types';
+import { Trash2, FileText, Search, PlusCircle, Loader2 } from "lucide-react";
+import type { Sales, Customer, Profile } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { SaleForm } from './sale-form';
+import { getSales, getCustomers, getProfile, deleteSaleById } from '@/lib/firebase-service';
+import { useToast } from '@/hooks/use-toast';
 
 export function InvoicingTable() {
-    const { sales, customers, profile, deleteSale } = useDataStore();
+    const [sales, setSales] = useState<Sales[]>([]);
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [profile, setProfile] = useState<Profile | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isPending, startTransition] = useTransition();
+    const { toast } = useToast();
 
-    const handleDelete = (id: string) => {
-        deleteSale(id);
+    const fetchData = () => {
+        startTransition(async () => {
+            try {
+                const [salesData, customersData, profileData] = await Promise.all([
+                    getSales(),
+                    getCustomers(),
+                    getProfile()
+                ]);
+                setSales(salesData);
+                setCustomers(customersData);
+                setProfile(profileData);
+            } catch (error) {
+                console.error("Failed to fetch invoicing data:", error);
+                toast({ title: "Error", description: "Could not fetch invoicing data.", variant: "destructive" });
+            }
+        });
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const handleDelete = async (id: string) => {
+        try {
+            await deleteSaleById(id);
+            setSales(prev => prev.filter(s => s.id !== id));
+            toast({ title: "Sale Deleted", description: "The sale record has been deleted." });
+        } catch (error) {
+            console.error("Failed to delete sale:", error);
+            toast({ title: "Error", description: "Could not delete the sale record.", variant: "destructive" });
+        }
     }
     
     const handleGenerateBill = (sale: Sales) => {
@@ -129,7 +163,7 @@ export function InvoicingTable() {
                     <FileText className="h-6 w-6"/>
                     <h2 className="text-3xl font-bold tracking-tight font-headline">Invoicing</h2>
                 </div>
-                 <SaleForm />
+                 <SaleForm onSave={fetchData} trigger={<Button><PlusCircle className="mr-2 h-4 w-4"/> Add Sale for Invoice</Button>} />
             </div>
             <Card>
                 <CardContent className="pt-6">
@@ -145,6 +179,11 @@ export function InvoicingTable() {
                         />
                         </div>
                     </div>
+                     {isPending ? (
+                        <div className="flex justify-center items-center h-64">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                     ) : (
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -171,7 +210,7 @@ export function InvoicingTable() {
                                             <Button variant="ghost" size="icon" onClick={() => handleGenerateBill(sale)} title="Generate Bill">
                                                 <FileText className="h-4 w-4" />
                                             </Button>
-                                            <SaleForm saleToEdit={sale} />
+                                            <SaleForm saleToEdit={sale} onSave={fetchData} />
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button variant="ghost" size="icon">
@@ -203,6 +242,7 @@ export function InvoicingTable() {
                             )}
                         </TableBody>
                     </Table>
+                    )}
                 </CardContent>
             </Card>
         </div>

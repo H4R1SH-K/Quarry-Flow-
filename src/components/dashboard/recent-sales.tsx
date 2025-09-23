@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect, useTransition } from 'react';
 import {
   Card,
   CardContent,
@@ -11,12 +12,36 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useDataStore } from "@/lib/data-store";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
+import { getRecentSales, getCustomers } from '@/lib/firebase-service';
+import type { Sales, Customer } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 export function RecentSales() {
-  const { sales, customers } = useDataStore();
+  const [sales, setSales] = useState<Sales[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
 
-  const recentSales = sales.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+  useEffect(() => {
+    startTransition(async () => {
+      try {
+        const [recentSales, customerData] = await Promise.all([
+          getRecentSales(5),
+          getCustomers()
+        ]);
+        setSales(recentSales);
+        setCustomers(customerData);
+      } catch (error) {
+        console.error("Failed to fetch recent sales data:", error);
+        toast({
+          title: "Error",
+          description: "Could not fetch recent sales.",
+          variant: "destructive",
+        });
+      }
+    });
+  }, []);
 
   const getCustomerInitials = (name: string) => {
     const customer = customers.find(c => c.name === name);
@@ -41,7 +66,7 @@ export function RecentSales() {
         <div className="flex items-center justify-between">
             <div>
                 <CardTitle className="font-headline">Recent Invoices</CardTitle>
-                <CardDescription>You have {sales.length} invoices this month.</CardDescription>
+                <CardDescription>Your last 5 invoices from the cloud.</CardDescription>
             </div>
             <Link href="/invoicing" className='text-sm text-primary hover:underline flex items-center'>
               View All <ArrowRight className='h-4 w-4 ml-1'/>
@@ -49,9 +74,13 @@ export function RecentSales() {
         </div>
       </CardHeader>
       <CardContent>
-        {recentSales.length > 0 ? (
+        {isPending ? (
+           <div className="flex justify-center items-center h-48">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+           </div>
+        ) : sales.length > 0 ? (
           <div className="space-y-8">
-            {recentSales.map((sale) => (
+            {sales.map((sale) => (
                 <div className="flex items-center" key={sale.id}>
                   <Avatar className="h-9 w-9">
                     <AvatarFallback>{getCustomerInitials(sale.customer)}</AvatarFallback>

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -24,18 +24,44 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Trash2, Search } from "lucide-react";
-import { useDataStore } from '@/lib/data-store';
+import { Trash2, Search, Loader2 } from "lucide-react";
+import { useToast } from '@/hooks/use-toast';
+import { getSales, deleteSaleById } from '@/lib/firebase-service';
 import type { Sales } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 import { SaleForm } from './sale-form';
 
 export function SalesTable() {
-    const { sales, deleteSale } = useDataStore();
+    const [sales, setSales] = useState<Sales[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isPending, startTransition] = useTransition();
+    const { toast } = useToast();
 
-    const handleDelete = (id: string) => {
-        deleteSale(id);
+    const fetchSales = () => {
+        startTransition(async () => {
+            try {
+                const salesData = await getSales();
+                setSales(salesData);
+            } catch (error) {
+                console.error("Failed to fetch sales:", error);
+                toast({ title: "Error", description: "Could not fetch sales data.", variant: "destructive" });
+            }
+        });
+    };
+
+    useEffect(() => {
+        fetchSales();
+    }, []);
+
+    const handleDelete = async (id: string) => {
+        try {
+            await deleteSaleById(id);
+            setSales(prev => prev.filter(s => s.id !== id));
+            toast({ title: "Sale Deleted", description: "The sale record has been deleted." });
+        } catch (error) {
+            console.error("Failed to delete sale:", error);
+            toast({ title: "Error", description: "Could not delete the sale record.", variant: "destructive" });
+        }
     }
     
     const filteredSales = sales.filter(sale =>
@@ -48,7 +74,7 @@ export function SalesTable() {
        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
             <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold tracking-tight font-headline">Sales</h2>
-                <SaleForm />
+                <SaleForm onSave={fetchSales} />
             </div>
             <Card>
                 <CardContent className="pt-6">
@@ -64,6 +90,11 @@ export function SalesTable() {
                         />
                         </div>
                     </div>
+                    {isPending ? (
+                        <div className="flex justify-center items-center h-64">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                    ) : (
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -87,7 +118,7 @@ export function SalesTable() {
                                         <TableCell>{sale.paymentMethod || 'N/A'}</TableCell>
                                         <TableCell className="text-right">Rs. {sale.price.toLocaleString('en-IN')}</TableCell>
                                         <TableCell className="text-right">
-                                            <SaleForm saleToEdit={sale} />
+                                            <SaleForm saleToEdit={sale} onSave={fetchSales} />
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button variant="ghost" size="icon">
@@ -119,6 +150,7 @@ export function SalesTable() {
                             )}
                         </TableBody>
                     </Table>
+                    )}
                 </CardContent>
             </Card>
         </div>

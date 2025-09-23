@@ -43,7 +43,7 @@ export default async function DashboardPage() {
                 <VehicleSummary />
              </Suspense>
           </div>
-      </div>
+       </div>
     </div>
   );
 }

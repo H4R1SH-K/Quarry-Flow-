@@ -1,3 +1,4 @@
+
 'use client';
 import { getFirebaseApp } from '@/lib/firebase';
 import { 
@@ -13,45 +14,41 @@ import {
   getDoc,
   initializeFirestore,
   persistentLocalCache,
-  memoryLocalCache
+  memoryLocalCache,
+  Firestore
 } from 'firebase/firestore';
 import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from '@/lib/types';
 
-let firestorePromise: Promise<ReturnType<typeof getFirestore>> | null = null;
+let db: Firestore;
 
-const getDb = (): Promise<ReturnType<typeof getFirestore>> => {
-  if (firestorePromise) {
-    return firestorePromise;
+// Singleton pattern to initialize Firestore correctly for client/server
+function getDb(): Firestore {
+  if (!db) {
+    const app = getFirebaseApp();
+    if (!app) {
+      // This is a fallback for environments without Firebase, like unit tests.
+      // It won't have persistence, but it prevents the app from crashing.
+      console.error("Firebase is not configured; using in-memory Firestore instance.");
+      // To prevent crashes, we can't return a promise or throw here in a way that
+      // would break every data-fetching function. We return a non-persistent instance.
+      return initializeFirestore(app || {}, { localCache: memoryLocalCache({}) });
+    }
+    
+    // Initialize with the correct cache for the environment.
+    // This runs only once.
+    db = initializeFirestore(app, {
+      localCache: typeof window !== 'undefined' 
+        ? persistentLocalCache({}) 
+        : memoryLocalCache({})
+    });
   }
-
-  firestorePromise = new Promise((resolve, reject) => {
-    (async () => {
-      try {
-        const app = getFirebaseApp();
-        if (!app) {
-          // This case should be handled by components checking getFirebaseApp() result
-          return reject(new Error("Firebase is not configured."));
-        }
-        
-        const db = initializeFirestore(app, {
-            localCache: (typeof window !== 'undefined') ? persistentLocalCache({}) : memoryLocalCache({}),
-        });
-        
-        resolve(db);
-      } catch (error) {
-        console.error("Failed to initialize Firestore with persistence", error);
-        reject(error);
-      }
-    })();
-  });
-
-  return firestorePromise;
-};
+  return db;
+}
 
 
 // Generic function to get all documents from a collection
 async function getCollection<T>(collectionName: string, recordLimit: number = 50): Promise<T[]> {
-  const db = await getDb();
+  const db = getDb();
   const q = query(collection(db, collectionName), limit(recordLimit));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
@@ -59,14 +56,14 @@ async function getCollection<T>(collectionName: string, recordLimit: number = 50
 
 // Generic function to add or update a document
 async function setDocument<T extends { id: string }>(collectionName: string, item: T): Promise<void> {
-  const db = await getDb();
+  const db = getDb();
   const docRef = doc(db, collectionName, item.id);
   await setDoc(docRef, item, { merge: true });
 }
 
 // Generic function to delete a document
 async function deleteDocument(collectionName: string, id: string): Promise<void> {
-  const db = await getDb();
+  const db = getDb();
   await deleteDoc(doc(db, collectionName, id));
 }
 
@@ -86,7 +83,7 @@ export async function getSales(): Promise<Sales[]> {
     return getCollection<Sales>('sales');
 }
 export async function getRecentSales(count: number = 5): Promise<Sales[]> {
-    const db = await getDb();
+    const db = getDb();
     const salesCollection = collection(db, 'sales');
     const q = query(salesCollection, orderBy('date', 'desc'), limit(count));
     const querySnapshot = await getDocs(q);
@@ -136,7 +133,7 @@ export async function deleteReminderById(id: string): Promise<void> {
 
 // Profile functions
 export async function getProfile(): Promise<Profile | null> {
-    const db = await getDb();
+    const db = getDb();
     const docRef = doc(db, 'profile', 'user_profile');
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
@@ -145,7 +142,7 @@ export async function getProfile(): Promise<Profile | null> {
     return null;
 }
 export async function saveProfile(profile: Profile): Promise<void> {
-    const db = await getDb();
+    const db = getDb();
     const docRef = doc(db, 'profile', 'user_profile');
     await setDoc(docRef, profile);
 }

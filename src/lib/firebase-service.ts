@@ -50,7 +50,7 @@ const getDb = (): Promise<ReturnType<typeof getFirestore>> => {
 
 
 // Generic function to get all documents from a collection
-async function getCollection<T>(collectionName: string, recordLimit: number = 20): Promise<T[]> {
+async function getCollection<T>(collectionName: string, recordLimit: number = 50): Promise<T[]> {
   const db = await getDb();
   const q = query(collection(db, collectionName), limit(recordLimit));
   const querySnapshot = await getDocs(q);
@@ -72,7 +72,7 @@ async function deleteDocument(collectionName: string, id: string): Promise<void>
 
 // Customer functions
 export async function getCustomers(): Promise<Customer[]> {
-  return getCollection<Customer>('customers', 50);
+  return getCollection<Customer>('customers');
 }
 export async function saveCustomer(customer: Customer): Promise<void> {
   return setDocument('customers', customer);
@@ -83,7 +83,7 @@ export async function deleteCustomerById(id: string): Promise<void> {
 
 // Sales functions
 export async function getSales(): Promise<Sales[]> {
-    return getCollection<Sales>('sales', 50);
+    return getCollection<Sales>('sales');
 }
 export async function getRecentSales(count: number = 5): Promise<Sales[]> {
     const db = await getDb();
@@ -102,7 +102,7 @@ export async function deleteSaleById(id: string): Promise<void> {
 
 // Vehicle functions
 export async function getVehicles(): Promise<Vehicle[]> {
-    return getCollection<Vehicle>('vehicles', 50);
+    return getCollection<Vehicle>('vehicles');
 }
 export async function saveVehicle(vehicle: Vehicle): Promise<void> {
     return setDocument('vehicles', vehicle);
@@ -113,7 +113,7 @@ export async function deleteVehicleById(id: string): Promise<void> {
 
 // Expense functions
 export async function getExpenses(): Promise<Expense[]> {
-    return getCollection<Expense>('expenses', 50);
+    return getCollection<Expense>('expenses');
 }
 export async function saveExpense(expense: Expense): Promise<void> {
     return setDocument('expenses', expense);
@@ -125,7 +125,7 @@ export async function deleteExpenseById(id: string): Promise<void> {
 
 // Reminder functions
 export async function getReminders(): Promise<Reminder[]> {
-    return getCollection<Reminder>('reminders', 50);
+    return getCollection<Reminder>('reminders');
 }
 export async function saveReminder(reminder: Reminder): Promise<void> {
     return setDocument('reminders', reminder);

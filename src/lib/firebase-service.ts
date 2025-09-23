@@ -35,7 +35,7 @@ const getDb = (): Promise<ReturnType<typeof getFirestore>> => {
         const db = initializeFirestore(app, {});
 
         if (typeof window !== 'undefined') {
-          await enableIndexedDbPersistence(db).catch((err: any) => {
+          await enableIndexedDbPersistence(db).catch((err) => {
             if (err.code === 'failed-precondition') {
               console.warn('Firestore persistence can only be enabled in one tab at a time.');
             } else if (err.code === 'unimplemented') {

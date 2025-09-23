@@ -3,10 +3,10 @@ import { SalesChart } from '@/components/dashboard/sales-chart';
 import { CostRevenueChart } from '@/components/dashboard/cost-revenue-chart';
 import { Suspense } from 'react';
 import { OverviewStats } from '@/components/dashboard/overview-stats';
-import { TableSkeleton } from '@/components/ui/table-skeleton';
 import { getDashboardData } from '@/lib/server/data';
 import { DashboardCardSkeleton, OverviewStatsSkeleton } from '@/components/dashboard/skeletons';
 import dynamic from 'next/dynamic';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 const ClientOnlyDashboard = dynamic(
   () => import('@/components/dashboard/client-only-dashboard').then(mod => mod.ClientOnlyDashboard),
@@ -23,12 +23,10 @@ const ClientOnlyDashboard = dynamic(
         </div>
       </div>
     ),
+    ssr: false, // This component and its children are client-side only
   }
 );
 
-const SmartReminder = dynamic(() => import('@/components/dashboard/smart-reminder').then(mod => mod.SmartReminder), {
-  loading: () => <DashboardCardSkeleton />,
-});
 
 const VehicleSummary = dynamic(() => import('@/components/dashboard/vehicle-summary').then(mod => mod.VehicleSummary), {
   loading: () => <DashboardCardSkeleton />,
@@ -53,15 +51,19 @@ export default async function DashboardPage() {
           <SalesChart sales={serverData.sales} />
           <CostRevenueChart sales={serverData.sales} expenses={serverData.expenses} />
        </div>
-      <Suspense>
+      
+      <Suspense fallback={<div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+          <div className="lg:col-span-3"><DashboardCardSkeleton /></div>
+          <div className="lg:col-span-4"><DashboardCardSkeleton /></div>
+      </div>}>
         <ClientOnlyDashboard />
       </Suspense>
 
        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
           <div className="lg:col-span-3 grid gap-4">
-            <Suspense fallback={<DashboardCardSkeleton />}>
-              <SmartReminder />
-            </Suspense>
+             <Suspense fallback={<DashboardCardSkeleton />}>
+                <ClientOnlyDashboard section="smart-reminder"/>
+             </Suspense>
           </div>
           <div className="lg:col-span-4">
              <Suspense fallback={<TableSkeleton />}>

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import dynamic from 'next/dynamic';
@@ -24,7 +23,19 @@ const ClientDashboardComponents = dynamic(
     }
 );
 
+const SmartReminder = dynamic(() => import('@/components/dashboard/smart-reminder').then(mod => mod.SmartReminder), {
+  loading: () => <DashboardCardSkeleton />,
+  ssr: false,
+});
 
-export function ClientOnlyDashboard() {
-    return <ClientDashboardComponents />
+
+interface ClientOnlyDashboardProps {
+  section?: 'main' | 'smart-reminder';
+}
+
+export function ClientOnlyDashboard({ section = 'main' }: ClientOnlyDashboardProps) {
+  if (section === 'smart-reminder') {
+    return <SmartReminder />;
+  }
+  return <ClientDashboardComponents />
 }

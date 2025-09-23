@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -41,7 +42,7 @@ function SubmitButton() {
   );
 }
 
-export function SmartReminder() {
+export default function SmartReminder() {
   const [state, formAction] = useActionState(createSmartReminder, initialState);
   const { reminders, addReminder, updateReminder } = useDataStore();
   const formRef = React.useRef<HTMLFormElement>(null);

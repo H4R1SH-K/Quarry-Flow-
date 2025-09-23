@@ -8,22 +8,36 @@ import {
   getDocs, 
   doc, 
   setDoc, 
-  deleteDoc, 
-  writeBatch,
+  deleteDoc,
   query,
-  where,
   limit,
   orderBy,
-  getDoc
+  getDoc,
+  enableIndexedDbPersistence,
 } from 'firebase/firestore';
 import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from './types';
+
+let persistenceEnabled = false;
 
 const getDb = () => {
     const app = getFirebaseApp();
     if (!app) {
         throw new Error("Firebase is not configured. Please add your Firebase configuration to enable cloud features.");
     }
-    return getFirestore(app);
+    const db = getFirestore(app);
+    if (!persistenceEnabled) {
+      try {
+        enableIndexedDbPersistence(db);
+        persistenceEnabled = true;
+      } catch (err: any) {
+        if (err.code === 'failed-precondition') {
+          console.warn('Firestore persistence can only be enabled in one tab at a time.');
+        } else if (err.code === 'unimplemented') {
+          console.warn('The current browser does not support all of the features required to enable persistence.');
+        }
+      }
+    }
+    return db;
 }
 
 // Generic function to get all documents from a collection
@@ -124,5 +138,6 @@ export async function getProfile(): Promise<Profile | null> {
 export async function saveProfile(profile: Profile): Promise<void> {
     return setDocument('profile', { id: 'user_profile', ...profile });
 }
+
 
 

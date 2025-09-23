@@ -1,4 +1,3 @@
-
 'use client';
 import { getFirebaseApp } from '@/lib/firebase';
 import { 
@@ -15,7 +14,7 @@ import {
   enableIndexedDbPersistence,
   initializeFirestore,
 } from 'firebase/firestore';
-import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from './types';
+import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from '@/lib/types';
 
 let firestorePromise: Promise<ReturnType<typeof getFirestore>> | null = null;
 
@@ -31,10 +30,8 @@ const getDb = (): Promise<ReturnType<typeof getFirestore>> => {
         throw new Error("Firebase is not configured. Please add your Firebase configuration to enable cloud features.");
       }
       
-      // Use initializeFirestore to enable persistence settings.
       const db = initializeFirestore(app, {});
 
-      // This is a browser-only feature
       if (typeof window !== 'undefined') {
         try {
           await enableIndexedDbPersistence(db);

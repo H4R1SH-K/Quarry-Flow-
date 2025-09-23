@@ -2,6 +2,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 
@@ -9,7 +10,6 @@ const ExpenseReport = dynamic(
   () => import('@/components/reports/expense-report').then((mod) => mod.ExpenseReport),
   { 
     ssr: false,
-    loading: () => <TableSkeleton />
   }
 );
 
@@ -20,7 +20,9 @@ export default function ReportsPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline">Reports</h2>
       </div>
       <div className="grid grid-cols-1 gap-4">
-        <ExpenseReport />
+        <Suspense fallback={<TableSkeleton />}>
+          <ExpenseReport />
+        </Suspense>
       </div>
     </div>
   );

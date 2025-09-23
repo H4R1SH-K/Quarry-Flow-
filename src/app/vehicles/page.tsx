@@ -2,18 +2,20 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 const VehicleTable = dynamic(
   () => import('@/components/vehicles/vehicle-table').then((mod) => mod.VehicleTable),
   { 
-    loading: () => <TableSkeleton />,
     ssr: false,
   }
 );
 
 export default function VehiclesPage() {
   return (
-    <VehicleTable />
+    <Suspense fallback={<TableSkeleton />}>
+      <VehicleTable />
+    </Suspense>
   );
 }

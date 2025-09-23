@@ -2,18 +2,20 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 const ExpenseTable = dynamic(
   () => import('@/components/expenses/expense-table').then((mod) => mod.ExpenseTable),
   { 
-    loading: () => <TableSkeleton />,
     ssr: false,
   }
 );
 
 export default function ExpensesPage() {
   return (
-    <ExpenseTable />
+    <Suspense fallback={<TableSkeleton />}>
+      <ExpenseTable />
+    </Suspense>
   );
 }

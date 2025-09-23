@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { initialState as sampleData } from '@/lib/sample-data';
 
-interface DataState {
+export interface DataState {
   sales: Sales[];
   customers: Customer[];
   vehicles: Vehicle[];

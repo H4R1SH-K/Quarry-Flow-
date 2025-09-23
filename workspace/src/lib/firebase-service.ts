@@ -1,0 +1,159 @@
+'use client';
+import { getFirebaseApp } from '@/lib/firebase';
+import { 
+  getFirestore, 
+  collection, 
+  getDocs, 
+  doc, 
+  setDoc, 
+  deleteDoc,
+  query,
+  limit,
+  orderBy,
+  getDoc,
+  enableIndexedDbPersistence,
+  initializeFirestore,
+} from 'firebase/firestore';
+import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from './types';
+
+let firestorePromise: Promise<ReturnType<typeof getFirestore>> | null = null;
+
+const getDb = (): Promise<ReturnType<typeof getFirestore>> => {
+  if (firestorePromise) {
+    return firestorePromise;
+  }
+
+  firestorePromise = new Promise(async (resolve, reject) => {
+    try {
+      const app = getFirebaseApp();
+      if (!app) {
+        throw new Error("Firebase is not configured. Please add your Firebase configuration to enable cloud features.");
+      }
+      
+      // Use initializeFirestore to enable persistence settings.
+      const db = initializeFirestore(app, {});
+
+      // This is a browser-only feature
+      if (typeof window !== 'undefined') {
+        try {
+          await enableIndexedDbPersistence(db);
+        } catch (err: any) {
+          if (err.code === 'failed-precondition') {
+            console.warn('Firestore persistence can only be enabled in one tab at a time.');
+          } else if (err.code === 'unimplemented') {
+            console.warn('The current browser does not support all of the features required to enable persistence.');
+          }
+        }
+      }
+      resolve(db);
+    } catch (error) {
+      console.error("Failed to initialize Firestore with persistence", error);
+      reject(error);
+    }
+  });
+
+  return firestorePromise;
+};
+
+
+// Generic function to get all documents from a collection
+async function getCollection<T>(collectionName: string): Promise<T[]> {
+  const db = await getDb();
+  const q = collection(db, collectionName);
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+}
+
+// Generic function to add or update a document
+async function setDocument<T extends { id: string }>(collectionName: string, item: T): Promise<void> {
+  const db = await getDb();
+  const docRef = doc(db, collectionName, item.id);
+  await setDoc(docRef, item, { merge: true });
+}
+
+// Generic function to delete a document
+async function deleteDocument(collectionName: string, id: string): Promise<void> {
+  const db = await getDb();
+  await deleteDoc(doc(db, collectionName, id));
+}
+
+// Customer functions
+export async function getCustomers(): Promise<Customer[]> {
+  return getCollection<Customer>('customers');
+}
+export async function saveCustomer(customer: Customer): Promise<void> {
+  return setDocument('customers', customer);
+}
+export async function deleteCustomerById(id: string): Promise<void> {
+  return deleteDocument('customers', id);
+}
+
+// Sales functions
+export async function getSales(): Promise<Sales[]> {
+    return getCollection<Sales>('sales');
+}
+export async function getRecentSales(count: number = 5): Promise<Sales[]> {
+    const db = await getDb();
+    const salesCollection = collection(db, 'sales');
+    const q = query(salesCollection, orderBy('date', 'desc'), limit(count));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sales));
+};
+export async function saveSale(sale: Sales): Promise<void> {
+    return setDocument('sales', sale);
+}
+export async function deleteSaleById(id: string): Promise<void> {
+    return deleteDocument('sales', id);
+}
+
+
+// Vehicle functions
+export async function getVehicles(): Promise<Vehicle[]> {
+    return getCollection<Vehicle>('vehicles');
+}
+export async function saveVehicle(vehicle: Vehicle): Promise<void> {
+    return setDocument('vehicles', vehicle);
+}
+export async function deleteVehicleById(id: string): Promise<void> {
+    return deleteDocument('vehicles', id);
+}
+
+// Expense functions
+export async function getExpenses(): Promise<Expense[]> {
+    return getCollection<Expense>('expenses');
+}
+export async function saveExpense(expense: Expense): Promise<void> {
+    return setDocument('expenses', expense);
+}
+export async function deleteExpenseById(id: string): Promise<void> {
+    return deleteDocument('expenses', id);
+}
+
+
+// Reminder functions
+export async function getReminders(): Promise<Reminder[]> {
+    return getCollection<Reminder>('reminders');
+}
+export async function saveReminder(reminder: Reminder): Promise<void> {
+    return setDocument('reminders', reminder);
+}
+export async function deleteReminderById(id: string): Promise<void> {
+    return deleteDocument('reminders', id);
+}
+
+// Profile functions
+export async function getProfile(): Promise<Profile | null> {
+    const db = await getDb();
+    const docRef = doc(db, 'profile', 'user_profile');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as Profile;
+    }
+    return null;
+}
+export async function saveProfile(profile: Profile): Promise<void> {
+    const db = await getDb();
+    const docRef = doc(db, 'profile', 'user_profile');
+    // Using setDoc with id in payload is not standard; we specify ID in doc()
+    await setDoc(docRef, profile);
+}

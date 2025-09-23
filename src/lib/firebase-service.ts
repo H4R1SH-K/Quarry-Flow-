@@ -1,3 +1,5 @@
+
+'use client';
 import { getFirebaseApp } from '@/lib/firebase';
 import { 
   getFirestore, 
@@ -29,6 +31,7 @@ const getDb = (): Promise<ReturnType<typeof getFirestore>> => {
         throw new Error("Firebase is not configured. Please add your Firebase configuration to enable cloud features.");
       }
       
+      // Use initializeFirestore to enable persistence settings.
       const db = initializeFirestore(app, {});
 
       // This is a browser-only feature
@@ -45,6 +48,7 @@ const getDb = (): Promise<ReturnType<typeof getFirestore>> => {
       }
       resolve(db);
     } catch (error) {
+      console.error("Failed to initialize Firestore with persistence", error);
       reject(error);
     }
   });
@@ -149,5 +153,8 @@ export async function getProfile(): Promise<Profile | null> {
     return null;
 }
 export async function saveProfile(profile: Profile): Promise<void> {
-    return setDocument('profile', { id: 'user_profile', ...profile });
+    const db = await getDb();
+    const docRef = doc(db, 'profile', 'user_profile');
+    // Using setDoc with id in payload is not standard; we specify ID in doc()
+    await setDoc(docRef, profile);
 }

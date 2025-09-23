@@ -17,7 +17,7 @@ import { User, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Profile } from '@/lib/types';
 import { getProfile, saveProfile } from '@/lib/firebase-service';
-import { Skeleton } from '../ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProfilePage() {
   const { toast } = useToast();

@@ -11,8 +11,9 @@ import {
   limit,
   orderBy,
   getDoc,
-  enableIndexedDbPersistence,
   initializeFirestore,
+  persistentLocalCache,
+  memoryLocalCache
 } from 'firebase/firestore';
 import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from '@/lib/types';
 
@@ -32,18 +33,10 @@ const getDb = (): Promise<ReturnType<typeof getFirestore>> => {
           return reject(new Error("Firebase is not configured."));
         }
         
-        const db = initializeFirestore(app, {});
-
-        if (typeof window !== 'undefined') {
-          // Enable persistence only on the client
-          await enableIndexedDbPersistence(db).catch((err) => {
-            if (err.code === 'failed-precondition') {
-              console.warn('Firestore persistence can only be enabled in one tab at a time.');
-            } else if (err.code === 'unimplemented') {
-              console.warn('The current browser does not support all of the features required to enable persistence.');
-            }
-          });
-        }
+        const db = initializeFirestore(app, {
+            localCache: (typeof window !== 'undefined') ? persistentLocalCache({}) : memoryLocalCache({}),
+        });
+        
         resolve(db);
       } catch (error) {
         console.error("Failed to initialize Firestore with persistence", error);
@@ -57,9 +50,9 @@ const getDb = (): Promise<ReturnType<typeof getFirestore>> => {
 
 
 // Generic function to get all documents from a collection
-async function getCollection<T>(collectionName: string): Promise<T[]> {
+async function getCollection<T>(collectionName: string, recordLimit: number = 20): Promise<T[]> {
   const db = await getDb();
-  const q = collection(db, collectionName);
+  const q = query(collection(db, collectionName), limit(recordLimit));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
 }
@@ -79,7 +72,7 @@ async function deleteDocument(collectionName: string, id: string): Promise<void>
 
 // Customer functions
 export async function getCustomers(): Promise<Customer[]> {
-  return getCollection<Customer>('customers');
+  return getCollection<Customer>('customers', 50);
 }
 export async function saveCustomer(customer: Customer): Promise<void> {
   return setDocument('customers', customer);
@@ -90,7 +83,7 @@ export async function deleteCustomerById(id: string): Promise<void> {
 
 // Sales functions
 export async function getSales(): Promise<Sales[]> {
-    return getCollection<Sales>('sales');
+    return getCollection<Sales>('sales', 50);
 }
 export async function getRecentSales(count: number = 5): Promise<Sales[]> {
     const db = await getDb();
@@ -109,7 +102,7 @@ export async function deleteSaleById(id: string): Promise<void> {
 
 // Vehicle functions
 export async function getVehicles(): Promise<Vehicle[]> {
-    return getCollection<Vehicle>('vehicles');
+    return getCollection<Vehicle>('vehicles', 50);
 }
 export async function saveVehicle(vehicle: Vehicle): Promise<void> {
     return setDocument('vehicles', vehicle);
@@ -120,7 +113,7 @@ export async function deleteVehicleById(id: string): Promise<void> {
 
 // Expense functions
 export async function getExpenses(): Promise<Expense[]> {
-    return getCollection<Expense>('expenses');
+    return getCollection<Expense>('expenses', 50);
 }
 export async function saveExpense(expense: Expense): Promise<void> {
     return setDocument('expenses', expense);
@@ -132,7 +125,7 @@ export async function deleteExpenseById(id: string): Promise<void> {
 
 // Reminder functions
 export async function getReminders(): Promise<Reminder[]> {
-    return getCollection<Reminder>('reminders');
+    return getCollection<Reminder>('reminders', 50);
 }
 export async function saveReminder(reminder: Reminder): Promise<void> {
     return setDocument('reminders', reminder);

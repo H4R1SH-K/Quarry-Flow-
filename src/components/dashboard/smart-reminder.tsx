@@ -1,14 +1,12 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useTransition } from 'react';
 import { useFormStatus } from 'react-dom';
-import { useActionState } from 'react';
-import { createSmartReminder, type FormState } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Bell, Sparkles, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Bell, Sparkles, AlertCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Separator } from '../ui/separator';
@@ -28,10 +26,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import type { Reminder } from '@/lib/types';
 import Link from 'next/link';
 
-const initialState: FormState = {
-  message: '',
-};
-
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -43,10 +37,13 @@ function SubmitButton() {
 }
 
 export default function SmartReminder() {
-  const [state, formAction] = useActionState(createSmartReminder, initialState);
   const { reminders, addReminder, updateReminder } = useDataStore();
   const formRef = React.useRef<HTMLFormElement>(null);
   
+  const [isPending, startTransition] = useTransition();
+  const [state, setState] = useState<{ message: string; success?: boolean; data?: any; }>({ message: '' });
+  const [prompt, setPrompt] = useState('');
+
   const [open, setOpen] = React.useState(false);
   const [editingReminder, setEditingReminder] = React.useState<Reminder | null>(null);
 
@@ -57,17 +54,35 @@ export default function SmartReminder() {
   const [relatedTo, setRelatedTo] = React.useState<string | undefined>(undefined);
   const [relatedToName, setRelatedToName] = React.useState('');
 
-  React.useEffect(() => {
-    if (state.success && state.data && state.data.type !== 'Credit') {
-      formRef.current?.reset();
-      setType(state.data.type as "Vehicle Permit" | "Insurance" || "Vehicle Permit");
-      setDetails(state.data.details || '');
-      setDueDate(state.data.dueDate || '');
-      setRelatedToName(state.data.relatedToName || '');
-      setOpen(true);
-    }
-  }, [state]);
-  
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    startTransition(async () => {
+      try {
+        const response = await fetch('/api/smart-reminder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt }),
+        });
+        const result = await response.json();
+        
+        setState(result);
+
+        if (result.success && result.data && result.data.type !== 'Credit') {
+          formRef.current?.reset();
+          setPrompt('');
+          setType(result.data.type as "Vehicle Permit" | "Insurance" || "Vehicle Permit");
+          setDetails(result.data.details || '');
+          setDueDate(result.data.dueDate || '');
+          setRelatedToName(result.data.relatedToName || '');
+          setOpen(true);
+        }
+      } catch (error) {
+        console.error(error);
+        setState({ success: false, message: 'An unexpected error occurred. Please try again.' });
+      }
+    });
+  }
+
   React.useEffect(() => {
     if (editingReminder) {
       setType(editingReminder.type as "Vehicle Permit" | "Insurance");
@@ -161,10 +176,12 @@ export default function SmartReminder() {
            )}
         </div>
 
-        <form action={formAction} ref={formRef} className="space-y-4 mt-auto">
+        <form onSubmit={handleFormSubmit} ref={formRef} className="space-y-4 mt-auto">
           <div>
             <Textarea
               name="prompt"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
               placeholder="e.g., 'Remind me to renew insurance for TN 01 AB 1234, expiring on Dec 15, 2024'"
               className="min-h-[80px]"
             />
@@ -173,13 +190,16 @@ export default function SmartReminder() {
              <div className="flex-grow w-full">
               {state.message && !state.success && (
                 <Alert variant={state.success ? 'default' : 'destructive'} className={cn(state.success ? 'border-green-500/50 text-green-700' : '')}>
-                  {state.success ? <CheckCircle2 className="h-4 w-4"/> : <AlertCircle className="h-4 w-4" />}
-                  <AlertTitle className="font-semibold">{state.success ? 'Success' : 'Error'}</AlertTitle>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle className="font-semibold">Error</AlertTitle>
                   <AlertDescription>{state.message}</AlertDescription>
                 </Alert>
               )}
             </div>
-            <SubmitButton />
+             <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+              {isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...</> : 'Create Smart Reminder'}
+              {!isPending && <Sparkles className="ml-2 h-4 w-4" />}
+            </Button>
           </div>
         </form>
          <Dialog open={open} onOpenChange={handleOpenChange}>

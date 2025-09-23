@@ -14,20 +14,32 @@ import {
   orderBy,
   getDoc,
   enableIndexedDbPersistence,
+  initializeFirestore,
+  onSnapshot,
 } from 'firebase/firestore';
 import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from './types';
 
 let persistenceEnabled = false;
 
-const getDb = () => {
+// We need a stable reference to the db, so we initialize it once.
+let db: ReturnType<typeof getFirestore>;
+
+const getDb = async () => {
+    if (db) {
+        return db;
+    }
+
     const app = getFirebaseApp();
     if (!app) {
         throw new Error("Firebase is not configured. Please add your Firebase configuration to enable cloud features.");
     }
-    const db = getFirestore(app);
-    if (!persistenceEnabled) {
+    
+    // Pass the app instance to getFirestore
+    const firestoreInstance = initializeFirestore(app, {});
+
+    if (typeof window !== 'undefined' && !persistenceEnabled) {
       try {
-        enableIndexedDbPersistence(db);
+        await enableIndexedDbPersistence(firestoreInstance);
         persistenceEnabled = true;
       } catch (err: any) {
         if (err.code === 'failed-precondition') {
@@ -37,12 +49,14 @@ const getDb = () => {
         }
       }
     }
+    db = firestoreInstance;
     return db;
 }
 
+
 // Generic function to get all documents from a collection
 async function getCollection<T>(collectionName: string): Promise<T[]> {
-  const db = getDb();
+  const db = await getDb();
   const q = collection(db, collectionName);
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
@@ -50,14 +64,14 @@ async function getCollection<T>(collectionName: string): Promise<T[]> {
 
 // Generic function to add or update a document
 async function setDocument<T extends { id: string }>(collectionName: string, item: T): Promise<void> {
-  const db = getDb();
+  const db = await getDb();
   const docRef = doc(db, collectionName, item.id);
   await setDoc(docRef, item, { merge: true });
 }
 
 // Generic function to delete a document
 async function deleteDocument(collectionName: string, id: string): Promise<void> {
-  const db = getDb();
+  const db = await getDb();
   await deleteDoc(doc(db, collectionName, id));
 }
 
@@ -77,7 +91,7 @@ export async function getSales(): Promise<Sales[]> {
     return getCollection<Sales>('sales');
 }
 export async function getRecentSales(count: number = 5): Promise<Sales[]> {
-    const db = getDb();
+    const db = await getDb();
     const salesCollection = collection(db, 'sales');
     const q = query(salesCollection, orderBy('date', 'desc'), limit(count));
     const querySnapshot = await getDocs(q);
@@ -127,7 +141,7 @@ export async function deleteReminderById(id: string): Promise<void> {
 
 // Profile functions
 export async function getProfile(): Promise<Profile | null> {
-    const db = getDb();
+    const db = await getDb();
     const docRef = doc(db, 'profile', 'user_profile');
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
@@ -138,6 +152,3 @@ export async function getProfile(): Promise<Profile | null> {
 export async function saveProfile(profile: Profile): Promise<void> {
     return setDocument('profile', { id: 'user_profile', ...profile });
 }
-
-
-

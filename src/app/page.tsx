@@ -14,7 +14,6 @@ const VehicleSummary = dynamic(() => import('@/components/dashboard/vehicle-summ
   loading: () => <DashboardCardSkeleton />,
 });
 
-
 // This is a server component that fetches initial data.
 export default async function DashboardPage() {
   const serverData = await getDashboardData();
@@ -39,11 +38,6 @@ export default async function DashboardPage() {
       </Suspense>
 
        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
-          <div className="lg:col-span-3 grid gap-4">
-             <Suspense fallback={<DashboardCardSkeleton />}>
-                <ClientOnlyDashboard section="smart-reminder"/>
-             </Suspense>
-          </div>
           <div className="lg:col-span-4">
              <Suspense fallback={<DashboardCardSkeleton />}>
                 <VehicleSummary />

@@ -23,19 +23,6 @@ const ClientDashboardComponents = dynamic(
     }
 );
 
-const SmartReminder = dynamic(() => import('@/components/dashboard/smart-reminder'), {
-  loading: () => <DashboardCardSkeleton />,
-  ssr: false,
-});
-
-
-interface ClientOnlyDashboardProps {
-  section?: 'main' | 'smart-reminder';
-}
-
-export function ClientOnlyDashboard({ section = 'main' }: ClientOnlyDashboardProps) {
-  if (section === 'smart-reminder') {
-    return <SmartReminder />;
-  }
+export function ClientOnlyDashboard() {
   return <ClientDashboardComponents />
 }

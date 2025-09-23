@@ -30,10 +30,12 @@ import { format, isValid } from 'date-fns';
 import { ExpenseForm } from './expense-form';
 import { getExpenses, deleteExpenseById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export function ExpenseTable() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
@@ -65,9 +67,9 @@ export function ExpenseTable() {
   }
 
   const filteredExpenses = expenses.filter(expense =>
-    expense.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    expense.item.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (expense.vehicle && expense.vehicle.toLowerCase().includes(searchTerm.toLowerCase()))
+    expense.category.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    expense.item.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    (expense.vehicle && expense.vehicle.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
   );
 
   return (

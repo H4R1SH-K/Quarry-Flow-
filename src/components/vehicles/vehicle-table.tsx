@@ -30,6 +30,7 @@ import type { Vehicle } from '@/lib/types';
 import { VehicleForm } from './vehicle-form';
 import { getVehicles, deleteVehicleById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
 
 type VehicleStatus = "Active" | "Maintenance" | "Inactive";
 
@@ -37,6 +38,7 @@ export function VehicleTable() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [filter, setFilter] = useState<VehicleStatus | 'All'>('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   
@@ -90,9 +92,9 @@ export function VehicleTable() {
   });
 
   const filteredVehicles = baseVehicles.filter(vehicle =>
-    vehicle.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    vehicle.make.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    vehicle.model.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    vehicle.vehicleNumber.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
   );
 
   const FilterButton = ({

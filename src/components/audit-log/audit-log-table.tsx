@@ -26,6 +26,7 @@ import { Input } from '../ui/input';
 // However, the data store will be modified, so we will use state for now.
 // In the future, this would also fetch from `getAuditLogs`.
 import { useDataStore } from '@/lib/data-store';
+import { useDebounce } from '@/hooks/use-debounce';
 
 
 export function AuditLogTable() {
@@ -33,6 +34,7 @@ export function AuditLogTable() {
   // const [isPending, startTransition] = useTransition();
   const { auditLogs } = useDataStore(); // Continue using store for now as it's not a large dataset
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Example for future implementation with Firebase
   // useEffect(() => {
@@ -69,9 +71,9 @@ export function AuditLogTable() {
   }
 
   const filteredLogs = auditLogs.filter(log => 
-    log.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.entity.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.userName.toLowerCase().includes(searchTerm.toLowerCase())
+    log.details.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    log.entity.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    log.userName.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
   );
 
   return (

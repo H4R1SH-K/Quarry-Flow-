@@ -31,10 +31,12 @@ import { differenceInDays, format, isValid } from 'date-fns';
 import { CollectionForm } from './collection-form';
 import { getReminders, deleteReminderById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export function CollectionsTable() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   
@@ -77,8 +79,8 @@ export function CollectionsTable() {
   }
 
   const filteredCollections = collections.filter(reminder => 
-    reminder.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (reminder.relatedToName && reminder.relatedToName.toLowerCase().includes(searchTerm.toLowerCase()))
+    reminder.details.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    (reminder.relatedToName && reminder.relatedToName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
   );
 
   return (

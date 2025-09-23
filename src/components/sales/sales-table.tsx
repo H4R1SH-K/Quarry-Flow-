@@ -30,10 +30,12 @@ import { getSales, deleteSaleById } from '@/lib/firebase-service';
 import type { Sales } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 import { SaleForm } from '@/components/invoicing/sale-form';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export function SalesTable() {
     const [sales, setSales] = useState<Sales[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
 
@@ -65,9 +67,9 @@ export function SalesTable() {
     }
     
     const filteredSales = sales.filter(sale =>
-        sale.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sale.vehicle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (sale.paymentMethod && sale.paymentMethod.toLowerCase().includes(searchTerm.toLowerCase()))
+        sale.customer.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        sale.vehicle.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        (sale.paymentMethod && sale.paymentMethod.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
     );
 
     return (

@@ -32,12 +32,14 @@ import 'jspdf-autotable';
 import { SaleForm } from './sale-form';
 import { getSales, getCustomers, getProfile, deleteSaleById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export function InvoicingTable() {
     const [sales, setSales] = useState<Sales[]>([]);
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
 
@@ -151,9 +153,9 @@ export function InvoicingTable() {
     };
 
     const filteredSales = sales.filter(sale =>
-        sale.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sale.vehicle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (sale.paymentMethod && sale.paymentMethod.toLowerCase().includes(searchTerm.toLowerCase()))
+        sale.customer.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        sale.vehicle.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        (sale.paymentMethod && sale.paymentMethod.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
     );
 
     return (

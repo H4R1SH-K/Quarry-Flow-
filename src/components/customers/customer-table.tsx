@@ -30,10 +30,12 @@ import type { Customer } from '@/lib/types';
 import { CustomerForm } from './customer-form';
 import { getCustomers, deleteCustomerById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export function CustomerTable() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
@@ -76,11 +78,11 @@ export function CustomerTable() {
   }
 
   const filteredCustomers = customers.filter(customer => 
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.address.toLowerCase().includes(searchTerm.toLowerCase())
+    customer.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    customer.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    customer.phone.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    customer.company.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    customer.address.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
   );
 
   return (

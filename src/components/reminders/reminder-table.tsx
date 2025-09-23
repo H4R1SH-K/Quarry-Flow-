@@ -31,10 +31,12 @@ import { differenceInDays, format, isValid } from 'date-fns';
 import { ReminderForm } from './reminder-form';
 import { getReminders, deleteReminderById, saveReminder } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export function ReminderTable() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
@@ -81,8 +83,8 @@ export function ReminderTable() {
   }
 
   const filteredReminders = allReminders.filter(reminder => 
-    reminder.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (reminder.relatedToName && reminder.relatedToName.toLowerCase().includes(searchTerm.toLowerCase()))
+    reminder.details.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    (reminder.relatedToName && reminder.relatedToName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
   );
 
   return (

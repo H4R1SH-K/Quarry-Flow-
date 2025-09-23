@@ -2,7 +2,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Suspense } from 'react';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 const ReminderTable = dynamic(
@@ -14,9 +13,5 @@ const ReminderTable = dynamic(
 );
 
 export default function RemindersPage() {
-  return (
-    <Suspense fallback={<TableSkeleton />}>
-      <ReminderTable />
-    </Suspense>
-  );
+  return <ReminderTable />;
 }

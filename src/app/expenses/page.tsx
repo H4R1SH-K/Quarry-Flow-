@@ -2,7 +2,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Suspense } from 'react';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 const ExpenseTable = dynamic(
@@ -14,9 +13,5 @@ const ExpenseTable = dynamic(
 );
 
 export default function ExpensesPage() {
-  return (
-    <Suspense fallback={<TableSkeleton />}>
-      <ExpenseTable />
-    </Suspense>
-  );
+  return <ExpenseTable />;
 }

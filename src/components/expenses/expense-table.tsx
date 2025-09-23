@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -24,18 +24,44 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Trash2, Search } from "lucide-react";
+import { Trash2, Search, Loader2 } from "lucide-react";
 import type { Expense } from '@/lib/types';
-import { useDataStore } from '@/lib/data-store';
 import { format, isValid } from 'date-fns';
 import { ExpenseForm } from './expense-form';
+import { getExpenses, deleteExpenseById } from '@/lib/firebase-service';
+import { useToast } from '@/hooks/use-toast';
 
 export function ExpenseTable() {
-  const { expenses, deleteExpense } = useDataStore();
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
 
-  const handleDelete = (id: string) => {
-    deleteExpense(id);
+  const fetchExpenses = () => {
+    startTransition(async () => {
+      try {
+        const expensesData = await getExpenses();
+        setExpenses(expensesData);
+      } catch (error) {
+        console.error("Failed to fetch expenses:", error);
+        toast({ title: "Error", description: "Could not fetch expenses.", variant: "destructive" });
+      }
+    });
+  };
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteExpenseById(id);
+      setExpenses(prev => prev.filter(e => e.id !== id));
+      toast({ title: "Expense Deleted", description: "The expense record has been deleted." });
+    } catch (error) {
+      console.error("Failed to delete expense:", error);
+      toast({ title: "Error", description: "Could not delete the expense record.", variant: "destructive" });
+    }
   }
 
   const filteredExpenses = expenses.filter(expense =>
@@ -48,7 +74,7 @@ export function ExpenseTable() {
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
        <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Expenses</h2>
-        <ExpenseForm />
+        <ExpenseForm onSave={fetchExpenses} />
       </div>
       <Card>
         <CardContent className="pt-6">
@@ -64,6 +90,11 @@ export function ExpenseTable() {
               />
             </div>
           </div>
+          {isPending ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -86,7 +117,7 @@ export function ExpenseTable() {
                       <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
                       <TableCell>{expense.date && isValid(new Date(expense.date)) ? format(new Date(expense.date), 'PPP') : 'N/A'}</TableCell>
                       <TableCell className="text-right">
-                        <ExpenseForm expenseToEdit={expense} />
+                        <ExpenseForm expenseToEdit={expense} onSave={fetchExpenses} />
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -119,6 +150,7 @@ export function ExpenseTable() {
               )}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
     </div>

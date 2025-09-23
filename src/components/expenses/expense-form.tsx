@@ -14,17 +14,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useDataStore } from '@/lib/data-store';
 import type { Expense } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+import { saveExpense } from '@/lib/firebase-service';
 import { PlusCircle, Pencil } from 'lucide-react';
 
 
 interface ExpenseFormProps {
     expenseToEdit?: Expense;
+    onSave?: () => void;
 }
 
-export function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
-  const { addExpense, updateExpense } = useDataStore();
+export function ExpenseForm({ expenseToEdit, onSave }: ExpenseFormProps) {
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   
   const [category, setCategory] = useState('');
@@ -53,29 +55,33 @@ export function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
     setVehicle('');
   };
 
-  const handleSave = () => {
-    if (expenseToEdit) {
-      const updatedExpense: Expense = {
-        ...expenseToEdit,
-        category,
-        item,
-        amount: Number(amount),
-        date,
-        vehicle,
-      };
-      updateExpense(updatedExpense);
-    } else {
-      const newExpense: Expense = {
-        id: String(Date.now()),
-        category,
-        item,
-        amount: Number(amount),
-        date,
-        vehicle,
-      };
-      addExpense(newExpense);
+  const handleSave = async () => {
+    const id = expenseToEdit ? expenseToEdit.id : String(Date.now());
+    const expenseData: Expense = {
+      id,
+      category,
+      item,
+      amount: Number(amount),
+      date,
+      vehicle,
+    };
+    
+    try {
+      await saveExpense(expenseData);
+      toast({
+        title: expenseToEdit ? 'Expense Updated' : 'Expense Added',
+        description: `Expense "${item}" has been saved.`,
+      });
+      onSave?.();
+      setIsOpen(false);
+    } catch (error) {
+       console.error("Failed to save expense:", error);
+       toast({
+         title: 'Error',
+         description: 'Could not save the expense.',
+         variant: 'destructive',
+       });
     }
-    setIsOpen(false);
   };
   
   const triggerButton = expenseToEdit ? (

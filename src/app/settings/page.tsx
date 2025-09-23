@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Upload, Cloud, LogIn, LogOut, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Separator } from '@/components/ui/separator';
 import { importToFirestore } from '@/app/settings/actions';
 import { getFirebaseApp } from '@/lib/firebase';
 import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User } from 'firebase/auth';
@@ -98,33 +97,38 @@ export default function SettingsPage() {
                 toast({ title: "Error", description: "Could not read the file.", variant: "destructive" });
                 return;
             }
-            const data = JSON.parse(text);
+            try {
+                const data = JSON.parse(text);
 
-            if (importMode.current === 'import_cloud') {
-                if (!user) {
-                    toast({ title: 'Authentication Required', description: 'Please sign in to import to the cloud.', variant: 'destructive'});
-                    return;
-                }
-                startTransition(async () => {
-                    const result = await importToFirestore(data);
-                    if (result.success) {
-                        toast({
-                            title: "Cloud Import Successful",
-                            description: result.message,
-                        });
-                    } else {
-                         toast({
-                            title: "Cloud Import Failed",
-                            description: result.message,
-                            variant: "destructive",
-                        });
+                if (importMode.current === 'import_cloud') {
+                    if (!user) {
+                        toast({ title: 'Authentication Required', description: 'Please sign in to import to the cloud.', variant: 'destructive'});
+                        return;
                     }
-                });
+                    startTransition(async () => {
+                        const result = await importToFirestore(data);
+                        if (result.success) {
+                            toast({
+                                title: "Cloud Import Successful",
+                                description: result.message,
+                            });
+                        } else {
+                             toast({
+                                title: "Cloud Import Failed",
+                                description: result.message,
+                                variant: "destructive",
+                            });
+                        }
+                    });
+                }
+            } catch (error) {
+                toast({ title: "Invalid File", description: "The selected file is not a valid JSON file.", variant: "destructive" });
+            } finally {
+                if(fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+                importMode.current = null;
             }
-            if(fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
-            importMode.current = null;
         };
         reader.readAsText(file);
     };
@@ -240,5 +244,4 @@ export default function SettingsPage() {
             />
         </div>
     );
-
-    
+}

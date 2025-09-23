@@ -24,31 +24,31 @@ const getDb = (): Promise<ReturnType<typeof getFirestore>> => {
     return firestorePromise;
   }
 
-  firestorePromise = new Promise(async (resolve, reject) => {
-    try {
-      const app = getFirebaseApp();
-      if (!app) {
-        throw new Error("Firebase is not configured. Please add your Firebase configuration to enable cloud features.");
-      }
-      
-      const db = initializeFirestore(app, {});
-
-      if (typeof window !== 'undefined') {
-        try {
-          await enableIndexedDbPersistence(db);
-        } catch (err: any) {
-          if (err.code === 'failed-precondition') {
-            console.warn('Firestore persistence can only be enabled in one tab at a time.');
-          } else if (err.code === 'unimplemented') {
-            console.warn('The current browser does not support all of the features required to enable persistence.');
-          }
+  firestorePromise = new Promise((resolve, reject) => {
+    (async () => {
+      try {
+        const app = getFirebaseApp();
+        if (!app) {
+          throw new Error("Firebase is not configured. Please add your Firebase configuration to enable cloud features.");
         }
+        
+        const db = initializeFirestore(app, {});
+
+        if (typeof window !== 'undefined') {
+          await enableIndexedDbPersistence(db).catch((err: any) => {
+            if (err.code === 'failed-precondition') {
+              console.warn('Firestore persistence can only be enabled in one tab at a time.');
+            } else if (err.code === 'unimplemented') {
+              console.warn('The current browser does not support all of the features required to enable persistence.');
+            }
+          });
+        }
+        resolve(db);
+      } catch (error) {
+        console.error("Failed to initialize Firestore with persistence", error);
+        reject(error);
       }
-      resolve(db);
-    } catch (error) {
-      console.error("Failed to initialize Firestore with persistence", error);
-      reject(error);
-    }
+    })();
   });
 
   return firestorePromise;

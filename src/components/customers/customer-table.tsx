@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -25,17 +25,54 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Trash2, Search } from "lucide-react";
+import { Trash2, Search, Loader2 } from "lucide-react";
 import type { Customer } from '@/lib/types';
-import { useDataStore } from '@/lib/data-store';
 import { CustomerForm } from './customer-form';
+import { getCustomers, deleteCustomerById } from '@/lib/firebase-service';
+import { useToast } from '@/hooks/use-toast';
 
 export function CustomerTable() {
-  const { customers, deleteCustomer } = useDataStore();
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, startTransition] = useTransition();
+  const { toast } = useToast();
 
-  const handleDelete = (id: string) => {
-    deleteCustomer(id);
+  const fetchCustomers = () => {
+    startTransition(async () => {
+      try {
+        const fetchedCustomers = await getCustomers();
+        setCustomers(fetchedCustomers);
+      } catch (error) {
+        console.error("Failed to fetch customers:", error);
+        toast({
+          title: "Error",
+          description: "Could not fetch customers. Please check your connection.",
+          variant: "destructive",
+        });
+      }
+    });
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteCustomerById(id);
+      setCustomers(prev => prev.filter(c => c.id !== id));
+      toast({
+        title: "Customer Deleted",
+        description: "The customer has been successfully deleted.",
+      });
+    } catch (error) {
+      console.error("Failed to delete customer:", error);
+      toast({
+        title: "Error",
+        description: "Could not delete the customer.",
+        variant: "destructive",
+      });
+    }
   }
 
   const filteredCustomers = customers.filter(customer => 
@@ -50,7 +87,7 @@ export function CustomerTable() {
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Customers</h2>
-        <CustomerForm />
+        <CustomerForm onSave={fetchCustomers} />
       </div>
       <Card>
         <CardContent className="pt-6">
@@ -66,70 +103,77 @@ export function CustomerTable() {
               />
             </div>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCustomers.length > 0 ? (
-                filteredCustomers.map((customer) => (
-                  <TableRow key={customer.id}>
-                    <TableCell className="font-medium">{customer.name}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="text-sm">{customer.email}</span>
-                        <span className="text-xs text-muted-foreground">{customer.phone}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate">{customer.address}</TableCell>
-                    <TableCell>{customer.company}</TableCell>
-                    <TableCell>
-                      <Badge variant={customer.status === "Active" ? "default" : "secondary"}>
-                        {customer.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                       <CustomerForm customerToEdit={customer} />
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete this customer.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(customer.id)}>Delete</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+          {isLoading ? (
+             <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+             </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Address</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCustomers.length > 0 ? (
+                  filteredCustomers.map((customer) => (
+                    <TableRow key={customer.id}>
+                      <TableCell className="font-medium">{customer.name}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="text-sm">{customer.email}</span>
+                          <span className="text-xs text-muted-foreground">{customer.phone}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[200px] truncate">{customer.address}</TableCell>
+                      <TableCell>{customer.company}</TableCell>
+                      <TableCell>
+                        <Badge variant={customer.status === "Active" ? "default" : "secondary"}>
+                          {customer.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <CustomerForm customerToEdit={customer} onSave={fetchCustomers} />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this customer.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(customer.id)}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      No customers found.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    No customers found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 }
+

@@ -16,18 +16,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useDataStore } from '@/lib/data-store';
 import type { Customer } from '@/lib/types';
+import { saveCustomer } from '@/lib/firebase-service';
+import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Pencil } from 'lucide-react';
 
 
 interface CustomerFormProps {
     customerToEdit?: Customer;
+    onSave?: () => void;
 }
 
-export function CustomerForm({ customerToEdit }: CustomerFormProps) {
-  const { addCustomer, updateCustomer } = useDataStore();
+export function CustomerForm({ customerToEdit, onSave }: CustomerFormProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -58,31 +60,34 @@ export function CustomerForm({ customerToEdit }: CustomerFormProps) {
     setStatus('Active');
   };
 
-  const handleSave = () => {
-    if (customerToEdit) {
-      const updatedCustomer: Customer = {
-        ...customerToEdit,
-        name,
-        email,
-        phone,
-        company,
-        address,
-        status,
-      };
-      updateCustomer(updatedCustomer);
-    } else {
-      const newCustomer: Customer = {
-        id: String(Date.now()),
-        name,
-        email,
-        phone,
-        company,
-        address,
-        status,
-      };
-      addCustomer(newCustomer);
+  const handleSave = async () => {
+    const id = customerToEdit ? customerToEdit.id : String(Date.now());
+    const customerData: Customer = {
+      id,
+      name,
+      email,
+      phone,
+      company,
+      address,
+      status,
+    };
+    
+    try {
+      await saveCustomer(customerData);
+      toast({
+        title: customerToEdit ? 'Customer Updated' : 'Customer Added',
+        description: `Customer "${name}" has been saved successfully.`,
+      });
+      onSave?.();
+      setIsOpen(false);
+    } catch (error) {
+      console.error("Failed to save customer:", error);
+      toast({
+        title: 'Error',
+        description: 'Could not save the customer.',
+        variant: 'destructive',
+      });
     }
-    setIsOpen(false);
   };
   
   const triggerButton = customerToEdit ? (

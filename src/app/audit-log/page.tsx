@@ -2,13 +2,13 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { FullPageLoader } from '@/components/ui/full-page-loader';
 
 const AuditLogTable = dynamic(
   () => import('@/components/audit-log/audit-log-table').then((mod) => mod.AuditLogTable),
   { 
     ssr: false,
-    loading: () => <TableSkeleton />
+    loading: () => <FullPageLoader />
   }
 );
 

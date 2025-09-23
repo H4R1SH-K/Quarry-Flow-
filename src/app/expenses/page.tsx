@@ -2,13 +2,13 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { FullPageLoader } from '@/components/ui/full-page-loader';
 
 const ExpenseTable = dynamic(
   () => import('@/components/expenses/expense-table').then((mod) => mod.ExpenseTable),
   { 
     ssr: false,
-    loading: () => <TableSkeleton />
+    loading: () => <FullPageLoader />
   }
 );
 

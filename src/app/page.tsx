@@ -6,7 +6,7 @@ import { OverviewStats } from '@/components/dashboard/overview-stats';
 import { getDashboardData } from '@/lib/server/data';
 import { DashboardCardSkeleton, OverviewStatsSkeleton } from '@/components/dashboard/skeletons';
 import dynamic from 'next/dynamic';
-import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { FullPageLoader } from '@/components/ui/full-page-loader';
 import { ClientOnlyDashboard } from '@/components/dashboard/client-only-dashboard';
 
 
@@ -34,16 +34,7 @@ export default async function DashboardPage() {
           <CostRevenueChart sales={serverData.sales} expenses={serverData.expenses} />
        </div>
       
-      <Suspense fallback={<div className="grid grid-cols-1 gap-4">
-          <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
-            <div className="lg:col-span-4"><DashboardCardSkeleton /></div>
-            <div className="lg:col-span-3"><DashboardCardSkeleton /></div>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
-            <div className="lg:col-span-3"><DashboardCardSkeleton /></div>
-            <div className="lg:col-span-4"><DashboardCardSkeleton /></div>
-          </div>
-        </div>}>
+      <Suspense fallback={<FullPageLoader />}>
         <ClientOnlyDashboard />
       </Suspense>
 
@@ -54,7 +45,7 @@ export default async function DashboardPage() {
              </Suspense>
           </div>
           <div className="lg:col-span-4">
-             <Suspense fallback={<TableSkeleton />}>
+             <Suspense fallback={<DashboardCardSkeleton />}>
                 <VehicleSummary />
              </Suspense>
           </div>

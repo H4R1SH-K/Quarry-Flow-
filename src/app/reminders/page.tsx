@@ -2,13 +2,13 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { FullPageLoader } from '@/components/ui/full-page-loader';
 
 const ReminderTable = dynamic(
   () => import('@/components/reminders/reminder-table').then((mod) => mod.ReminderTable),
   { 
     ssr: false,
-    loading: () => <TableSkeleton />
+    loading: () => <FullPageLoader />
   }
 );
 

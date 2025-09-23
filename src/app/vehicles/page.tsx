@@ -2,13 +2,13 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { FullPageLoader } from '@/components/ui/full-page-loader';
 
 const VehicleTable = dynamic(
   () => import('@/components/vehicles/vehicle-table').then((mod) => mod.VehicleTable),
   { 
     ssr: false,
-    loading: () => <TableSkeleton />
+    loading: () => <FullPageLoader />
   }
 );
 

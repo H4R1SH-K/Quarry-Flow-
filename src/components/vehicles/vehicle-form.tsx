@@ -15,18 +15,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useDataStore } from '@/lib/data-store';
 import type { Vehicle } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+import { saveVehicle } from '@/lib/firebase-service';
 import { PlusCircle, Pencil } from 'lucide-react';
 
 type VehicleStatus = "Active" | "Maintenance" | "Inactive";
 
 interface VehicleFormProps {
     vehicleToEdit?: Vehicle;
+    onSave?: () => void;
 }
 
-export function VehicleForm({ vehicleToEdit }: VehicleFormProps) {
-  const { addVehicle, updateVehicle } = useDataStore();
+export function VehicleForm({ vehicleToEdit, onSave }: VehicleFormProps) {
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   
   const [make, setMake] = useState('');
@@ -55,29 +57,33 @@ export function VehicleForm({ vehicleToEdit }: VehicleFormProps) {
     setStatus('Active');
   };
   
-  const handleSave = () => {
-    if (vehicleToEdit) {
-      const updatedVehicle: Vehicle = {
-        ...vehicleToEdit,
-        make,
-        model,
-        year: Number(year),
-        vehicleNumber,
-        status,
-      };
-      updateVehicle(updatedVehicle);
-    } else {
-      const newVehicle: Vehicle = {
-        id: String(Date.now()),
-        make,
-        model,
-        year: Number(year),
-        vehicleNumber,
-        status,
-      };
-      addVehicle(newVehicle);
+  const handleSave = async () => {
+    const id = vehicleToEdit ? vehicleToEdit.id : String(Date.now());
+    const vehicleData: Vehicle = {
+      id,
+      make,
+      model,
+      year: Number(year),
+      vehicleNumber,
+      status,
+    };
+    
+    try {
+      await saveVehicle(vehicleData);
+      toast({
+        title: vehicleToEdit ? 'Vehicle Updated' : 'Vehicle Added',
+        description: `Vehicle "${vehicleNumber}" has been saved.`,
+      });
+      onSave?.();
+      setIsOpen(false);
+    } catch (error) {
+       console.error("Failed to save vehicle:", error);
+       toast({
+         title: 'Error',
+         description: 'Could not save the vehicle.',
+         variant: 'destructive',
+       });
     }
-    setIsOpen(false);
   };
   
   const triggerButton = vehicleToEdit ? (

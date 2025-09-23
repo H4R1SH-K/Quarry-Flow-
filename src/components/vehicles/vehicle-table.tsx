@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -27,31 +27,61 @@ import {
 import { Input } from "@/components/ui/input";
 import { Truck, Wrench, Ban, ListFilter, Trash2, Search, Loader2 } from "lucide-react";
 import type { Vehicle } from '@/lib/types';
-import { useDataStore } from '@/lib/data-store';
 import { VehicleForm } from './vehicle-form';
+import { getVehicles, deleteVehicleById } from '@/lib/firebase-service';
+import { useToast } from '@/hooks/use-toast';
 
 type VehicleStatus = "Active" | "Maintenance" | "Inactive";
 
 export function VehicleTable() {
-  const { vehicles, deleteVehicle } = useDataStore();
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [filter, setFilter] = useState<VehicleStatus | 'All'>('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
   
-  const handleDelete = (id: string) => {
-    deleteVehicle(id);
+  const fetchVehicles = () => {
+    startTransition(async () => {
+        try {
+            const fetchedVehicles = await getVehicles();
+            setVehicles(fetchedVehicles);
+        } catch (error) {
+            console.error("Failed to fetch vehicles:", error);
+            toast({
+                title: "Error",
+                description: "Could not fetch vehicles. Please check your connection.",
+                variant: "destructive",
+            });
+        }
+    });
+  };
+
+  useEffect(() => {
+    fetchVehicles();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    try {
+        await deleteVehicleById(id);
+        setVehicles(prev => prev.filter(v => v.id !== id));
+        toast({
+            title: "Vehicle Deleted",
+            description: "The vehicle has been successfully deleted.",
+        });
+    } catch (error) {
+        console.error("Failed to delete vehicle:", error);
+        toast({
+            title: "Error",
+            description: "Could not delete the vehicle.",
+            variant: "destructive",
+        });
+    }
   }
 
   const handleFilterChange = (newFilter: VehicleStatus | 'All') => {
-    setIsLoading(true);
-    // Simulate a short delay for better UX, prevents flashing
-    setTimeout(() => {
-        startTransition(() => {
-            setFilter(newFilter);
-        });
-        setIsLoading(false);
-    }, 300);
+    startTransition(() => {
+        setFilter(newFilter);
+    });
   }
 
   const baseVehicles = vehicles.filter(vehicle => {
@@ -75,15 +105,14 @@ export function VehicleTable() {
     children: React.ReactNode;
   }) => {
     const isCurrent = status === currentFilter;
-    const loading = isLoading && isCurrent;
-
+    
     return (
       <Button
         variant={isCurrent ? 'default' : 'outline'}
         onClick={() => handleFilterChange(status)}
-        disabled={loading}
+        disabled={isPending && !isCurrent}
       >
-        {loading ? (
+        {isPending && isCurrent ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
           children
@@ -97,7 +126,7 @@ export function VehicleTable() {
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Vehicles</h2>
-        <VehicleForm />
+        <VehicleForm onSave={fetchVehicles}/>
       </div>
 
        <Card>
@@ -128,6 +157,11 @@ export function VehicleTable() {
               </FilterButton>
             </div>
           </div>
+          { isPending ? (
+              <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -142,7 +176,7 @@ export function VehicleTable() {
             <TableBody>
               {filteredVehicles.length > 0 ? (
                 filteredVehicles.map((vehicle) => (
-                  <TableRow key={vehicle.id} style={{ opacity: isPending ? 0.5 : 1 }}>
+                  <TableRow key={vehicle.id}>
                     <TableCell className="font-medium">{vehicle.vehicleNumber}</TableCell>
                     <TableCell>{vehicle.make}</TableCell>
                     <TableCell>{vehicle.model}</TableCell>
@@ -161,7 +195,7 @@ export function VehicleTable() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <VehicleForm vehicleToEdit={vehicle} />
+                      <VehicleForm vehicleToEdit={vehicle} onSave={fetchVehicles} />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon">
@@ -193,6 +227,7 @@ export function VehicleTable() {
               )}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
     </div>

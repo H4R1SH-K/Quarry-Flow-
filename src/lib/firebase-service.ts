@@ -1,4 +1,3 @@
-
 'use client';
 import { getFirebaseApp } from '@/lib/firebase';
 import { 
@@ -29,12 +28,14 @@ const getDb = (): Promise<ReturnType<typeof getFirestore>> => {
       try {
         const app = getFirebaseApp();
         if (!app) {
-          throw new Error("Firebase is not configured. Please add your Firebase configuration to enable cloud features.");
+          // This case should be handled by components checking getFirebaseApp() result
+          return reject(new Error("Firebase is not configured."));
         }
         
         const db = initializeFirestore(app, {});
 
         if (typeof window !== 'undefined') {
+          // Enable persistence only on the client
           await enableIndexedDbPersistence(db).catch((err) => {
             if (err.code === 'failed-precondition') {
               console.warn('Firestore persistence can only be enabled in one tab at a time.');

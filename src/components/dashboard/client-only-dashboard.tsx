@@ -23,7 +23,7 @@ const ClientDashboardComponents = dynamic(
     }
 );
 
-const SmartReminder = dynamic(() => import('@/components/dashboard/smart-reminder').then(mod => mod.SmartReminder), {
+const SmartReminder = dynamic(() => import('@/components/dashboard/smart-reminder'), {
   loading: () => <DashboardCardSkeleton />,
   ssr: false,
 });

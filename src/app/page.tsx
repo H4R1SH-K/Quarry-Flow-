@@ -1,13 +1,39 @@
-import { SmartReminder } from '@/components/dashboard/smart-reminder';
+
 import { SalesChart } from '@/components/dashboard/sales-chart';
 import { CostRevenueChart } from '@/components/dashboard/cost-revenue-chart';
-import { ClientOnlyDashboard } from '@/components/dashboard/client-only-dashboard';
 import { Suspense } from 'react';
 import { OverviewStats } from '@/components/dashboard/overview-stats';
-import { VehicleSummary } from '@/components/dashboard/vehicle-summary';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
 import { getDashboardData } from '@/lib/server/data';
-import { OverviewStatsSkeleton } from '@/components/dashboard/skeletons';
+import { DashboardCardSkeleton, OverviewStatsSkeleton } from '@/components/dashboard/skeletons';
+import dynamic from 'next/dynamic';
+
+const ClientOnlyDashboard = dynamic(
+  () => import('@/components/dashboard/client-only-dashboard').then(mod => mod.ClientOnlyDashboard),
+  {
+    loading: () => (
+      <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+          <div className="lg:col-span-4"><DashboardCardSkeleton /></div>
+          <div className="lg:col-span-3"><DashboardCardSkeleton /></div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+          <div className="lg:col-span-3"><DashboardCardSkeleton /></div>
+          <div className="lg:col-span-4"><DashboardCardSkeleton /></div>
+        </div>
+      </div>
+    ),
+  }
+);
+
+const SmartReminder = dynamic(() => import('@/components/dashboard/smart-reminder').then(mod => mod.SmartReminder), {
+  loading: () => <DashboardCardSkeleton />,
+});
+
+const VehicleSummary = dynamic(() => import('@/components/dashboard/vehicle-summary').then(mod => mod.VehicleSummary), {
+  loading: () => <DashboardCardSkeleton />,
+});
+
 
 // This is a server component that fetches initial data.
 export default async function DashboardPage() {
@@ -27,12 +53,15 @@ export default async function DashboardPage() {
           <SalesChart sales={serverData.sales} />
           <CostRevenueChart sales={serverData.sales} expenses={serverData.expenses} />
        </div>
-
-       <ClientOnlyDashboard />
+      <Suspense>
+        <ClientOnlyDashboard />
+      </Suspense>
 
        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
           <div className="lg:col-span-3 grid gap-4">
-            <SmartReminder />
+            <Suspense fallback={<DashboardCardSkeleton />}>
+              <SmartReminder />
+            </Suspense>
           </div>
           <div className="lg:col-span-4">
              <Suspense fallback={<TableSkeleton />}>

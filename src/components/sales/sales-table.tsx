@@ -24,12 +24,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Trash2, Search, Loader2 } from "lucide-react";
+import { Trash2, Search, Loader2, PlusCircle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { getSales, deleteSaleById } from '@/lib/firebase-service';
 import type { Sales } from '@/lib/types';
 import { format, isValid } from 'date-fns';
-import { SaleForm } from './sale-form';
+import { SaleForm } from '@/components/invoicing/sale-form';
 
 export function SalesTable() {
     const [sales, setSales] = useState<Sales[]>([]);
@@ -74,7 +74,7 @@ export function SalesTable() {
        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
             <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold tracking-tight font-headline">Sales</h2>
-                <SaleForm onSave={fetchSales} />
+                <SaleForm onSave={fetchSales} trigger={<Button><PlusCircle className="mr-2 h-4 w-4"/> Add Sale</Button>} />
             </div>
             <Card>
                 <CardContent className="pt-6">

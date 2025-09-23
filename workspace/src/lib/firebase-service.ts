@@ -14,7 +14,7 @@ import {
   enableIndexedDbPersistence,
   initializeFirestore,
 } from 'firebase/firestore';
-import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from './types';
+import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from '@/lib/types';
 
 let firestorePromise: Promise<ReturnType<typeof getFirestore>> | null = null;
 

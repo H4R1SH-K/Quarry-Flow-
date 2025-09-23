@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -25,7 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Truck, Wrench, Ban, ListFilter, Trash2, Search } from "lucide-react";
+import { Truck, Wrench, Ban, ListFilter, Trash2, Search, Loader2 } from "lucide-react";
 import type { Vehicle } from '@/lib/types';
 import { useDataStore } from '@/lib/data-store';
 import { VehicleForm } from './vehicle-form';
@@ -36,9 +36,22 @@ export function VehicleTable() {
   const { vehicles, deleteVehicle } = useDataStore();
   const [filter, setFilter] = useState<VehicleStatus | 'All'>('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   
   const handleDelete = (id: string) => {
     deleteVehicle(id);
+  }
+
+  const handleFilterChange = (newFilter: VehicleStatus | 'All') => {
+    setIsLoading(true);
+    // Simulate a short delay for better UX, prevents flashing
+    setTimeout(() => {
+        startTransition(() => {
+            setFilter(newFilter);
+        });
+        setIsLoading(false);
+    }, 300);
   }
 
   const baseVehicles = vehicles.filter(vehicle => {
@@ -51,6 +64,33 @@ export function VehicleTable() {
     vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
     vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const FilterButton = ({
+    status,
+    currentFilter,
+    children,
+  }: {
+    status: VehicleStatus | 'All';
+    currentFilter: VehicleStatus | 'All';
+    children: React.ReactNode;
+  }) => {
+    const isCurrent = status === currentFilter;
+    const loading = isLoading && isCurrent;
+
+    return (
+      <Button
+        variant={isCurrent ? 'default' : 'outline'}
+        onClick={() => handleFilterChange(status)}
+        disabled={loading}
+      >
+        {loading ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          children
+        )}
+      </Button>
+    );
+  };
 
 
   return (
@@ -74,18 +114,18 @@ export function VehicleTable() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <Button variant={filter === 'All' ? 'default' : 'outline'} onClick={() => setFilter('All')}>
+               <FilterButton status="All" currentFilter={filter}>
                 <ListFilter className="mr-2 h-4 w-4" /> All
-              </Button>
-              <Button variant={filter === 'Active' ? 'default' : 'outline'} onClick={() => setFilter('Active')}>
+              </FilterButton>
+              <FilterButton status="Active" currentFilter={filter}>
                 <Truck className="mr-2 h-4 w-4" /> Active
-              </Button>
-              <Button variant={filter === 'Maintenance' ? 'default' : 'outline'} onClick={() => setFilter('Maintenance')}>
+              </FilterButton>
+              <FilterButton status="Maintenance" currentFilter={filter}>
                 <Wrench className="mr-2 h-4 w-4" /> Maint.
-              </Button>
-              <Button variant={filter === 'Inactive' ? 'default' : 'outline'} onClick={() => setFilter('Inactive')}>
+              </FilterButton>
+              <FilterButton status="Inactive" currentFilter={filter}>
                 <Ban className="mr-2 h-4 w-4" /> Inactive
-              </Button>
+              </FilterButton>
             </div>
           </div>
           <Table>
@@ -102,7 +142,7 @@ export function VehicleTable() {
             <TableBody>
               {filteredVehicles.length > 0 ? (
                 filteredVehicles.map((vehicle) => (
-                  <TableRow key={vehicle.id}>
+                  <TableRow key={vehicle.id} style={{ opacity: isPending ? 0.5 : 1 }}>
                     <TableCell className="font-medium">{vehicle.vehicleNumber}</TableCell>
                     <TableCell>{vehicle.make}</TableCell>
                     <TableCell>{vehicle.model}</TableCell>

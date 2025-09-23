@@ -11,8 +11,13 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
+let app: FirebaseApp | null = null;
+
 // Initialize Firebase
 function initializeFirebaseApp(): FirebaseApp {
+    if (typeof window === 'undefined') {
+        return {} as FirebaseApp;
+    }
     if (getApps().length) {
         return getApp();
     }
@@ -25,7 +30,9 @@ function initializeFirebaseApp(): FirebaseApp {
 }
 
 export function getFirebaseApp(): FirebaseApp | null {
-    const app = initializeFirebaseApp();
+    if (!app) {
+      app = initializeFirebaseApp();
+    }
     if (!app.options?.apiKey) {
       return null;
     }

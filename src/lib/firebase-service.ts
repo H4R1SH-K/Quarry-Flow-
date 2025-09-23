@@ -1,6 +1,3 @@
-
-'use server';
-
 import { getFirebaseApp } from '@/lib/firebase';
 import { 
   getFirestore, 
@@ -15,43 +12,45 @@ import {
   getDoc,
   enableIndexedDbPersistence,
   initializeFirestore,
-  onSnapshot,
 } from 'firebase/firestore';
 import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from './types';
 
-let persistenceEnabled = false;
+let firestorePromise: Promise<ReturnType<typeof getFirestore>> | null = null;
 
-// We need a stable reference to the db, so we initialize it once.
-let db: ReturnType<typeof getFirestore>;
+const getDb = (): Promise<ReturnType<typeof getFirestore>> => {
+  if (firestorePromise) {
+    return firestorePromise;
+  }
 
-const getDb = async () => {
-    if (db) {
-        return db;
-    }
-
-    const app = getFirebaseApp();
-    if (!app) {
+  firestorePromise = new Promise(async (resolve, reject) => {
+    try {
+      const app = getFirebaseApp();
+      if (!app) {
         throw new Error("Firebase is not configured. Please add your Firebase configuration to enable cloud features.");
-    }
-    
-    // Pass the app instance to getFirestore
-    const firestoreInstance = initializeFirestore(app, {});
+      }
+      
+      const db = initializeFirestore(app, {});
 
-    if (typeof window !== 'undefined' && !persistenceEnabled) {
-      try {
-        await enableIndexedDbPersistence(firestoreInstance);
-        persistenceEnabled = true;
-      } catch (err: any) {
-        if (err.code === 'failed-precondition') {
-          console.warn('Firestore persistence can only be enabled in one tab at a time.');
-        } else if (err.code === 'unimplemented') {
-          console.warn('The current browser does not support all of the features required to enable persistence.');
+      // This is a browser-only feature
+      if (typeof window !== 'undefined') {
+        try {
+          await enableIndexedDbPersistence(db);
+        } catch (err: any) {
+          if (err.code === 'failed-precondition') {
+            console.warn('Firestore persistence can only be enabled in one tab at a time.');
+          } else if (err.code === 'unimplemented') {
+            console.warn('The current browser does not support all of the features required to enable persistence.');
+          }
         }
       }
+      resolve(db);
+    } catch (error) {
+      reject(error);
     }
-    db = firestoreInstance;
-    return db;
-}
+  });
+
+  return firestorePromise;
+};
 
 
 // Generic function to get all documents from a collection

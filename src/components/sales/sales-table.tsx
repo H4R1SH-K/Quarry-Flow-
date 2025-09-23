@@ -56,7 +56,7 @@ export function SalesTable() {
     const handleDelete = async (id: string) => {
         try {
             await deleteSaleById(id);
-            setSales(prev => prev.filter(s => s.id !== id));
+            fetchSales(); // Refetch
             toast({ title: "Sale Deleted", description: "The sale record has been deleted." });
         } catch (error) {
             console.error("Failed to delete sale:", error);

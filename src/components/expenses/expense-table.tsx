@@ -56,7 +56,7 @@ export function ExpenseTable() {
   const handleDelete = async (id: string) => {
     try {
       await deleteExpenseById(id);
-      setExpenses(prev => prev.filter(e => e.id !== id));
+      fetchExpenses(); // Refetch
       toast({ title: "Expense Deleted", description: "The expense record has been deleted." });
     } catch (error) {
       console.error("Failed to delete expense:", error);

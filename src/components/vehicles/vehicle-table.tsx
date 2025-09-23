@@ -63,7 +63,7 @@ export function VehicleTable() {
   const handleDelete = async (id: string) => {
     try {
         await deleteVehicleById(id);
-        setVehicles(prev => prev.filter(v => v.id !== id));
+        fetchVehicles(); // Refetch
         toast({
             title: "Vehicle Deleted",
             description: "The vehicle has been successfully deleted.",

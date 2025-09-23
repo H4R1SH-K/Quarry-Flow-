@@ -34,7 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 export function CustomerTable() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
   const fetchCustomers = () => {
@@ -60,7 +60,7 @@ export function CustomerTable() {
   const handleDelete = async (id: string) => {
     try {
       await deleteCustomerById(id);
-      setCustomers(prev => prev.filter(c => c.id !== id));
+      fetchCustomers(); // Refetch data
       toast({
         title: "Customer Deleted",
         description: "The customer has been successfully deleted.",
@@ -103,7 +103,7 @@ export function CustomerTable() {
               />
             </div>
           </div>
-          {isLoading ? (
+          {isPending ? (
              <div className="flex justify-center items-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
              </div>
@@ -176,4 +176,3 @@ export function CustomerTable() {
     </div>
   );
 }
-

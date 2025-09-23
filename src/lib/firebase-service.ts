@@ -155,6 +155,5 @@ export async function getProfile(): Promise<Profile | null> {
 export async function saveProfile(profile: Profile): Promise<void> {
     const db = await getDb();
     const docRef = doc(db, 'profile', 'user_profile');
-    // Using setDoc with id in payload is not standard; we specify ID in doc()
     await setDoc(docRef, profile);
 }

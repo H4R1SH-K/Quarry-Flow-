@@ -9,6 +9,7 @@ const InvoicingTable = dynamic(
   () => import('@/components/invoicing/invoicing-table').then((mod) => mod.InvoicingTable),
   { 
     ssr: false,
+    loading: () => <TableSkeleton />
   }
 );
 

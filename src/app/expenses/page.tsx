@@ -9,6 +9,7 @@ const ExpenseTable = dynamic(
   () => import('@/components/expenses/expense-table').then((mod) => mod.ExpenseTable),
   { 
     ssr: false,
+    loading: () => <TableSkeleton />
   }
 );
 

@@ -9,6 +9,7 @@ const ReminderTable = dynamic(
   () => import('@/components/reminders/reminder-table').then((mod) => mod.ReminderTable),
   { 
     ssr: false,
+    loading: () => <TableSkeleton />
   }
 );
 

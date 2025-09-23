@@ -9,6 +9,7 @@ const AuditLogTable = dynamic(
   () => import('@/components/audit-log/audit-log-table').then((mod) => mod.AuditLogTable),
   { 
     ssr: false,
+    loading: () => <TableSkeleton />
   }
 );
 

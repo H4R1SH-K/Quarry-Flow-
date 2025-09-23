@@ -10,6 +10,7 @@ const ExpenseReport = dynamic(
   () => import('@/components/reports/expense-report').then((mod) => mod.ExpenseReport),
   { 
     ssr: false,
+    loading: () => <TableSkeleton />
   }
 );
 

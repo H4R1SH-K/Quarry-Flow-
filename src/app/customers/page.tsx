@@ -9,6 +9,7 @@ const CustomerTable = dynamic(
   () => import('@/components/customers/customer-table').then((mod) => mod.CustomerTable),
   { 
     ssr: false, 
+    loading: () => <TableSkeleton />
   }
 );
 

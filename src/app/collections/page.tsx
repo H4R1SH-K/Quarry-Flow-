@@ -9,6 +9,7 @@ const CollectionsTable = dynamic(
   () => import('@/components/collections/collections-table').then((mod) => mod.CollectionsTable),
   { 
     ssr: false,
+    loading: () => <TableSkeleton />
   }
 );
 

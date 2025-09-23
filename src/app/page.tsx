@@ -7,25 +7,7 @@ import { getDashboardData } from '@/lib/server/data';
 import { DashboardCardSkeleton, OverviewStatsSkeleton } from '@/components/dashboard/skeletons';
 import dynamic from 'next/dynamic';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
-
-const ClientOnlyDashboard = dynamic(
-  () => import('@/components/dashboard/client-only-dashboard').then(mod => mod.ClientOnlyDashboard),
-  {
-    loading: () => (
-      <div className="grid grid-cols-1 gap-4">
-        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
-          <div className="lg:col-span-4"><DashboardCardSkeleton /></div>
-          <div className="lg:col-span-3"><DashboardCardSkeleton /></div>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
-          <div className="lg:col-span-3"><DashboardCardSkeleton /></div>
-          <div className="lg:col-span-4"><DashboardCardSkeleton /></div>
-        </div>
-      </div>
-    ),
-    ssr: false, // This component and its children are client-side only
-  }
-);
+import { ClientOnlyDashboard } from '@/components/dashboard/client-only-dashboard';
 
 
 const VehicleSummary = dynamic(() => import('@/components/dashboard/vehicle-summary').then(mod => mod.VehicleSummary), {
@@ -52,10 +34,16 @@ export default async function DashboardPage() {
           <CostRevenueChart sales={serverData.sales} expenses={serverData.expenses} />
        </div>
       
-      <Suspense fallback={<div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
-          <div className="lg:col-span-3"><DashboardCardSkeleton /></div>
-          <div className="lg:col-span-4"><DashboardCardSkeleton /></div>
-      </div>}>
+      <Suspense fallback={<div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+            <div className="lg:col-span-4"><DashboardCardSkeleton /></div>
+            <div className="lg:col-span-3"><DashboardCardSkeleton /></div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+            <div className="lg:col-span-3"><DashboardCardSkeleton /></div>
+            <div className="lg:col-span-4"><DashboardCardSkeleton /></div>
+          </div>
+        </div>}>
         <ClientOnlyDashboard />
       </Suspense>
 

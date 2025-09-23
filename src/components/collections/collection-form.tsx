@@ -16,18 +16,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useDataStore } from '@/lib/data-store';
 import type { Reminder } from '@/lib/types';
 import { PlusCircle, Pencil } from 'lucide-react';
-
+import { saveReminder } from '@/lib/firebase-service';
+import { useToast } from '@/hooks/use-toast';
 
 interface CollectionFormProps {
     reminderToEdit?: Reminder;
+    onSave?: () => void;
 }
 
-export function CollectionForm({ reminderToEdit }: CollectionFormProps) {
-  const { addReminder, updateReminder } = useDataStore();
+export function CollectionForm({ reminderToEdit, onSave }: CollectionFormProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
   
   const [details, setDetails] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -55,8 +56,10 @@ export function CollectionForm({ reminderToEdit }: CollectionFormProps) {
     setAmount('');
   };
 
-  const handleSave = () => {
-    const reminderData = {
+  const handleSave = async () => {
+    const id = reminderToEdit?.id || String(Date.now());
+    const reminderData: Reminder = {
+      id,
       type: 'Credit' as const,
       details,
       dueDate,
@@ -64,13 +67,19 @@ export function CollectionForm({ reminderToEdit }: CollectionFormProps) {
       relatedToName,
       amount: Number(amount) || 0,
     };
-
-    if (reminderToEdit) {
-      updateReminder({ ...reminderToEdit, ...reminderData });
-    } else {
-      addReminder({ id: String(Date.now()), ...reminderData });
+    
+    try {
+        await saveReminder(reminderData);
+        toast({
+          title: reminderToEdit ? 'Collection Updated' : 'Collection Added',
+          description: `Collection for "${relatedToName}" has been saved.`,
+        });
+        onSave?.();
+        setIsOpen(false);
+    } catch (error) {
+        console.error("Failed to save collection:", error);
+        toast({ title: 'Error', description: 'Could not save collection.', variant: 'destructive' });
     }
-    setIsOpen(false);
   };
 
   const triggerButton = reminderToEdit ? (

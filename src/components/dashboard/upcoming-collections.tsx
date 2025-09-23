@@ -1,19 +1,32 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '../ui/separator';
-import { useDataStore } from '@/lib/data-store';
-import { differenceInDays } from 'date-fns';
-import { Banknote, ArrowRight } from 'lucide-react';
+import { differenceInDays, isValid } from 'date-fns';
+import { Banknote, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { getReminders } from '@/lib/firebase-service';
+import type { Reminder } from '@/lib/types';
 
 export function UpcomingCollections() {
-  const { reminders } = useDataStore();
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    startTransition(async () => {
+      try {
+        const remindersData = await getReminders();
+        setReminders(remindersData);
+      } catch (error) {
+        console.error("Failed to fetch collections:", error);
+      }
+    });
+  }, []);
 
   const upcomingCollections = reminders
-    .filter(r => r.type === 'Credit' && r.status === 'Pending')
+    .filter(r => r.type === 'Credit' && r.status === 'Pending' && r.dueDate && isValid(new Date(r.dueDate)))
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
     .slice(0, 3);
   
@@ -24,7 +37,6 @@ export function UpcomingCollections() {
     if (days <= 7) return <span className="font-medium text-orange-500">{days} days left</span>
     return `${days} days left`;
   }
-
 
   return (
     <Card>
@@ -38,7 +50,11 @@ export function UpcomingCollections() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {upcomingCollections.length > 0 ? (
+        {isPending ? (
+            <div className="flex justify-center items-center h-48">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        ) : upcomingCollections.length > 0 ? (
           <div className="space-y-4">
             {upcomingCollections.map((reminder, index) => (
               <React.Fragment key={reminder.id}>

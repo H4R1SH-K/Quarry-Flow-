@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import {
   Card,
   CardContent,
@@ -17,17 +17,30 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useDataStore } from '@/lib/data-store';
 import { Badge } from '@/components/ui/badge';
 import { format, formatDistanceToNow } from 'date-fns';
-import { History, User, Calendar, Edit, Trash2, PlusCircle, Search } from 'lucide-react';
+import { History, User, Calendar, Edit, Trash2, PlusCircle, Search, Loader2 } from 'lucide-react';
 import type { AuditLog } from '@/lib/types';
 import { Input } from '../ui/input';
+// This component is not yet using firebase-service, so no changes needed for fetching.
+// However, the data store will be modified, so we will use state for now.
+// In the future, this would also fetch from `getAuditLogs`.
+import { useDataStore } from '@/lib/data-store';
 
 
 export function AuditLogTable() {
-  const { auditLogs } = useDataStore();
+  // const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  // const [isPending, startTransition] = useTransition();
+  const { auditLogs } = useDataStore(); // Continue using store for now as it's not a large dataset
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Example for future implementation with Firebase
+  // useEffect(() => {
+  //   startTransition(async () => {
+  //     // const logs = await getAuditLogs();
+  //     // setAuditLogs(logs);
+  //   });
+  // }, []);
 
   const getActionIcon = (action: AuditLog['action']) => {
     switch (action) {

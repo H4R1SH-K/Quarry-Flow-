@@ -2,7 +2,6 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { useFormStatus } from 'react-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -10,8 +9,7 @@ import { Bell, Sparkles, AlertCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Separator } from '../ui/separator';
-import { useDataStore } from '@/lib/data-store';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, isValid } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -25,22 +23,17 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { Reminder } from '@/lib/types';
 import Link from 'next/link';
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-      {pending ? 'Analyzing...' : 'Create Smart Reminder'}
-      <Sparkles className="ml-2 h-4 w-4" />
-    </Button>
-  );
-}
+import { getReminders, saveReminder } from '@/lib/firebase-service';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SmartReminder() {
-  const { reminders, addReminder, updateReminder } = useDataStore();
   const formRef = React.useRef<HTMLFormElement>(null);
+  const { toast } = useToast();
   
-  const [isPending, startTransition] = useTransition();
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [isFetching, startFetching] = useTransition();
+
+  const [isAnalyzing, startTransition] = useTransition();
   const [state, setState] = useState<{ message: string; success?: boolean; data?: any; }>({ message: '' });
   const [prompt, setPrompt] = useState('');
 
@@ -53,6 +46,21 @@ export default function SmartReminder() {
   const [status, setStatus] = React.useState<"Pending" | "Completed">('Pending');
   const [relatedTo, setRelatedTo] = React.useState<string | undefined>(undefined);
   const [relatedToName, setRelatedToName] = React.useState('');
+
+  const fetchReminders = () => {
+    startFetching(async () => {
+      try {
+        const remindersData = await getReminders();
+        setReminders(remindersData);
+      } catch (error) {
+        console.error("Failed to fetch reminders:", error);
+      }
+    });
+  };
+
+  useEffect(() => {
+    fetchReminders();
+  }, []);
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -113,24 +121,29 @@ export default function SmartReminder() {
     setRelatedToName('');
   };
 
-  const handleSaveReminder = () => {
-    const reminderData = { type, details, dueDate, status, relatedTo, relatedToName };
-    if (editingReminder) {
-      updateReminder({ ...editingReminder, ...reminderData });
-    } else {
-      addReminder({ id: String(Date.now()), ...reminderData, type: reminderData.type as any });
+  const handleSaveReminder = async () => {
+    const id = editingReminder?.id || String(Date.now());
+    const reminderData: Reminder = { id, type, details, dueDate, status, relatedTo, relatedToName };
+    
+    try {
+        await saveReminder(reminderData);
+        toast({ title: editingReminder ? 'Reminder Updated' : 'Reminder Created', description: `Reminder "${details}" has been saved.` });
+        fetchReminders();
+        resetForm();
+        setEditingReminder(null);
+        setOpen(false);
+    } catch(error) {
+        toast({ title: 'Error', description: 'Could not save the reminder.', variant: 'destructive'});
     }
-    resetForm();
-    setEditingReminder(null);
-    setOpen(false);
   };
 
   const upcomingRenewals = reminders
-    .filter(r => r.status === 'Pending' && (r.type === 'Vehicle Permit' || r.type === 'Insurance'))
+    .filter(r => r.status === 'Pending' && (r.type === 'Vehicle Permit' || r.type === 'Insurance') && r.dueDate && isValid(new Date(r.dueDate)))
     .sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
     .slice(0, 2);
 
   const getDaysLeft = (dueDate: string) => {
+    if (!dueDate || !isValid(new Date(dueDate))) return null;
     const days = differenceInDays(new Date(dueDate), new Date());
     if (days < 0) return <span className="font-medium text-destructive">Overdue</span>
     if (days === 0) return <span className="font-medium text-destructive">Today</span>
@@ -157,7 +170,11 @@ export default function SmartReminder() {
               View All <ArrowRight className='h-4 w-4 ml-1'/>
             </Link>
           </div>
-           {upcomingRenewals.length > 0 ? (
+           {isFetching ? (
+             <div className="text-sm text-center text-muted-foreground p-3 bg-muted/50 rounded-lg h-12 flex items-center justify-center">
+                <Loader2 className="h-4 w-4 animate-spin"/>
+             </div>
+           ) : upcomingRenewals.length > 0 ? (
             <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-lg space-y-2">
               {upcomingRenewals.map((reminder, index) => (
                 <React.Fragment key={reminder.id}>
@@ -196,9 +213,9 @@ export default function SmartReminder() {
                 </Alert>
               )}
             </div>
-             <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
-              {isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...</> : 'Create Smart Reminder'}
-              {!isPending && <Sparkles className="ml-2 h-4 w-4" />}
+             <Button type="submit" disabled={isAnalyzing} className="w-full sm:w-auto">
+              {isAnalyzing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...</> : 'Create Smart Reminder'}
+              {!isAnalyzing && <Sparkles className="ml-2 h-4 w-4" />}
             </Button>
           </div>
         </form>

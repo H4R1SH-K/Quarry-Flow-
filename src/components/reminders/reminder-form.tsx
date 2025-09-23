@@ -16,18 +16,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useDataStore } from '@/lib/data-store';
 import type { Reminder } from '@/lib/types';
 import { PlusCircle, Pencil } from 'lucide-react';
-
+import { saveReminder } from '@/lib/firebase-service';
+import { useToast } from '@/hooks/use-toast';
 
 interface ReminderFormProps {
     reminderToEdit?: Reminder;
+    onSave?: () => void;
 }
 
-export function ReminderForm({ reminderToEdit }: ReminderFormProps) {
-  const { addReminder, updateReminder } = useDataStore();
+export function ReminderForm({ reminderToEdit, onSave }: ReminderFormProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
   
   const [type, setType] = useState<"Vehicle Permit" | "Insurance">("Vehicle Permit");
   const [details, setDetails] = useState('');
@@ -58,8 +59,10 @@ export function ReminderForm({ reminderToEdit }: ReminderFormProps) {
     setRelatedToName('');
   };
 
-  const handleSave = () => {
-    const reminderData = {
+  const handleSave = async () => {
+    const id = reminderToEdit?.id || String(Date.now());
+    const reminderData: Reminder = {
+      id,
       type,
       details,
       dueDate,
@@ -67,12 +70,19 @@ export function ReminderForm({ reminderToEdit }: ReminderFormProps) {
       relatedTo,
       relatedToName,
     };
-    if (reminderToEdit) {
-      updateReminder({ ...reminderToEdit, ...reminderData });
-    } else {
-      addReminder({ id: String(Date.now()), ...reminderData, type: reminderData.type as any });
+    
+    try {
+      await saveReminder(reminderData);
+      toast({
+        title: reminderToEdit ? 'Reminder Updated' : 'Reminder Added',
+        description: `Reminder "${details}" has been saved.`,
+      });
+      onSave?.();
+      setIsOpen(false);
+    } catch (error) {
+        console.error("Failed to save reminder:", error);
+        toast({ title: 'Error', description: 'Could not save reminder.', variant: 'destructive' });
     }
-    setIsOpen(false);
   };
   
   const triggerButton = reminderToEdit ? (

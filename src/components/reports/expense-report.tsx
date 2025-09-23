@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import {
   Card,
   CardContent,
@@ -9,25 +9,52 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { IndianRupee, FileDown, Calendar as CalendarIcon } from 'lucide-react';
+import { IndianRupee, FileDown, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { useDataStore } from '@/lib/data-store';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { addDays, format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, sub, isValid } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
-import type { Sales, Expense, Reminder } from '@/lib/types';
+import type { Sales, Expense, Reminder, Profile } from '@/lib/types';
+import { getExpenses, getSales, getProfile, getReminders } from '@/lib/firebase-service';
+import { useToast } from '@/hooks/use-toast';
 
 export function ExpenseReport() {
-  const { expenses, sales, profile, reminders } = useDataStore();
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [sales, setSales] = useState<Sales[]>([]);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
+
   const [filter, setFilter] = useState<'all' | 'today' | 'week' | 'month' | 'year' | 'custom'>('all');
   const [date, setDate] = useState<DateRange | undefined>({
     from: sub(new Date(), {days: 30}),
     to: new Date(),
   });
+
+  useEffect(() => {
+    startTransition(async () => {
+      try {
+        const [expensesData, salesData, profileData, remindersData] = await Promise.all([
+          getExpenses(),
+          getSales(),
+          getProfile(),
+          getReminders()
+        ]);
+        setExpenses(expensesData);
+        setSales(salesData);
+        setProfile(profileData);
+        setReminders(remindersData);
+      } catch (error) {
+        toast({ title: "Error", description: "Could not load data for the report.", variant: "destructive" });
+      }
+    });
+  }, [toast]);
 
    const getFilteredData = <T extends { date?: string, dueDate?: string }>(data: T[]): T[] => {
     const now = new Date();
@@ -77,7 +104,7 @@ export function ExpenseReport() {
   const filteredExpenses = getFilteredData(expenses);
   const filteredSales = getFilteredData(sales);
   
-  const pendingReminders = reminders.filter(r => r.status === 'Pending' && (r.type === 'Vehicle Permit' || r.type === 'Insurance'));
+  const pendingReminders = getFilteredData(reminders.filter(r => r.status === 'Pending' && (r.type === 'Vehicle Permit' || r.type === 'Insurance')));
 
   const totalRevenue = filteredSales.reduce((acc, sale) => acc + sale.price, 0);
   const totalExpenses = filteredExpenses.reduce((acc, expense) => acc + expense.amount, 0);
@@ -257,22 +284,17 @@ export function ExpenseReport() {
     doc.save(`QuarryFlow_Report_${filterText.replace(/ /g, '_')}.pdf`);
   };
 
+  const renderContent = () => {
+    if (isPending) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
 
-  return (
-    <Card>
-      <CardHeader className="flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <CardTitle className="font-headline">Financial Report</CardTitle>
-          <CardDescription>Generate a detailed financial report for the selected period.</CardDescription>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-           <Button onClick={handleExport}>
-             <FileDown className="mr-2 h-4 w-4" />
-             Export as PDF
-           </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    return (
+      <>
         <div className="flex flex-wrap items-center gap-2 p-4 bg-muted/50 rounded-lg">
           <Button variant={filter === 'all' ? 'default' : 'outline'} onClick={() => setFilter('all')}>All Time</Button>
           <Button variant={filter === 'today' ? 'default' : 'outline'} onClick={() => setFilter('today')}>Today</Button>
@@ -354,7 +376,26 @@ export function ExpenseReport() {
             </CardContent>
           </Card>
         </div>
+      </>
+    );
+  }
 
+  return (
+    <Card>
+      <CardHeader className="flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <CardTitle className="font-headline">Financial Report</CardTitle>
+          <CardDescription>Generate a detailed financial report for the selected period.</CardDescription>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+           <Button onClick={handleExport} disabled={isPending}>
+             <FileDown className="mr-2 h-4 w-4" />
+             Export as PDF
+           </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {renderContent()}
       </CardContent>
     </Card>
   );

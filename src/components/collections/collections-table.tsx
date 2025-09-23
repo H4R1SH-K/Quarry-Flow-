@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -25,20 +25,46 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Banknote, Trash2, Search } from "lucide-react";
+import { Banknote, Trash2, Search, Loader2 } from "lucide-react";
 import type { Reminder } from '@/lib/types';
-import { useDataStore } from '@/lib/data-store';
 import { differenceInDays, format, isValid } from 'date-fns';
 import { CollectionForm } from './collection-form';
+import { getReminders, deleteReminderById } from '@/lib/firebase-service';
+import { useToast } from '@/hooks/use-toast';
 
 export function CollectionsTable() {
-  const { reminders, deleteReminder } = useDataStore();
+  const [reminders, setReminders] = useState<Reminder[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
   
   const collections = reminders.filter(r => r.type === 'Credit');
 
-  const handleDelete = (id: string) => {
-    deleteReminder(id);
+  const fetchCollections = () => {
+    startTransition(async () => {
+      try {
+        const remindersData = await getReminders();
+        setReminders(remindersData);
+      } catch (error) {
+        console.error("Failed to fetch collections:", error);
+        toast({ title: "Error", description: "Could not fetch collections.", variant: "destructive" });
+      }
+    });
+  };
+
+  useEffect(() => {
+    fetchCollections();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    try {
+        await deleteReminderById(id);
+        fetchCollections();
+        toast({ title: "Collection Deleted", description: "The collection record has been deleted." });
+    } catch (error) {
+        console.error("Failed to delete collection:", error);
+        toast({ title: "Error", description: "Could not delete collection record.", variant: "destructive" });
+    }
   }
   
   const getDaysLeft = (dueDate: string) => {
@@ -55,7 +81,6 @@ export function CollectionsTable() {
     (reminder.relatedToName && reminder.relatedToName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
@@ -63,7 +88,7 @@ export function CollectionsTable() {
             <Banknote className="h-6 w-6"/>
             <h2 className="text-3xl font-bold tracking-tight font-headline">Collections</h2>
         </div>
-        <CollectionForm />
+        <CollectionForm onSave={fetchCollections} />
       </div>
       <Card>
         <CardContent className="pt-6">
@@ -79,6 +104,11 @@ export function CollectionsTable() {
               />
             </div>
           </div>
+          {isPending ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -106,7 +136,7 @@ export function CollectionsTable() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                       <CollectionForm reminderToEdit={reminder} />
+                       <CollectionForm reminderToEdit={reminder} onSave={fetchCollections} />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon">
@@ -138,6 +168,7 @@ export function CollectionsTable() {
               )}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -25,20 +25,46 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Bell, Trash2, Search } from "lucide-react";
+import { Bell, Trash2, Search, Loader2 } from "lucide-react";
 import type { Reminder } from '@/lib/types';
-import { useDataStore } from '@/lib/data-store';
 import { differenceInDays, format, isValid } from 'date-fns';
 import { ReminderForm } from './reminder-form';
+import { getReminders, deleteReminderById, saveReminder } from '@/lib/firebase-service';
+import { useToast } from '@/hooks/use-toast';
 
 export function ReminderTable() {
-  const { reminders, deleteReminder } = useDataStore();
+  const [reminders, setReminders] = useState<Reminder[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   const allReminders = reminders.filter(r => r.type !== 'Credit');
 
-  const handleDelete = (id: string) => {
-    deleteReminder(id);
+  const fetchReminders = () => {
+    startTransition(async () => {
+        try {
+            const remindersData = await getReminders();
+            setReminders(remindersData);
+        } catch (error) {
+            console.error("Failed to fetch reminders:", error);
+            toast({ title: "Error", description: "Could not fetch reminders.", variant: "destructive" });
+        }
+    });
+  };
+
+  useEffect(() => {
+    fetchReminders();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    try {
+        await deleteReminderById(id);
+        fetchReminders();
+        toast({ title: "Reminder Deleted", description: "The reminder has been deleted." });
+    } catch (error) {
+        console.error("Failed to delete reminder:", error);
+        toast({ title: "Error", description: "Could not delete reminder.", variant: "destructive" });
+    }
   }
   
   const getRelatedName = (reminder: Reminder) => {
@@ -66,7 +92,7 @@ export function ReminderTable() {
             <Bell className="h-6 w-6"/>
             <h2 className="text-3xl font-bold tracking-tight font-headline">Reminders</h2>
         </div>
-        <ReminderForm />
+        <ReminderForm onSave={fetchReminders} />
       </div>
       <Card>
         <CardContent className="pt-6">
@@ -82,6 +108,11 @@ export function ReminderTable() {
               />
             </div>
           </div>
+          {isPending ? (
+            <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -109,7 +140,7 @@ export function ReminderTable() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                       <ReminderForm reminderToEdit={reminder} />
+                       <ReminderForm reminderToEdit={reminder} onSave={fetchReminders} />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon">
@@ -141,6 +172,7 @@ export function ReminderTable() {
               )}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
     </div>

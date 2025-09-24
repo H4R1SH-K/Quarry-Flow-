@@ -58,10 +58,11 @@ export default function SettingsPage() {
             });
         } catch (error: any) {
             console.error("Google Sign-In Error:", error);
+            // This explicit check is the most common reason for this error.
             if (error.code === 'auth/unauthorized-domain') {
                  toast({
                     title: 'Login Error: Domain Not Authorized',
-                    description: 'Your localhost is not authorized. Please follow the instructions on the settings page.',
+                    description: 'Please follow the instructions on the settings page to authorize localhost.',
                     variant: 'destructive',
                     duration: 10000,
                 });
@@ -159,6 +160,7 @@ export default function SettingsPage() {
                     <li>Navigate to **Authentication** {'>'} **Settings** {'>'} **Authorized domains**.</li>
                     <li>Click **Add domain** and enter `localhost`.</li>
                 </ol>
+                <p className="mt-2">After adding the domain, please do a **hard refresh** of this page (Cmd+Shift+R or Ctrl+Shift+R).</p>
             </AlertDescription>
         </Alert>
     );

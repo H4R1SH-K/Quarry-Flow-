@@ -14,7 +14,7 @@ import { Upload, Cloud, LogIn, LogOut, Loader2, AlertTriangle } from 'lucide-rea
 import { useToast } from '@/hooks/use-toast';
 import { importToFirestore } from '@/app/settings/actions';
 import { getFirebaseApp } from '@/lib/firebase';
-import { getAuth, onAuthStateChanged, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, type User } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithRedirect, GoogleAuthProvider, signOut, type User } from 'firebase/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -34,41 +34,19 @@ export default function SettingsPage() {
         if (app) {
             setFirebaseConfigured(true);
             const auth = getAuth(app);
-
-            const unsubscribe = onAuthStateChanged(auth, (user) => {
-                setUser(user);
+            const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+                setUser(currentUser);
+                setIsAuthLoading(false);
+                 if (currentUser) {
+                    toast({
+                        title: 'Signed In',
+                        description: `Welcome, ${currentUser.displayName || currentUser.email}.`,
+                    });
+                }
+            }, (error) => {
+                console.error("Auth State Error:", error);
                 setIsAuthLoading(false);
             });
-            
-            const checkRedirectResult = async () => {
-                try {
-                    // No need to set loading to true here, onAuthStateChanged handles the initial load state.
-                    const result = await getRedirectResult(auth);
-                    if (result) {
-                        toast({
-                            title: 'Signed In',
-                            description: 'You have successfully signed in with Google.',
-                        });
-                        setUser(result.user);
-                    }
-                } catch (error: any) {
-                    console.error("Redirect result error:", error);
-                    if (error.code === 'auth/unauthorized-domain') {
-                        // This error is better handled visually with the AuthFixInstruction component
-                    } else {
-                        toast({
-                            title: 'Sign-In Failed',
-                            description: 'Could not sign in with Google. Please try again.',
-                            variant: 'destructive',
-                        });
-                    }
-                } finally {
-                    // Ensure loading is always false after the check.
-                    setIsAuthLoading(false);
-                }
-            };
-            
-            checkRedirectResult();
 
             return () => unsubscribe();
         } else {
@@ -80,35 +58,37 @@ export default function SettingsPage() {
     const handleGoogleSignIn = async () => {
         const app = getFirebaseApp();
         if (!app) {
-            console.error('Firebase app not available');
+            toast({
+                title: 'Firebase Not Configured',
+                description: 'Cannot sign in because Firebase is not configured.',
+                variant: 'destructive',
+            });
             return;
         }
         const auth = getAuth(app);
-        
-        console.log('🚀 Starting Google sign-in...');
-        console.log('Current URL:', window.location.href);
-        
         const provider = new GoogleAuthProvider();
         
+        setIsAuthLoading(true);
         try {
-            setIsAuthLoading(true);
-            console.log('📝 Auth object:', auth);
-            console.log('🔧 Provider object:', provider);
-            
-            console.log('🌐 About to call signInWithRedirect...');
             await signInWithRedirect(auth, provider);
-            console.log('✅ signInWithRedirect called successfully');
-            
+            // The onAuthStateChanged listener will handle the result.
         } catch (error: any) {
             setIsAuthLoading(false);
-            console.error('❌ Redirect error:', error);
-            console.error('Error code:', error.code);
-            console.error('Error message:', error.message);
-            toast({
-                title: 'Sign-In Error',
-                description: error.message || 'An unknown error occurred.',
-                variant: 'destructive',
-            });
+            console.error('Sign-in redirect error:', error);
+            if(error.code === 'auth/unauthorized-domain') {
+                 toast({
+                    title: 'Sign-In Failed: Domain Not Authorized',
+                    description: 'Please authorize localhost in your Firebase project settings and then do a hard refresh (Cmd+Shift+R).',
+                    variant: 'destructive',
+                    duration: 10000,
+                });
+            } else {
+                toast({
+                    title: 'Sign-In Error',
+                    description: error.message || 'An unknown error occurred during sign-in.',
+                    variant: 'destructive',
+                });
+            }
         }
     };
 
@@ -118,6 +98,7 @@ export default function SettingsPage() {
         const auth = getAuth(app);
         try {
             await signOut(auth);
+            setUser(null);
             toast({
                 title: 'Signed Out',
                 description: 'You have successfully signed out.',
@@ -196,7 +177,7 @@ export default function SettingsPage() {
                     <li>Navigate to **Authentication** {'>'} **Settings** {'>'} **Authorized domains**.</li>
                     <li>Click **Add domain** and enter `localhost`.</li>
                 </ol>
-                <p className="mt-2">After adding the domain, please do a **hard refresh** of this page (Cmd+Shift+R or Ctrl+Shift+R).</p>
+                <p className="mt-2">After adding the domain, please do a **hard refresh** of this page (Cmd+Shift+R or Ctrl+Shift+R) and try again.</p>
             </AlertDescription>
         </Alert>
     );
@@ -228,8 +209,8 @@ export default function SettingsPage() {
         return (
             <div className="flex flex-col gap-4">
                 <AuthFixInstruction />
-                <Button onClick={handleGoogleSignIn} disabled={isActionPending || !firebaseConfigured}>
-                    {isActionPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+                <Button onClick={handleGoogleSignIn} disabled={isAuthLoading || !firebaseConfigured}>
+                    {isAuthLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
                      Sign in with Google
                 </Button>
                  <div className='text-xs text-muted-foreground'>

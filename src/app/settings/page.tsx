@@ -62,7 +62,7 @@ export default function SettingsPage() {
             if (error.code === 'auth/unauthorized-domain') {
                  toast({
                     title: 'Login Error: Domain Not Authorized',
-                    description: 'Please follow the instructions on the settings page to authorize localhost.',
+                    description: 'Please follow the instructions on the settings page to authorize localhost. If you already have, try a hard refresh (Cmd+Shift+R or Ctrl+Shift+R).',
                     variant: 'destructive',
                     duration: 10000,
                 });
@@ -192,7 +192,8 @@ export default function SettingsPage() {
             <div className="flex flex-col gap-4">
                 <AuthFixInstruction />
                 <Button onClick={handleGoogleSignIn} disabled={isActionPending || !firebaseConfigured}>
-                    <LogIn className="mr-2 h-4 w-4" /> Sign in with Google
+                    {isActionPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+                     Sign in with Google
                 </Button>
                  <div className='text-xs text-muted-foreground'>
                     <p>Sign in to enable cloud data synchronization, offline access, and backup.</p>

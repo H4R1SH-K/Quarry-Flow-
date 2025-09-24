@@ -10,12 +10,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, Cloud, LogIn, LogOut, Loader2 } from 'lucide-react';
+import { Upload, Cloud, LogIn, LogOut, Loader2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { importToFirestore } from '@/app/settings/actions';
 import { getFirebaseApp } from '@/lib/firebase';
 import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User } from 'firebase/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 export default function SettingsPage() {
@@ -55,13 +56,22 @@ export default function SettingsPage() {
                 title: 'Signed In',
                 description: 'You have successfully signed in with Google.',
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error("Google Sign-In Error:", error);
-            toast({
-                title: 'Sign-In Failed',
-                description: 'Could not sign in with Google. Please try again.',
-                variant: 'destructive',
-            });
+            if (error.code === 'auth/unauthorized-domain') {
+                 toast({
+                    title: 'Login Error: Domain Not Authorized',
+                    description: 'Your localhost is not authorized. Please follow the instructions on the settings page.',
+                    variant: 'destructive',
+                    duration: 10000,
+                });
+            } else {
+                toast({
+                    title: 'Sign-In Failed',
+                    description: 'Could not sign in with Google. Please try again.',
+                    variant: 'destructive',
+                });
+            }
         }
     };
 
@@ -137,6 +147,21 @@ export default function SettingsPage() {
         importMode.current = mode;
         fileInputRef.current?.click();
     };
+    
+    const AuthFixInstruction = () => (
+        <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Action Required to Enable Login</AlertTitle>
+            <AlertDescription>
+                To use Google Sign-In, you must authorize `localhost` in your Firebase project.
+                <ol className="list-decimal pl-5 mt-2 space-y-1">
+                    <li>Go to the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="font-bold underline">Firebase Console</a> and select your project.</li>
+                    <li>Navigate to **Authentication** {'>'} **Settings** {'>'} **Authorized domains**.</li>
+                    <li>Click **Add domain** and enter `localhost`.</li>
+                </ol>
+            </AlertDescription>
+        </Alert>
+    );
 
     const AuthContent = () => {
         if (!firebaseConfigured) {
@@ -162,11 +187,12 @@ export default function SettingsPage() {
             )
         }
         return (
-            <div className="flex flex-col gap-2">
-                <Button onClick={handleGoogleSignIn} disabled={isActionPending}>
+            <div className="flex flex-col gap-4">
+                <AuthFixInstruction />
+                <Button onClick={handleGoogleSignIn} disabled={isActionPending || !firebaseConfigured}>
                     <LogIn className="mr-2 h-4 w-4" /> Sign in with Google
                 </Button>
-                 <div className='text-xs text-muted-foreground pt-2'>
+                 <div className='text-xs text-muted-foreground'>
                     <p>Sign in to enable cloud data synchronization, offline access, and backup.</p>
                 </div>
             </div>

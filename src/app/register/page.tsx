@@ -99,13 +99,17 @@ export default function RegisterPage() {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Action Required: Enable Sign-in Methods</AlertTitle>
             <AlertDescription>
-                <p className='text-xs'>To use these sign-in options, you must enable them in your Firebase project.</p>
+                <p className='text-xs'>To use these sign-in options, you must enable them in your new Firebase project.</p>
                 <p className="font-bold my-2 text-xs">Follow these steps:</p>
                 <ol className="list-decimal pl-4 mt-2 space-y-1 text-xs">
                     <li>Go to the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="underline">Firebase Console</a>.</li>
+                    <li>Select your project: **studio-9564969490-82816**.</li>
                     <li>Navigate to **Authentication** > **Sign-in method**.</li>
                     <li>Enable the **Email/Password** provider.</li>
-                    <li>Enable the **Google** provider.</li>
+                    <li>Enable the **Google** provider and enter a project support email.</li>
+                    <li>
+                      Under **Authorized Domains**, ensure `localhost` is listed. If not, add it.
+                    </li>
                 </ol>
             </AlertDescription>
         </Alert>

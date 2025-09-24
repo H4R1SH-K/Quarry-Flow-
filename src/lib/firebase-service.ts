@@ -15,33 +15,30 @@ import {
   initializeFirestore,
   persistentLocalCache,
   memoryLocalCache,
-  Firestore
+  type Firestore
 } from 'firebase/firestore';
 import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from '@/lib/types';
 
 let db: Firestore;
 
-// Singleton pattern to initialize Firestore correctly for client/server
+// This function initializes Firestore with persistence for the client-side.
 function getDb(): Firestore {
-  if (!db) {
-    const app = getFirebaseApp();
-    if (!app) {
-      // This is a fallback for environments without Firebase, like unit tests.
-      // It won't have persistence, but it prevents the app from crashing.
-      console.error("Firebase is not configured; using in-memory Firestore instance.");
-      // To prevent crashes, we can't return a promise or throw here in a way that
-      // would break every data-fetching function. We return a non-persistent instance.
-      return initializeFirestore(app || {}, { localCache: memoryLocalCache({}) });
-    }
-    
-    // Initialize with the correct cache for the environment.
-    // This runs only once.
-    db = initializeFirestore(app, {
-      localCache: typeof window !== 'undefined' 
-        ? persistentLocalCache({}) 
-        : memoryLocalCache({})
-    });
+  if (db) {
+    return db;
   }
+
+  const app = getFirebaseApp();
+  if (!app) {
+    // This should not happen in the browser if config is present, but it's a safeguard.
+    throw new Error("Firebase is not configured. Please add your Firebase configuration.");
+  }
+  
+  // Initialize with the correct cache for the browser environment.
+  // This runs only once.
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({})
+  });
+  
   return db;
 }
 

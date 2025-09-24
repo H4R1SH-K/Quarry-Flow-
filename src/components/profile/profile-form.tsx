@@ -10,12 +10,14 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Profile } from '@/lib/types';
 import { saveProfile } from '@/lib/firebase-service';
+import { Skeleton } from '../ui/skeleton';
 
 interface ProfileFormProps {
   initialData: Profile | null;
+  isPending: boolean;
 }
 
-export function ProfileForm({ initialData }: ProfileFormProps) {
+export function ProfileForm({ initialData, isPending }: ProfileFormProps) {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   
@@ -47,6 +49,38 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
       setIsSaving(false);
     }
   };
+
+   if (isPending) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+           <div className="space-y-2">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="col-span-1 space-y-2 md:col-span-2">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        </div>
+        <div className="flex justify-end">
+           <Skeleton className="h-10 w-28" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">

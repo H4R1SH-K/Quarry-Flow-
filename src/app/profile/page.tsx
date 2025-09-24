@@ -1,40 +1,19 @@
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { User } from 'lucide-react';
-import { getProfile } from '@/lib/server/data';
-import { ProfileForm } from '@/components/profile/profile-form';
+'use client';
 
-// This is now a Server Component. It fetches the initial data.
-export default async function ProfilePage() {
-  const profileData = await getProfile();
+import dynamic from 'next/dynamic';
+import { FullPageLoader } from '@/components/ui/full-page-loader';
 
-  return (
-    <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight font-headline">Personal & Company Details</h2>
-      </div>
+// The profile page requires client-side interaction for form input and data fetching.
+// We make it a client component and dynamically import the form to handle state.
+const ProfilePageClient = dynamic(
+  () => import('@/components/profile/profile-page-client').then((mod) => mod.ProfilePageClient),
+  { 
+    ssr: false, 
+    loading: () => <FullPageLoader /> 
+  }
+);
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <User className="h-6 w-6" />
-            <CardTitle className="font-headline">Your Information</CardTitle>
-          </div>
-          <CardDescription>
-            This information will be used for generating reports and other official documents.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* The form itself is a Client Component to handle state and user interaction */}
-          <ProfileForm initialData={profileData} />
-        </CardContent>
-      </Card>
-    </div>
-  );
+export default function ProfilePage() {
+  return <ProfilePageClient />;
 }

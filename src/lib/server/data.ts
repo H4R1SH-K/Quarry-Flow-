@@ -7,9 +7,9 @@ import { initialState } from '@/lib/sample-data';
 
 async function getDb() {
   const app = getFirebaseApp();
+  // On the server, we don't need persistence. We want a direct connection.
+  // We initialize a new instance for each server-side request context if needed.
   if (!app) {
-    // This will only happen if Firebase is not configured.
-    // In this case, we can't connect to Firestore.
     return null;
   }
   return getFirestore(app);

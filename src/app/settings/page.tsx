@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, Cloud, LogIn, LogOut, Loader2, AlertTriangle } from 'lucide-react';
+import { Upload, Cloud, LogIn, LogOut, Loader2, AlertTriangle, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { importToFirestore } from '@/app/settings/actions';
 import { getFirebaseApp } from '@/lib/firebase';
@@ -71,24 +71,14 @@ export default function SettingsPage() {
         setIsAuthLoading(true);
         try {
             await signInWithRedirect(auth, provider);
-            // The onAuthStateChanged listener will handle the result.
         } catch (error: any) {
             setIsAuthLoading(false);
             console.error('Sign-in redirect error:', error);
-            if(error.code === 'auth/unauthorized-domain') {
-                 toast({
-                    title: 'Sign-In Failed: Domain Not Authorized',
-                    description: 'Please authorize localhost in your Firebase project settings and then do a hard refresh (Cmd+Shift+R).',
-                    variant: 'destructive',
-                    duration: 10000,
-                });
-            } else {
-                toast({
-                    title: 'Sign-In Error',
-                    description: error.message || 'An unknown error occurred during sign-in.',
-                    variant: 'destructive',
-                });
-            }
+            toast({
+                title: 'Sign-In Error',
+                description: error.message || 'An unknown error occurred during sign-in.',
+                variant: 'destructive',
+            });
         }
     };
 
@@ -169,15 +159,24 @@ export default function SettingsPage() {
     const AuthFixInstruction = () => (
         <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Action Required to Enable Login</AlertTitle>
+            <AlertTitle>Action Required: Enable Identity Platform</AlertTitle>
             <AlertDescription>
-                To use Google Sign-In, you must authorize `localhost` in your Firebase project.
-                <ol className="list-decimal pl-5 mt-2 space-y-1">
-                    <li>Go to the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="font-bold underline">Firebase Console</a> and select your project.</li>
-                    <li>Navigate to **Authentication** {'>'} **Settings** {'>'} **Authorized domains**.</li>
-                    <li>Click **Add domain** and enter `localhost`.</li>
+                <p>The "403 access denied" error means a required Google Cloud service is not enabled for your project.</p>
+                <p className="font-bold my-2">Please follow these steps to fix it:</p>
+                <ol className="list-decimal pl-5 mt-2 space-y-2">
+                    <li>
+                        Click this link to go directly to the API library page in the Google Cloud Console:
+                        <a href="https://console.cloud.google.com/apis/library/identitytoolkit.googleapis.com" target="_blank" rel="noopener noreferrer" className="block my-2">
+                            <Button variant="outline" size="sm">
+                                Enable Identity Platform API <ExternalLink className="ml-2 h-3 w-3" />
+                            </Button>
+                        </a>
+                         <p className="text-xs text-muted-foreground">You may need to select your project (`{process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'your-project-id'}`) first.</p>
+                    </li>
+                    <li>Click the blue **Enable** button.</li>
+                    <li>Wait for it to finish (this can take a minute).</li>
+                    <li>Come back to this page and do a **hard refresh** (Cmd+Shift+R or Ctrl+Shift+R) and try signing in again.</li>
                 </ol>
-                <p className="mt-2">After adding the domain, please do a **hard refresh** of this page (Cmd+Shift+R or Ctrl+Shift+R) and try again.</p>
             </AlertDescription>
         </Alert>
     );
@@ -213,9 +212,6 @@ export default function SettingsPage() {
                     {isAuthLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
                      Sign in with Google
                 </Button>
-                 <div className='text-xs text-muted-foreground'>
-                    <p>Sign in to enable cloud data synchronization, offline access, and backup.</p>
-                </div>
             </div>
         )
     };
@@ -292,3 +288,5 @@ export default function SettingsPage() {
         </div>
     );
 }
+
+    

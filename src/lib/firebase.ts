@@ -15,9 +15,6 @@ let app: FirebaseApp | null = null;
 
 // Initialize Firebase
 function initializeFirebaseApp(): FirebaseApp {
-    if (typeof window === 'undefined') {
-        return {} as FirebaseApp;
-    }
     if (getApps().length) {
         return getApp();
     }
@@ -33,6 +30,7 @@ export function getFirebaseApp(): FirebaseApp | null {
     if (!app) {
       app = initializeFirebaseApp();
     }
+    // Check if the app was initialized with a valid config
     if (!app.options?.apiKey) {
       return null;
     }

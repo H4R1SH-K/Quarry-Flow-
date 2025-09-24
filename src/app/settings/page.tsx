@@ -79,18 +79,34 @@ export default function SettingsPage() {
 
     const handleGoogleSignIn = async () => {
         const app = getFirebaseApp();
-        if (!app) return;
+        if (!app) {
+            console.error('Firebase app not available');
+            return;
+        }
         const auth = getAuth(app);
+        
+        console.log('🚀 Starting Google sign-in...');
+        console.log('Current URL:', window.location.href);
+        
         const provider = new GoogleAuthProvider();
+        
         try {
             setIsAuthLoading(true);
+            console.log('📝 Auth object:', auth);
+            console.log('🔧 Provider object:', provider);
+            
+            console.log('🌐 About to call signInWithRedirect...');
             await signInWithRedirect(auth, provider);
+            console.log('✅ signInWithRedirect called successfully');
+            
         } catch (error: any) {
             setIsAuthLoading(false);
-            console.error("Google Sign-In Error:", error);
+            console.error('❌ Redirect error:', error);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
             toast({
-                title: 'Sign-In Failed',
-                description: 'Could not initiate sign-in with Google. Please try again.',
+                title: 'Sign-In Error',
+                description: error.message || 'An unknown error occurred.',
                 variant: 'destructive',
             });
         }

@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, Cloud, LogIn, LogOut, Loader2, AlertTriangle, ExternalLink, Mail, Lock } from 'lucide-react';
+import { Upload, Cloud, Loader2, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { importToFirestore } from '@/app/settings/actions';
 import { getFirebaseApp } from '@/lib/firebase';
@@ -19,13 +19,9 @@ import {
     onAuthStateChanged, 
     signOut, 
     type User,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword
 } from 'firebase/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import Link from 'next/link';
 
 
 export default function SettingsPage() {
@@ -37,11 +33,6 @@ export default function SettingsPage() {
     const [isAuthLoading, setIsAuthLoading] = useState(true);
     const [isActionPending, startTransition] = useTransition();
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [authError, setAuthError] = useState<string | null>(null);
-
-
     useEffect(() => {
         const app = getFirebaseApp();
         if (app) {
@@ -50,7 +41,6 @@ export default function SettingsPage() {
             const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
                 setUser(currentUser);
                 setIsAuthLoading(false);
-                setAuthError(null);
             }, (error) => {
                 console.error("Auth State Error:", error);
                 setIsAuthLoading(false);
@@ -63,62 +53,6 @@ export default function SettingsPage() {
         }
     }, []);
 
-    const handleSignUp = async () => {
-        const app = getFirebaseApp();
-        if (!app || !email || !password) return;
-        
-        setIsAuthLoading(true);
-        setAuthError(null);
-        const auth = getAuth(app);
-        
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            setUser(userCredential.user);
-            toast({
-                title: 'Account Created',
-                description: `Welcome! You have successfully signed up.`,
-            });
-        } catch (error: any) {
-            console.error('Sign-up error:', error);
-            setAuthError(error.message || 'An unknown error occurred during sign-up.');
-            toast({
-                title: 'Sign-Up Error',
-                description: error.message || 'An unknown error occurred during sign-up.',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsAuthLoading(false);
-        }
-    };
-    
-    const handleSignIn = async () => {
-        const app = getFirebaseApp();
-        if (!app || !email || !password) return;
-
-        setIsAuthLoading(true);
-        setAuthError(null);
-        const auth = getAuth(app);
-        
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            setUser(userCredential.user);
-            toast({
-                title: 'Signed In',
-                description: `Welcome back, ${userCredential.user.email}.`,
-            });
-        } catch (error: any) {
-             console.error('Sign-in error:', error);
-             setAuthError(error.message || 'An unknown error occurred during sign-in.');
-             toast({
-                title: 'Sign-In Error',
-                description: error.message || 'An unknown error occurred during sign-in.',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsAuthLoading(false);
-        }
-    };
-
     const handleSignOut = async () => {
         const app = getFirebaseApp();
         if (!app) return;
@@ -126,8 +60,6 @@ export default function SettingsPage() {
         try {
             await signOut(auth);
             setUser(null);
-            setEmail('');
-            setPassword('');
             toast({
                 title: 'Signed Out',
                 description: 'You have successfully signed out.',
@@ -194,25 +126,6 @@ export default function SettingsPage() {
         importMode.current = mode;
         fileInputRef.current?.click();
     };
-    
-    const AuthFixInstruction = () => (
-        <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Action Required: Enable Email/Password Sign-in</AlertTitle>
-            <AlertDescription>
-                <p>To use email and password authentication, you must enable it in your Firebase project.</p>
-                <p className="font-bold my-2">Please follow these steps:</p>
-                <ol className="list-decimal pl-5 mt-2 space-y-2">
-                    <li>Go to the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="underline">Firebase Console</a> and select your project.</li>
-                    <li>Navigate to the **Authentication** section.</li>
-                    <li>Click on the **Sign-in method** tab.</li>
-                    <li>Find **Email/Password** in the list of providers and click the pencil icon to edit.</li>
-                    <li>Enable the provider and click **Save**.</li>
-                    <li>Come back to this page and try to sign up or sign in again.</li>
-                </ol>
-            </AlertDescription>
-        </Alert>
-    );
 
     const AuthContent = () => {
         if (!firebaseConfigured) {
@@ -222,7 +135,7 @@ export default function SettingsPage() {
                 </div>
             )
         }
-        if (isAuthLoading && !user) {
+        if (isAuthLoading) {
              return (
                 <div className="flex items-center justify-center h-48">
                     <Loader2 className="h-6 w-6 animate-spin" />
@@ -232,39 +145,21 @@ export default function SettingsPage() {
         }
         if (user) {
              return (
-                <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                    <span>Signed in as {user.email}</span>
-                    <Button onClick={handleSignOut} variant="ghost" size="sm" disabled={isActionPending}><LogOut className="mr-2 h-4 w-4" /> Sign Out</Button>
+                <div className="flex flex-col items-start gap-4 p-4 bg-muted rounded-lg">
+                    <p>Signed in as <span className="font-semibold">{user.email}</span>.</p>
+                    <Button onClick={handleSignOut} variant="ghost" disabled={isActionPending}><LogOut className="mr-2 h-4 w-4" /> Sign Out</Button>
                 </div>
             )
         }
         return (
             <div className="flex flex-col gap-4">
-                <AuthFixInstruction />
-                <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                        <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-8"/>
-                    </div>
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                     <div className="relative">
-                        <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-8"/>
-                    </div>
-                     <p className="text-xs text-muted-foreground">Password should be at least 6 characters long.</p>
-                </div>
-                {authError && <p className="text-sm text-destructive">{authError}</p>}
-                <div className="flex flex-col sm:flex-row gap-2">
-                    <Button onClick={handleSignUp} disabled={isAuthLoading || !firebaseConfigured} className="flex-1">
-                        {isAuthLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-                        Create Account
+                <p>Sign in to enable cloud sync, backup, and multi-device access.</p>
+                <div className="flex gap-2">
+                    <Button asChild>
+                        <Link href="/login">Sign In</Link>
                     </Button>
-                    <Button onClick={handleSignIn} variant="secondary" disabled={isAuthLoading || !firebaseConfigured} className="flex-1">
-                        {isAuthLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                         Sign In
+                    <Button asChild variant="secondary">
+                        <Link href="/register">Create Account</Link>
                     </Button>
                 </div>
             </div>
@@ -288,11 +183,8 @@ export default function SettingsPage() {
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       <Cloud className="h-6 w-6"/>
-                      <CardTitle className="font-headline">Cloud Features</CardTitle>
+                      <CardTitle className="font-headline">Cloud Status</CardTitle>
                     </div>
-                    <CardDescription>
-                      Sign in or create an account to enable cloud sync, backup, and multi-device access.
-                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <AuthContent />

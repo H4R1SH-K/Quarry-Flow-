@@ -14,7 +14,7 @@ import { Upload, Cloud, LogIn, LogOut, Loader2, AlertTriangle } from 'lucide-rea
 import { useToast } from '@/hooks/use-toast';
 import { importToFirestore } from '@/app/settings/actions';
 import { getFirebaseApp } from '@/lib/firebase';
-import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, type User } from 'firebase/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -34,16 +34,52 @@ export default function SettingsPage() {
         if (app) {
             setFirebaseConfigured(true);
             const auth = getAuth(app);
+
             const unsubscribe = onAuthStateChanged(auth, (user) => {
                 setUser(user);
                 setIsAuthLoading(false);
             });
+            
+            const checkRedirectResult = async () => {
+                try {
+                    setIsAuthLoading(true);
+                    const result = await getRedirectResult(auth);
+                    if (result) {
+                        toast({
+                            title: 'Signed In',
+                            description: 'You have successfully signed in with Google.',
+                        });
+                        setUser(result.user);
+                    }
+                } catch (error: any) {
+                    console.error("Redirect result error:", error);
+                    if (error.code === 'auth/unauthorized-domain') {
+                        toast({
+                            title: 'Login Error: Domain Not Authorized',
+                            description: 'Please add `localhost` to the authorized domains in your Firebase project settings, then do a hard refresh (Ctrl+Shift+R).',
+                            variant: 'destructive',
+                            duration: 10000,
+                        });
+                    } else {
+                        toast({
+                            title: 'Sign-In Failed',
+                            description: 'Could not sign in with Google. Please try again.',
+                            variant: 'destructive',
+                        });
+                    }
+                } finally {
+                    setIsAuthLoading(false);
+                }
+            };
+            
+            checkRedirectResult();
+
             return () => unsubscribe();
         } else {
             setFirebaseConfigured(false);
             setIsAuthLoading(false);
         }
-    }, []);
+    }, [toast]);
 
     const handleGoogleSignIn = async () => {
         const app = getFirebaseApp();
@@ -51,28 +87,16 @@ export default function SettingsPage() {
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
         try {
-            await signInWithPopup(auth, provider);
-            toast({
-                title: 'Signed In',
-                description: 'You have successfully signed in with Google.',
-            });
+            setIsAuthLoading(true);
+            await signInWithRedirect(auth, provider);
         } catch (error: any) {
+            setIsAuthLoading(false);
             console.error("Google Sign-In Error:", error);
-            // This explicit check is the most common reason for this error.
-            if (error.code === 'auth/unauthorized-domain') {
-                 toast({
-                    title: 'Login Error: Domain Not Authorized',
-                    description: 'Please follow the instructions on the settings page to authorize localhost. If you already have, try a hard refresh (Cmd+Shift+R or Ctrl+Shift+R).',
-                    variant: 'destructive',
-                    duration: 10000,
-                });
-            } else {
-                toast({
-                    title: 'Sign-In Failed',
-                    description: 'Could not sign in with Google. Please try again.',
-                    variant: 'destructive',
-                });
-            }
+            toast({
+                title: 'Sign-In Failed',
+                description: 'Could not initiate sign-in with Google. Please try again.',
+                variant: 'destructive',
+            });
         }
     };
 
@@ -177,6 +201,7 @@ export default function SettingsPage() {
              return (
                 <div className="flex items-center justify-center h-24">
                     <Loader2 className="h-6 w-6 animate-spin" />
+                    <span className="ml-2">Authenticating...</span>
                 </div>
             )
         }

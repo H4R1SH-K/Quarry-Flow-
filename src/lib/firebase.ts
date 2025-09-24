@@ -11,28 +11,26 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-let app: FirebaseApp | null = null;
-
-// Initialize Firebase
-function initializeFirebaseApp(): FirebaseApp {
+// This function initializes and returns the Firebase app instance.
+// It ensures that Firebase is initialized only once.
+export function getFirebaseApp(): FirebaseApp | null {
+    // If the app is already initialized, return it.
     if (getApps().length) {
         return getApp();
     }
-    if (!firebaseConfig.apiKey) {
-      console.warn("Firebase API key is missing. Cloud features will be disabled.");
-      // Return a dummy app object if config is missing
-      return {} as FirebaseApp;
-    }
-    return initializeApp(firebaseConfig);
-}
 
-export function getFirebaseApp(): FirebaseApp | null {
-    if (!app) {
-      app = initializeFirebaseApp();
-    }
-    // Check if the app was initialized with a valid config
-    if (!app.options?.apiKey) {
+    // Check if the necessary Firebase config values are present.
+    // This is a safeguard against running without a configured .env file.
+    if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+      console.warn("Firebase configuration is missing or incomplete. Cloud features will be disabled.");
       return null;
     }
-    return app;
+
+    // Initialize the Firebase app.
+    try {
+        return initializeApp(firebaseConfig);
+    } catch (error) {
+        console.error("Failed to initialize Firebase app:", error);
+        return null;
+    }
 }

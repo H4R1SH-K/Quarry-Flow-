@@ -10,13 +10,22 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, Cloud, LogIn, LogOut, Loader2, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Upload, Cloud, LogIn, LogOut, Loader2, AlertTriangle, ExternalLink, Mail, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { importToFirestore } from '@/app/settings/actions';
 import { getFirebaseApp } from '@/lib/firebase';
-import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User } from 'firebase/auth';
+import { 
+    getAuth, 
+    onAuthStateChanged, 
+    signOut, 
+    type User,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword
+} from 'firebase/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 
 export default function SettingsPage() {
@@ -28,6 +37,10 @@ export default function SettingsPage() {
     const [isAuthLoading, setIsAuthLoading] = useState(true);
     const [isActionPending, startTransition] = useTransition();
 
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [authError, setAuthError] = useState<string | null>(null);
+
 
     useEffect(() => {
         const app = getFirebaseApp();
@@ -37,6 +50,7 @@ export default function SettingsPage() {
             const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
                 setUser(currentUser);
                 setIsAuthLoading(false);
+                setAuthError(null);
             }, (error) => {
                 console.error("Auth State Error:", error);
                 setIsAuthLoading(false);
@@ -49,30 +63,53 @@ export default function SettingsPage() {
         }
     }, []);
 
-    const handleGoogleSignIn = async () => {
+    const handleSignUp = async () => {
         const app = getFirebaseApp();
-        if (!app) {
-            toast({
-                title: 'Firebase Not Configured',
-                description: 'Cannot sign in because Firebase is not configured.',
-                variant: 'destructive',
-            });
-            return;
-        }
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
+        if (!app || !email || !password) return;
         
         setIsAuthLoading(true);
+        setAuthError(null);
+        const auth = getAuth(app);
+        
         try {
-            const result = await signInWithPopup(auth, provider);
-            setUser(result.user);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            setUser(userCredential.user);
             toast({
-                title: 'Signed In',
-                description: `Welcome, ${result.user.displayName || result.user.email}.`,
+                title: 'Account Created',
+                description: `Welcome! You have successfully signed up.`,
             });
         } catch (error: any) {
-            console.error('Sign-in error:', error);
+            console.error('Sign-up error:', error);
+            setAuthError(error.message || 'An unknown error occurred during sign-up.');
             toast({
+                title: 'Sign-Up Error',
+                description: error.message || 'An unknown error occurred during sign-up.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsAuthLoading(false);
+        }
+    };
+    
+    const handleSignIn = async () => {
+        const app = getFirebaseApp();
+        if (!app || !email || !password) return;
+
+        setIsAuthLoading(true);
+        setAuthError(null);
+        const auth = getAuth(app);
+        
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            setUser(userCredential.user);
+            toast({
+                title: 'Signed In',
+                description: `Welcome back, ${userCredential.user.email}.`,
+            });
+        } catch (error: any) {
+             console.error('Sign-in error:', error);
+             setAuthError(error.message || 'An unknown error occurred during sign-in.');
+             toast({
                 title: 'Sign-In Error',
                 description: error.message || 'An unknown error occurred during sign-in.',
                 variant: 'destructive',
@@ -89,6 +126,8 @@ export default function SettingsPage() {
         try {
             await signOut(auth);
             setUser(null);
+            setEmail('');
+            setPassword('');
             toast({
                 title: 'Signed Out',
                 description: 'You have successfully signed out.',
@@ -159,25 +198,17 @@ export default function SettingsPage() {
     const AuthFixInstruction = () => (
         <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Action Required: Enable Identity Platform</AlertTitle>
+            <AlertTitle>Action Required: Enable Email/Password Sign-in</AlertTitle>
             <AlertDescription>
-                <p>The "403 access denied" or "auth/unauthorized-domain" error can mean a required Google Cloud service is not enabled for your project or localhost is not an authorized domain.</p>
-                <p className="font-bold my-2">Please follow these steps to fix it:</p>
+                <p>To use email and password authentication, you must enable it in your Firebase project.</p>
+                <p className="font-bold my-2">Please follow these steps:</p>
                 <ol className="list-decimal pl-5 mt-2 space-y-2">
-                    <li>
-                        Go to the Firebase Authentication settings and add `localhost` to the **authorized domains** list.
-                    </li>
-                    <li>
-                        Click this link to go to the API library page in the Google Cloud Console:
-                        <a href="https://console.cloud.google.com/apis/library/identitytoolkit.googleapis.com" target="_blank" rel="noopener noreferrer" className="block my-2">
-                            <Button variant="outline" size="sm">
-                                Enable Identity Platform API <ExternalLink className="ml-2 h-3 w-3" />
-                            </Button>
-                        </a>
-                         <p className="text-xs text-muted-foreground">You may need to select your project (`{process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'your-project-id'}`) first.</p>
-                    </li>
-                    <li>Click the blue **Enable** button.</li>
-                    <li>Come back to this page and do a **hard refresh** (Cmd+Shift+R or Ctrl+Shift+R) and try signing in again.</li>
+                    <li>Go to the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="underline">Firebase Console</a> and select your project.</li>
+                    <li>Navigate to the **Authentication** section.</li>
+                    <li>Click on the **Sign-in method** tab.</li>
+                    <li>Find **Email/Password** in the list of providers and click the pencil icon to edit.</li>
+                    <li>Enable the provider and click **Save**.</li>
+                    <li>Come back to this page and try to sign up or sign in again.</li>
                 </ol>
             </AlertDescription>
         </Alert>
@@ -191,18 +222,18 @@ export default function SettingsPage() {
                 </div>
             )
         }
-        if (isAuthLoading) {
+        if (isAuthLoading && !user) {
              return (
-                <div className="flex items-center justify-center h-24">
+                <div className="flex items-center justify-center h-48">
                     <Loader2 className="h-6 w-6 animate-spin" />
-                    <span className="ml-2">Authenticating...</span>
+                    <span className="ml-2">Please wait...</span>
                 </div>
             )
         }
         if (user) {
              return (
                 <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                    <span>Signed in as {user.displayName || user.email}</span>
+                    <span>Signed in as {user.email}</span>
                     <Button onClick={handleSignOut} variant="ghost" size="sm" disabled={isActionPending}><LogOut className="mr-2 h-4 w-4" /> Sign Out</Button>
                 </div>
             )
@@ -210,10 +241,32 @@ export default function SettingsPage() {
         return (
             <div className="flex flex-col gap-4">
                 <AuthFixInstruction />
-                <Button onClick={handleGoogleSignIn} disabled={isAuthLoading || !firebaseConfigured}>
-                    {isAuthLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-                     Sign in with Google
-                </Button>
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <div className="relative">
+                        <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-8"/>
+                    </div>
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                     <div className="relative">
+                        <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-8"/>
+                    </div>
+                     <p className="text-xs text-muted-foreground">Password should be at least 6 characters long.</p>
+                </div>
+                {authError && <p className="text-sm text-destructive">{authError}</p>}
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <Button onClick={handleSignUp} disabled={isAuthLoading || !firebaseConfigured} className="flex-1">
+                        {isAuthLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+                        Create Account
+                    </Button>
+                    <Button onClick={handleSignIn} variant="secondary" disabled={isAuthLoading || !firebaseConfigured} className="flex-1">
+                        {isAuthLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                         Sign In
+                    </Button>
+                </div>
             </div>
         )
     };
@@ -238,7 +291,7 @@ export default function SettingsPage() {
                       <CardTitle className="font-headline">Cloud Features</CardTitle>
                     </div>
                     <CardDescription>
-                      Sign in with your Google Account to enable cloud sync, backup, and multi-device access.
+                      Sign in or create an account to enable cloud sync, backup, and multi-device access.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">

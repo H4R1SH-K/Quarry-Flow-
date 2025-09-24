@@ -48,9 +48,9 @@ export default function RegisterPage() {
       await createUserWithEmailAndPassword(auth, email, password);
       toast({
         title: 'Account Created',
-        description: 'You have successfully signed up. Please sign in.',
+        description: 'Welcome! You are now signed in.',
       });
-      router.push('/login'); // Redirect to login page after successful registration
+      router.push('/');
     } catch (err: any) {
       console.error('Sign-up error:', err);
       setError(err.message || 'An unknown error occurred.');

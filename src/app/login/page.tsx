@@ -50,7 +50,7 @@ export default function LoginPage() {
         title: 'Sign In Successful',
         description: 'Welcome back!',
       });
-      router.push('/'); // Redirect to dashboard on successful login
+      router.push('/');
     } catch (err: any) {
       console.error('Sign-in error:', err);
       setError(err.message || 'An unknown error occurred.');

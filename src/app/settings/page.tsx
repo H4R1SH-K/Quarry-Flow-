@@ -42,7 +42,7 @@ export default function SettingsPage() {
             
             const checkRedirectResult = async () => {
                 try {
-                    setIsAuthLoading(true);
+                    // No need to set loading to true here, onAuthStateChanged handles the initial load state.
                     const result = await getRedirectResult(auth);
                     if (result) {
                         toast({
@@ -54,12 +54,7 @@ export default function SettingsPage() {
                 } catch (error: any) {
                     console.error("Redirect result error:", error);
                     if (error.code === 'auth/unauthorized-domain') {
-                        toast({
-                            title: 'Login Error: Domain Not Authorized',
-                            description: 'Please add `localhost` to the authorized domains in your Firebase project settings, then do a hard refresh (Ctrl+Shift+R).',
-                            variant: 'destructive',
-                            duration: 10000,
-                        });
+                        // This error is better handled visually with the AuthFixInstruction component
                     } else {
                         toast({
                             title: 'Sign-In Failed',
@@ -68,6 +63,7 @@ export default function SettingsPage() {
                         });
                     }
                 } finally {
+                    // Ensure loading is always false after the check.
                     setIsAuthLoading(false);
                 }
             };
@@ -298,4 +294,4 @@ export default function SettingsPage() {
             />
         </div>
     );
-}
+ 

@@ -14,7 +14,7 @@ import { Upload, Cloud, LogIn, LogOut, Loader2, AlertTriangle, ExternalLink } fr
 import { useToast } from '@/hooks/use-toast';
 import { importToFirestore } from '@/app/settings/actions';
 import { getFirebaseApp } from '@/lib/firebase';
-import { getAuth, onAuthStateChanged, signInWithRedirect, GoogleAuthProvider, signOut, type User } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User } from 'firebase/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -37,12 +37,6 @@ export default function SettingsPage() {
             const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
                 setUser(currentUser);
                 setIsAuthLoading(false);
-                 if (currentUser) {
-                    toast({
-                        title: 'Signed In',
-                        description: `Welcome, ${currentUser.displayName || currentUser.email}.`,
-                    });
-                }
             }, (error) => {
                 console.error("Auth State Error:", error);
                 setIsAuthLoading(false);
@@ -53,7 +47,7 @@ export default function SettingsPage() {
             setFirebaseConfigured(false);
             setIsAuthLoading(false);
         }
-    }, [toast]);
+    }, []);
 
     const handleGoogleSignIn = async () => {
         const app = getFirebaseApp();
@@ -70,15 +64,21 @@ export default function SettingsPage() {
         
         setIsAuthLoading(true);
         try {
-            await signInWithRedirect(auth, provider);
+            const result = await signInWithPopup(auth, provider);
+            setUser(result.user);
+            toast({
+                title: 'Signed In',
+                description: `Welcome, ${result.user.displayName || result.user.email}.`,
+            });
         } catch (error: any) {
-            setIsAuthLoading(false);
-            console.error('Sign-in redirect error:', error);
+            console.error('Sign-in error:', error);
             toast({
                 title: 'Sign-In Error',
                 description: error.message || 'An unknown error occurred during sign-in.',
                 variant: 'destructive',
             });
+        } finally {
+            setIsAuthLoading(false);
         }
     };
 
@@ -161,11 +161,14 @@ export default function SettingsPage() {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Action Required: Enable Identity Platform</AlertTitle>
             <AlertDescription>
-                <p>The "403 access denied" error means a required Google Cloud service is not enabled for your project.</p>
+                <p>The "403 access denied" or "auth/unauthorized-domain" error can mean a required Google Cloud service is not enabled for your project or localhost is not an authorized domain.</p>
                 <p className="font-bold my-2">Please follow these steps to fix it:</p>
                 <ol className="list-decimal pl-5 mt-2 space-y-2">
                     <li>
-                        Click this link to go directly to the API library page in the Google Cloud Console:
+                        Go to the Firebase Authentication settings and add `localhost` to the **authorized domains** list.
+                    </li>
+                    <li>
+                        Click this link to go to the API library page in the Google Cloud Console:
                         <a href="https://console.cloud.google.com/apis/library/identitytoolkit.googleapis.com" target="_blank" rel="noopener noreferrer" className="block my-2">
                             <Button variant="outline" size="sm">
                                 Enable Identity Platform API <ExternalLink className="ml-2 h-3 w-3" />
@@ -174,7 +177,6 @@ export default function SettingsPage() {
                          <p className="text-xs text-muted-foreground">You may need to select your project (`{process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'your-project-id'}`) first.</p>
                     </li>
                     <li>Click the blue **Enable** button.</li>
-                    <li>Wait for it to finish (this can take a minute).</li>
                     <li>Come back to this page and do a **hard refresh** (Cmd+Shift+R or Ctrl+Shift+R) and try signing in again.</li>
                 </ol>
             </AlertDescription>
@@ -288,5 +290,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    

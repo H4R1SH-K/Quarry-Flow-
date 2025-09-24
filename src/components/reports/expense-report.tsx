@@ -40,15 +40,17 @@ export function ExpenseReport() {
   useEffect(() => {
     startTransition(async () => {
       try {
-        const [expensesData, salesData, profileData, remindersData] = await Promise.all([
+        // Fetching profile on the client is fine for this report generation feature
+        const profileData = await getProfile();
+        setProfile(profileData);
+
+        const [expensesData, salesData, remindersData] = await Promise.all([
           getExpenses(),
           getSales(),
-          getProfile(),
           getReminders()
         ]);
         setExpenses(expensesData);
         setSales(salesData);
-        setProfile(profileData);
         setReminders(remindersData);
       } catch (error) {
         toast({ title: "Error", description: "Could not load data for the report.", variant: "destructive" });

@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { User } from 'lucide-react';
-import { getProfile } from '@/lib/firebase-service';
+import { getProfile } from '@/lib/server/data';
 import { ProfileForm } from '@/components/profile/profile-form';
 
 // This is now a Server Component. It fetches the initial data.

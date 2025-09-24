@@ -131,7 +131,7 @@ export async function deleteReminderById(id: string): Promise<void> {
     return deleteDocument('reminders', id);
 }
 
-// Profile functions
+// Profile functions (Client-side only)
 export async function getProfile(): Promise<Profile | null> {
     const db = getDb();
     const docRef = doc(db, 'profile', 'user_profile');

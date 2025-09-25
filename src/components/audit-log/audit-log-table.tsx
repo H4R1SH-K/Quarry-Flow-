@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -23,6 +23,7 @@ import { History, User, Calendar, Edit, Trash2, PlusCircle, Search } from 'lucid
 import type { AuditLog } from '@/lib/types';
 import { Input } from '../ui/input';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Skeleton } from '../ui/skeleton';
 
 interface AuditLogTableProps {
   initialData: AuditLog[];
@@ -32,6 +33,11 @@ export function AuditLogTable({ initialData }: AuditLogTableProps) {
   const [auditLogs] = useState<AuditLog[]>(initialData);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const getActionIcon = (action: AuditLog['action']) => {
     switch (action) {
@@ -131,9 +137,13 @@ export function AuditLogTable({ initialData }: AuditLogTableProps) {
                       <div className="flex flex-col">
                          <div className="flex items-center gap-2">
                            <Calendar className="h-4 w-4 text-muted-foreground"/>
-                           <span title={format(new Date(log.timestamp), 'PPpp')}>
-                            {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
-                           </span>
+                           {isClient ? (
+                             <span title={format(new Date(log.timestamp), 'PPpp')}>
+                              {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
+                             </span>
+                           ) : (
+                             <Skeleton className="h-4 w-24" />
+                           )}
                          </div>
                       </div>
                     </TableCell>

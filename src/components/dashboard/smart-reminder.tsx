@@ -25,6 +25,7 @@ import type { Reminder } from '@/lib/types';
 import Link from 'next/link';
 import { getReminders, saveReminder } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '../ui/skeleton';
 
 export default function SmartReminder() {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -46,6 +47,12 @@ export default function SmartReminder() {
   const [status, setStatus] = React.useState<"Pending" | "Completed">('Pending');
   const [relatedTo, setRelatedTo] = React.useState<string | undefined>(undefined);
   const [relatedToName, setRelatedToName] = React.useState('');
+
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const fetchReminders = () => {
     startFetching(async () => {
@@ -180,7 +187,7 @@ export default function SmartReminder() {
                 <React.Fragment key={reminder.id}>
                   <div className="flex items-center justify-between">
                     <p className='truncate max-w-[200px]'>{reminder.details}</p>
-                    {getDaysLeft(reminder.dueDate)}
+                    {isClient ? getDaysLeft(reminder.dueDate) : <Skeleton className="h-4 w-16" />}
                   </div>
                   {index < upcomingRenewals.length - 1 && <Separator />}
                 </React.Fragment>

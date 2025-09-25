@@ -32,6 +32,7 @@ import { ReminderForm } from './reminder-form';
 import { getReminders, deleteReminderById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Skeleton } from '../ui/skeleton';
 
 interface ReminderTableProps {
   initialData: Reminder[];
@@ -43,6 +44,11 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const fetchReminders = () => {
     startTransition(async () => {
@@ -132,7 +138,7 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
                     <TableCell className="font-medium">{reminder.type}</TableCell>
                     <TableCell className="max-w-[250px] truncate">{reminder.details}</TableCell>
                     <TableCell>{reminder.dueDate && isValid(new Date(reminder.dueDate)) ? format(new Date(reminder.dueDate), 'PPP') : 'N/A'}</TableCell>
-                    <TableCell>{getDaysLeft(reminder.dueDate)}</TableCell>
+                    <TableCell>{isClient ? getDaysLeft(reminder.dueDate) : <Skeleton className='h-4 w-16' />}</TableCell>
                     <TableCell>{getRelatedName(reminder)}</TableCell>
                     <TableCell>
                       <Badge variant={reminder.status === "Pending" ? "destructive" : "default"}>

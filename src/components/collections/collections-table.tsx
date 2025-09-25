@@ -32,6 +32,7 @@ import { CollectionForm } from './collection-form';
 import { getReminders, deleteReminderById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Skeleton } from '../ui/skeleton';
 
 interface CollectionsTableProps {
   initialData: Reminder[];
@@ -43,6 +44,11 @@ export function CollectionsTable({ initialData }: CollectionsTableProps) {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const fetchCollections = () => {
     startTransition(async () => {
@@ -128,7 +134,7 @@ export function CollectionsTable({ initialData }: CollectionsTableProps) {
                     <TableCell className="max-w-[250px] truncate font-medium">{reminder.details}</TableCell>
                     <TableCell>₹{reminder.amount?.toLocaleString('en-IN') || 'N/A'}</TableCell>
                     <TableCell>{reminder.dueDate && isValid(new Date(reminder.dueDate)) ? format(new Date(reminder.dueDate), 'PPP') : 'N/A'}</TableCell>
-                    <TableCell>{getDaysLeft(reminder.dueDate)}</TableCell>
+                    <TableCell>{isClient ? getDaysLeft(reminder.dueDate) : <Skeleton className="h-4 w-16" />}</TableCell>
                     <TableCell>{reminder.relatedToName || 'N/A'}</TableCell>
                     <TableCell>
                       <Badge variant={reminder.status === "Pending" ? "destructive" : "default"}>

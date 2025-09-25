@@ -9,10 +9,16 @@ import { Banknote, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { getReminders } from '@/lib/firebase-service';
 import type { Reminder } from '@/lib/types';
+import { Skeleton } from '../ui/skeleton';
 
 export function UpcomingCollections() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isPending, startTransition] = useTransition();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     startTransition(async () => {
@@ -65,7 +71,7 @@ export function UpcomingCollections() {
                   </div>
                   <div className="flex justify-between">
                     <p className="text-muted-foreground truncate max-w-[200px]">{reminder.details}</p>
-                    <p className="font-medium">{getDaysLeft(reminder.dueDate)}</p>
+                    {isClient ? <p className="font-medium">{getDaysLeft(reminder.dueDate)}</p> : <Skeleton className="h-4 w-20" />}
                   </div>
                 </div>
                 {index < upcomingCollections.length - 1 && <Separator />}

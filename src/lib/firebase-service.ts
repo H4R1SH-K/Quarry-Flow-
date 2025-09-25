@@ -14,7 +14,6 @@ import {
   getDoc,
   initializeFirestore,
   persistentLocalCache,
-  memoryLocalCache,
   type Firestore
 } from 'firebase/firestore';
 import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from '@/lib/types';
@@ -43,10 +42,10 @@ function getDb(): Firestore {
 }
 
 
-// Generic function to get all documents from a collection
+// Generic function to get all documents from a collection, with a default limit.
 async function getCollection<T>(collectionName: string, recordLimit: number = 50): Promise<T[]> {
   const db = getDb();
-  const q = query(collection(db, collectionName), limit(recordLimit));
+  const q = query(collection(db, collectionName), orderBy('id', 'desc'), limit(recordLimit));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
 }

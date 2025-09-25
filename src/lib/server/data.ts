@@ -22,26 +22,41 @@ async function fetchCollection<T>(collectionName: keyof typeof initialState | 'p
         return initialState[collectionName] || [];
     }
     
-    // The try/catch block is moved to the main getDashboardData function
-    // to handle fallbacks at a global level.
-    const snap = await getDocs(query(collection(db, collectionName), orderBy("id", "desc")));
-    if (snap.empty) {
-      return [];
+    try {
+        const snap = await getDocs(query(collection(db, collectionName)));
+        if (snap.empty) {
+          return [];
+        }
+        return snap.docs.map(d => ({ ...d.data(), id: d.id })) as T[];
+
+    } catch (e: any) {
+         if (e.code === 'permission-denied' || e.code === 'failed-precondition') {
+            console.warn(`Firestore permission error on server for collection: ${collectionName}. Falling back to sample data.`);
+            // @ts-ignore
+            return initialState[collectionName] || [];
+        }
+        throw e;
     }
-    return snap.docs.map(d => ({ ...d.data(), id: d.id })) as T[];
 }
 
 export async function getProfile(): Promise<Profile | null> {
     const db = await getDb();
     if (!db) return initialState.profile;
     
-    // The try/catch block is moved to the main getDashboardData function
-    const docRef = doc(db, 'profile', 'user_profile');
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        return docSnap.data() as Profile;
+    try {
+        const docRef = doc(db, 'profile', 'user_profile');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return docSnap.data() as Profile;
+        }
+        return initialState.profile; 
+    } catch(e: any) {
+        if (e.code === 'permission-denied' || e.code === 'failed-precondition') {
+            console.warn(`Firestore permission error on server for profile. Falling back to sample data.`);
+            return initialState.profile;
+        }
+        throw e;
     }
-    return initialState.profile; // Fallback to sample if no profile exists
 }
 
 export const getCustomers = async () => fetchCollection<Customer>('customers');
@@ -64,12 +79,14 @@ type DashboardData = {
 
 
 export async function getDashboardData(): Promise<DashboardData> {
-  const db = await getDb();
-  if (!db) {
-    return {...initialState, profile: initialState.profile, error: 'FIREBASE_NOT_CONFIGURED'};
-  }
-
   try {
+    // We try to fetch just one collection to detect the permission error.
+    // The individual functions will handle their own fallbacks.
+    const db = await getDb();
+    if (db) {
+        await getDocs(query(collection(db, 'customers'), limit(1)));
+    }
+    
     const [sales, customers, vehicles, expenses, reminders, profile] = await Promise.all([
         getSales(),
         getCustomers(),
@@ -79,8 +96,6 @@ export async function getDashboardData(): Promise<DashboardData> {
         getProfile(),
     ]);
 
-    // Check if the database is truly empty to decide whether to show sample data.
-    // This is useful for first-time users.
     const isDbEmpty = sales.length === 0 && customers.length === 0 && vehicles.length === 0 && expenses.length === 0 && reminders.length === 0;
 
     if (isDbEmpty) {
@@ -92,7 +107,6 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   } catch (e: any) {
     let errorType = 'UNKNOWN_ERROR';
-    // This is the global catch block that prevents any page from crashing.
     if (e.code === 'permission-denied' || e.code === 'failed-precondition') {
         console.warn(`Firestore permission/connection error detected. Falling back to initial data for the entire app.`);
         errorType = 'PERMISSION_DENIED';
@@ -100,7 +114,6 @@ export async function getDashboardData(): Promise<DashboardData> {
         console.error("Could not fetch dashboard data from server.", e);
     }
     
-    // Fallback to the initial (empty) state for the whole app if there's any firebase error.
     return {...initialState, profile: initialState.profile, error: errorType};
   }
 }

@@ -14,6 +14,7 @@ import {
   getDoc,
   initializeFirestore,
   persistentLocalCache,
+  where,
   type Firestore
 } from 'firebase/firestore';
 import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from '@/lib/types';
@@ -32,9 +33,15 @@ function getDb(): Firestore {
   }
   
   // Use persistent cache for client-side (browser) only
-  db = initializeFirestore(app, {
-    localCache: persistentLocalCache({})
-  });
+  try {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({})
+    });
+  } catch(e) {
+    // This can happen in certain environments, fallback to in-memory.
+    console.warn("Could not initialize persistent cache. Falling back to in-memory cache.", e);
+    db = getFirestore(app);
+  }
   
   return db;
 }

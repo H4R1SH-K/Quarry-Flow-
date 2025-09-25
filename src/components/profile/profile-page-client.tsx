@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { User } from 'lucide-react';
+import { User, Building } from 'lucide-react';
 import type { Profile } from '@/lib/types';
 import { ProfileForm } from './profile-form';
 
@@ -23,20 +23,8 @@ export function ProfilePageClient({ initialData }: ProfilePageClientProps) {
         <h2 className="text-3xl font-bold tracking-tight font-headline">Personal & Company Details</h2>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <User className="h-6 w-6" />
-            <CardTitle className="font-headline">Your Information</CardTitle>
-          </div>
-          <CardDescription>
-            This information will be used for generating reports and other official documents.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ProfileForm initialData={initialData} />
-        </CardContent>
-      </Card>
+      <ProfileForm initialData={initialData} />
+      
     </div>
   );
 }

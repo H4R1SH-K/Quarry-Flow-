@@ -9,11 +9,11 @@ import { FullPageLoader } from '@/components/ui/full-page-loader';
 import { ClientOnlyDashboard } from '@/components/dashboard/client-only-dashboard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
-import dynamic from 'next/dynamic';
+import dynamicComponent from 'next/dynamic';
 
 export const dynamic = 'force-dynamic';
 
-const VehicleSummary = dynamic(() => import('@/components/dashboard/vehicle-summary').then(mod => mod.VehicleSummary), {
+const VehicleSummary = dynamicComponent(() => import('@/components/dashboard/vehicle-summary').then(mod => mod.VehicleSummary), {
   loading: () => <DashboardCardSkeleton />,
 });
 

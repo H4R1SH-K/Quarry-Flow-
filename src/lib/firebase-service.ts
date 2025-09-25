@@ -1,3 +1,4 @@
+
 'use client';
 import { getFirebaseApp } from '@/lib/firebase';
 import { 
@@ -19,7 +20,7 @@ import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from '@/lib
 
 let db: Firestore | null = null;
 
-// This function initializes Firestore correctly for client or server.
+// This function initializes Firestore for the CLIENT-SIDE ONLY with persistence.
 function getDb(): Firestore {
   if (db) {
     return db;
@@ -31,21 +32,16 @@ function getDb(): Firestore {
   }
   
   // Use persistent cache for client-side (browser) only
-  if (typeof window !== 'undefined') {
-    db = initializeFirestore(app, {
-      localCache: persistentLocalCache({})
-    });
-  } else {
-    // Use standard Firestore instance for server-side
-    db = getFirestore(app);
-  }
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({})
+  });
   
   return db;
 }
 
 
 // Generic function to get all documents from a collection, with a default limit.
-async function getCollection<T>(collectionName: string, recordLimit: number = 50): Promise<T[]> {
+async function getCollection<T>(collectionName: string, recordLimit: number = 100): Promise<T[]> {
   const db = getDb();
   const q = query(collection(db, collectionName), orderBy('id', 'desc'), limit(recordLimit));
   const querySnapshot = await getDocs(q);

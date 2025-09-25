@@ -1,6 +1,6 @@
 
 import { getFirebaseApp } from '@/lib/firebase';
-import { getFirestore, doc, getDoc, collection, getDocs, limit, query, orderBy } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
 import type { Profile, Sales, Customer, Vehicle, Expense, Reminder, AuditLog } from '@/lib/types';
 import { initialState } from '@/lib/sample-data';
 
@@ -24,7 +24,7 @@ async function fetchCollection<T>(collectionName: keyof typeof initialState | 'p
     }
     
     try {
-        const snap = await getDocs(query(collection(db, collectionName), orderBy("id", "desc"), limit(100)));
+        const snap = await getDocs(query(collection(db, collectionName), orderBy("id", "desc")));
         if (snap.empty) {
           // If the collection is empty in Firestore, return an empty array.
           return [];

@@ -1,4 +1,4 @@
-import { getFirestore, doc, getDoc, collection, getDocs, query, type Firestore, limit } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, collection, getDocs, query, type Firestore } from 'firebase/firestore';
 import type { Profile, Sales, Customer, Vehicle, Expense, Reminder, AuditLog } from '@/lib/types';
 import { initialState } from '@/lib/sample-data';
 import { getFirebaseApp } from '../firebase';
@@ -75,7 +75,7 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   } catch (e: any) {
     let errorType = 'UNKNOWN_ERROR';
-    if (e.code === 'permission-denied' || e.code === 'failed-precondition' || e.code === 'unimplemented') {
+    if (e.code === 'permission-denied' || e.code === 'failed-precondition' || e.code === 'unimplemented' || e.code === 'unavailable') {
         console.warn(`Firestore connection error on server. Falling back to initial data. Error: ${e.code}`);
         errorType = 'PERMISSION_DENIED';
     } else {

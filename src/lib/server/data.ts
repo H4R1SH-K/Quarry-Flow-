@@ -1,5 +1,5 @@
 
-import { getFirestore, doc, getDoc, collection, getDocs, query, type Firestore } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, collection, getDocs, query, type Firestore, limit } from 'firebase/firestore';
 import type { Profile, Sales, Customer, Vehicle, Expense, Reminder, AuditLog } from '@/lib/types';
 import { initialState } from '@/lib/sample-data';
 import { getFirebaseApp } from '../firebase';
@@ -60,6 +60,10 @@ export async function getDashboardData(): Promise<DashboardData> {
   }
   
   try {
+    // This is a check to see if Firestore is enabled. It's a lightweight operation.
+    // If it fails, we fall back to sample data.
+    await getDocs(query(collection(db, 'customers'), limit(1)));
+
     const [sales, customers, vehicles, expenses, reminders, profile] = await Promise.all([
         getSales(db),
         getCustomers(db),

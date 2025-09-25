@@ -5,6 +5,7 @@ import { initialState } from '@/lib/sample-data';
 import { getFirebaseApp } from '../firebase';
 
 
+// This function is intended for SERVER-SIDE use only. It does not enable persistence.
 async function getDb() {
   const app = getFirebaseApp();
   if (!app) {
@@ -86,7 +87,11 @@ export async function getDashboardData(): Promise<DashboardData> {
     // The individual functions will handle their own fallbacks.
     const db = await getDb();
     if (db) {
+        // This is a lightweight check to see if we can connect to Firestore.
         await getDocs(query(collection(db, 'customers'), limit(1)));
+    } else {
+        // If Firebase isn't configured at all, return sample data.
+        return {...initialState, profile: initialState.profile, error: 'FIREBASE_NOT_CONFIGURED'};
     }
     
     const [sales, customers, vehicles, expenses, reminders, profile] = await Promise.all([

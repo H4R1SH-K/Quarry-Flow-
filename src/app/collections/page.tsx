@@ -2,6 +2,8 @@
 import { CollectionsTable } from "@/components/collections/collections-table";
 import { getDashboardData } from "@/lib/server/data";
 
+export const dynamic = 'force-dynamic';
+
 export default async function CollectionsPage() {
   const { reminders } = await getDashboardData();
   const collections = reminders.filter(r => r.type === 'Credit');

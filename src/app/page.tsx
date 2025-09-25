@@ -11,6 +11,7 @@ import { ClientOnlyDashboard } from '@/components/dashboard/client-only-dashboar
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
 
 const VehicleSummary = dynamic(() => import('@/components/dashboard/vehicle-summary').then(mod => mod.VehicleSummary), {
   loading: () => <DashboardCardSkeleton />,

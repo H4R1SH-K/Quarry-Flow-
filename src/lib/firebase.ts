@@ -15,19 +15,15 @@ const firebaseConfig = {
 // This function initializes and returns the Firebase app instance.
 // It ensures that Firebase is initialized only once.
 export function getFirebaseApp(): FirebaseApp | null {
-    // If the app is already initialized, return it.
     if (getApps().length) {
         return getApp();
     }
 
-    // Check if the necessary Firebase config values are present.
-    // This is a safeguard against running without a configured .env file.
     if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
       console.warn("Firebase configuration is missing or incomplete. Cloud features will be disabled.");
       return null;
     }
 
-    // Initialize the Firebase app.
     try {
         return initializeApp(firebaseConfig);
     } catch (error) {

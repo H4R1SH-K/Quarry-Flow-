@@ -1,12 +1,12 @@
 
-import { getFirestore, doc, getDoc, collection, getDocs, query, limit } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, collection, getDocs, query, limit, Firestore } from 'firebase/firestore';
 import type { Profile, Sales, Customer, Vehicle, Expense, Reminder, AuditLog } from '@/lib/types';
 import { initialState } from '@/lib/sample-data';
 import { getFirebaseApp } from '../firebase';
 
 
 // This function is intended for SERVER-SIDE use only. It does not enable persistence.
-async function getDb() {
+function getDb(): Firestore | null {
   const app = getFirebaseApp();
   if (!app) {
     return null;
@@ -17,7 +17,7 @@ async function getDb() {
 
 
 async function fetchCollection<T>(collectionName: keyof typeof initialState | 'profile' | 'auditLogs'): Promise<T[]> {
-    const db = await getDb();
+    const db = getDb();
     if (!db) {
         // @ts-ignore
         return initialState[collectionName] || [];
@@ -43,7 +43,7 @@ async function fetchCollection<T>(collectionName: keyof typeof initialState | 'p
 }
 
 export async function getProfile(): Promise<Profile | null> {
-    const db = await getDb();
+    const db = getDb();
     if (!db) return initialState.profile;
     
     try {
@@ -85,7 +85,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   try {
     // We try to fetch just one collection to detect the permission error.
     // The individual functions will handle their own fallbacks.
-    const db = await getDb();
+    const db = getDb();
     if (db) {
         // This is a lightweight check to see if we can connect to Firestore.
         await getDocs(query(collection(db, 'customers'), limit(1)));

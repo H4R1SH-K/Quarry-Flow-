@@ -33,17 +33,11 @@ function getDb(): Firestore {
   
   // Use persistent cache for client-side (browser) only
   try {
-    // Check if we are in a browser environment before enabling persistence
-    if (typeof window !== 'undefined') {
       db = initializeFirestore(app, {
         localCache: persistentLocalCache({})
       });
-    } else {
-      db = getFirestore(app);
-    }
   } catch(e) {
-    // This can happen in certain environments (like server), fallback to in-memory.
-    console.warn("Could not initialize persistent cache. Falling back to in-memory cache.", e);
+    console.warn("Could not initialize persistent cache. Using in-memory cache.", e);
     db = getFirestore(app);
   }
   

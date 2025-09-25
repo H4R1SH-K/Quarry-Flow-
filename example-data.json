@@ -25,6 +25,24 @@
       "price": 26500,
       "date": "2024-07-21",
       "paymentMethod": "GPay"
+    },
+    {
+      "id": "1721629200000",
+      "customer": "Modern Builders",
+      "vehicle": "TN 02 CD 5678",
+      "items": [
+        {
+          "id": "1",
+          "description": "M-Sand",
+          "quantity": 15,
+          "unit": "Ton",
+          "unitPrice": 2200,
+          "total": 33000
+        }
+      ],
+      "price": 33000,
+      "date": "2024-07-22",
+      "paymentMethod": "Cash"
     }
   ],
   "customers": [
@@ -36,6 +54,24 @@
       "company": "Global Constructions Inc.",
       "address": "123 Main Street, Anytown, AN 12345",
       "status": "Active"
+    },
+    {
+      "id": "102",
+      "name": "Modern Builders",
+      "email": "info@modernbuilders.co",
+      "phone": "9988776655",
+      "company": "Modern Builders Ltd.",
+      "address": "456 Park Avenue, Sometown, ST 54321",
+      "status": "Active"
+    },
+    {
+      "id": "103",
+      "name": "Prestige Estates",
+      "email": "projects@prestige.com",
+      "phone": "9123456789",
+      "company": "Prestige Estate Projects",
+      "address": "789 High-Tech City, Metroville, MV 67890",
+      "status": "Inactive"
     }
   ],
   "vehicles": [
@@ -46,6 +82,22 @@
       "year": 2023,
       "vehicleNumber": "TN 01 AB 1234",
       "status": "Active"
+    },
+    {
+      "id": "202",
+      "make": "Ashok Leyland",
+      "model": "Captain",
+      "year": 2022,
+      "vehicleNumber": "TN 02 CD 5678",
+      "status": "Maintenance"
+    },
+    {
+      "id": "203",
+      "make": "BharatBenz",
+      "model": "3128CM",
+      "year": 2021,
+      "vehicleNumber": "TN 03 EF 9012",
+      "status": "Inactive"
     }
   ],
   "expenses": [
@@ -56,6 +108,22 @@
       "amount": 12000,
       "date": "2024-07-20",
       "vehicle": "TN 01 AB 1234"
+    },
+    {
+      "id": "302",
+      "category": "Maintenance",
+      "item": "Tyre Replacement",
+      "amount": 25000,
+      "date": "2024-07-18",
+      "vehicle": "TN 02 CD 5678"
+    },
+    {
+      "id": "303",
+      "category": "Salary",
+      "item": "Driver Salary - July",
+      "amount": 30000,
+      "date": "2024-07-31",
+      "vehicle": ""
     }
   ],
   "reminders": [
@@ -75,6 +143,14 @@
       "status": "Pending",
       "relatedToName": "Global Constructions",
       "amount": 26500
+    },
+    {
+      "id": "403",
+      "type": "Vehicle Permit",
+      "details": "Renew All India Permit",
+      "dueDate": "2024-09-10",
+      "status": "Pending",
+      "relatedToName": "TN 02 CD 5678"
     }
   ],
   "profile": {
@@ -82,6 +158,6 @@
     "email": "your.email@example.com",
     "phone": "123-456-7890",
     "companyName": "Your Quarry Business",
-    "address": "Your Company Address"
+    "address": "123 Business Avenue, Suite 100, Commerce City, CC 54321"
   }
 }

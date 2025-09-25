@@ -33,6 +33,7 @@ const menuItems = [
     { name: "Reminders", icon: Bell, href: "/reminders" },
     { name: "Reports", icon: LineChart, href: "/reports" },
     { name: "Audit Log", icon: History, href: "/audit-log"},
+    { name: "Settings", icon: Settings, href: "/settings"},
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {

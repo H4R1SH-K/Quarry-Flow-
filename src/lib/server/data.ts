@@ -1,7 +1,7 @@
 
 import { getFirebaseApp } from '@/lib/firebase';
 import { getFirestore, doc, getDoc, collection, getDocs, limit, query, orderBy } from 'firebase/firestore';
-import type { Profile, Sales, Customer, Vehicle, Expense, Reminder } from '@/lib/types';
+import type { Profile, Sales, Customer, Vehicle, Expense, Reminder, AuditLog } from '@/lib/types';
 import { initialState } from '@/lib/sample-data';
 
 
@@ -15,7 +15,7 @@ async function getDb() {
   return getFirestore(app);
 }
 
-async function fetchCollection<T>(collectionName: keyof typeof initialState | 'profile' | 'audit-logs'): Promise<T[]> {
+async function fetchCollection<T>(collectionName: keyof typeof initialState | 'profile' | 'auditLogs'): Promise<T[]> {
     const db = await getDb();
     if (!db) {
         // @ts-ignore
@@ -23,11 +23,15 @@ async function fetchCollection<T>(collectionName: keyof typeof initialState | 'p
     }
     try {
         const snap = await getDocs(query(collection(db, collectionName), orderBy("id", "desc"), limit(100)));
-        if (snap.empty) return [];
+        if (snap.empty) {
+          // If the collection is empty in Firestore, return the sample data for it
+          // @ts-ignore
+          return initialState[collectionName] || [];
+        }
         return snap.docs.map(d => ({ ...d.data(), id: d.id })) as T[];
     } catch(e: any) {
-        if (e.code === 'permission-denied') {
-            console.warn(`Firestore permission denied for ${collectionName}. Falling back to sample data.`);
+        if (e.code === 'permission-denied' || e.code === 'failed-precondition') {
+            console.warn(`Firestore permission/connection error for ${collectionName}. Falling back to sample data.`);
             // @ts-ignore
             return initialState[collectionName] || [];
         }
@@ -49,14 +53,14 @@ export async function getProfile(): Promise<Profile | null> {
         if (docSnap.exists()) {
             return docSnap.data() as Profile;
         }
-        return initialState.profile;
+        return sampleData.profile;
     } catch(e: any) {
-        if (e.code === 'permission-denied') {
-             console.warn(`Firestore permission denied for profile. Falling back to sample data.`);
-             return initialState.profile;
+        if (e.code === 'permission-denied' || e.code === 'failed-precondition') {
+             console.warn(`Firestore permission/connection error for profile. Falling back to sample data.`);
+             return sampleData.profile;
         }
         console.error(`Failed to fetch profile`, e);
-        return initialState.profile;
+        return sampleData.profile;
     }
 }
 
@@ -66,7 +70,7 @@ export const getSales = async () => fetchCollection<Sales>('sales');
 export const getVehicles = async () => fetchCollection<Vehicle>('vehicles');
 export const getExpenses = async () => fetchCollection<Expense>('expenses');
 export const getReminders = async () => fetchCollection<Reminder>('reminders');
-export const getAuditLogs = async () => fetchCollection<any>('audit-logs'); // No strong type for now
+export const getAuditLogs = async () => fetchCollection<AuditLog>('auditLogs');
 
 
 type DashboardData = {
@@ -83,7 +87,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   const db = await getDb();
   if (!db) {
     // Fallback to sample data if firebase is not configured
-    return {...initialState, error: 'FIREBASE_NOT_CONFIGURED'};
+    return {...initialState, profile: sampleData.profile, error: 'FIREBASE_NOT_CONFIGURED'};
   }
 
   // This is a server-side fetch. We are not using the client-side store here.
@@ -97,17 +101,23 @@ export async function getDashboardData(): Promise<DashboardData> {
         getReminders(),
     ]);
 
+    // If any of the fetches returned sample data (because of an empty DB), 
+    // we want to return a consistent set of sample data.
+    if (sales.length === 0 && customers.length === 0 && vehicles.length === 0 && expenses.length === 0 && reminders.length === 0) {
+      return {...initialState, profile: sampleData.profile, error: null};
+    }
+    
     return { sales, customers, vehicles, expenses, reminders, error: null };
 
   } catch (e: any) {
     console.error("Could not fetch dashboard data from server. This should not be reached due to individual fallbacks.", e);
     
     let errorType = 'UNKNOWN_ERROR';
-    if (e.code === 'permission-denied') {
+    if (e.code === 'permission-denied' || e.code === 'failed-precondition') {
         errorType = 'PERMISSION_DENIED';
     }
 
     // Fallback to sample data if there's a firebase error
-    return {...initialState, error: errorType};
+    return {...initialState, profile: sampleData.profile, error: errorType};
   }
 }

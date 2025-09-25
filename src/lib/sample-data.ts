@@ -1,5 +1,5 @@
 
-import type { Sales, Customer, Vehicle, Expense, Reminder } from '@/lib/types';
+import type { Sales, Customer, Vehicle, Expense, Reminder, Profile, AuditLog } from '@/lib/types';
 
 const customers: Customer[] = [
   { id: '1', name: 'BuildRight Pvt Ltd', email: 'contact@buildright.com', phone: '9876543210', company: 'BuildRight Pvt Ltd', address: '123 Construction Way, Bangalore', status: 'Active' },
@@ -79,10 +79,22 @@ const reminders: Reminder[] = [
   { id: '5', type: 'Insurance', details: 'Insurance renewal for AP 05 AB 1234', dueDate: '2024-06-01', status: 'Completed', relatedTo: '3', relatedToName: 'AP 05 AB 1234' },
 ];
 
+const profile: Profile = {
+    name: "Your Name",
+    email: "your.email@example.com",
+    phone: "123-456-7890",
+    companyName: "Your Quarry Business",
+    address: "Your Company Address"
+};
+
+const auditLogs: AuditLog[] = [];
+
 export const initialState = {
     sales,
     customers,
     vehicles,
     expenses,
-    reminders
+    reminders,
+    profile,
+    auditLogs,
 }

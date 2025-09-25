@@ -18,7 +18,7 @@ import {
 } from 'firebase/firestore';
 import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from '@/lib/types';
 
-let db: Firestore;
+let db: Firestore | null = null;
 
 // This function initializes Firestore with persistence for the client-side.
 function getDb(): Firestore {

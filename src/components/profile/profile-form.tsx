@@ -10,7 +10,6 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Profile } from '@/lib/types';
 import { saveProfile } from '@/lib/firebase-service';
-import { Skeleton } from '../ui/skeleton';
 
 interface ProfileFormProps {
   initialData: Profile | null;

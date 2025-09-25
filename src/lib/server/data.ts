@@ -1,3 +1,4 @@
+
 import { getFirebaseApp } from '@/lib/firebase';
 import { getFirestore, doc, getDoc, collection, getDocs, limit, query, orderBy } from 'firebase/firestore';
 import type { Profile, Sales, Customer, Vehicle, Expense, Reminder, AuditLog } from '@/lib/types';
@@ -25,8 +26,7 @@ async function fetchCollection<T>(collectionName: keyof typeof initialState | 'p
     try {
         const snap = await getDocs(query(collection(db, collectionName), orderBy("id", "desc"), limit(100)));
         if (snap.empty) {
-          // If the collection is empty in Firestore, return an empty array, not sample data.
-          // Sample data is now handled at a higher level in getDashboardData.
+          // If the collection is empty in Firestore, return an empty array.
           return [];
         }
         return snap.docs.map(d => ({ ...d.data(), id: d.id })) as T[];
@@ -82,7 +82,7 @@ type DashboardData = {
 export async function getDashboardData(): Promise<DashboardData> {
   const db = await getDb();
   if (!db) {
-    return {...initialState, profile: initialState.profile, error: 'FIREBASE_NOT_CONFIGURED'};
+    return {...initialState, error: 'FIREBASE_NOT_CONFIGURED'};
   }
 
   try {

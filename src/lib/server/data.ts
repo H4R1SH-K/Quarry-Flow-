@@ -1,3 +1,4 @@
+
 import { getFirestore, doc, getDoc, collection, getDocs, query, type Firestore } from 'firebase/firestore';
 import type { Profile, Sales, Customer, Vehicle, Expense, Reminder, AuditLog } from '@/lib/types';
 import { initialState } from '@/lib/sample-data';

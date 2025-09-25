@@ -1,10 +1,8 @@
 
 import { ProfilePageClient } from "@/components/profile/profile-page-client";
-import { getProfile } from "@/lib/server/data";
-import { initialState } from "@/lib/sample-data";
+import { getDashboardData } from "@/lib/server/data";
 
 export default async function ProfilePage() {
-  const profile = await getProfile();
-  const initialData = profile || initialState.profile;
-  return <ProfilePageClient initialData={initialData} />;
+  const { profile } = await getDashboardData();
+  return <ProfilePageClient initialData={profile} />;
 }

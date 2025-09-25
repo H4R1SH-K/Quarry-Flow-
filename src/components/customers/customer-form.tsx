@@ -17,9 +17,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { Customer } from '@/lib/types';
-import { saveCustomer } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Pencil } from 'lucide-react';
+import { useDataStore } from '@/lib/data-store';
 
 
 interface CustomerFormProps {
@@ -30,6 +30,7 @@ interface CustomerFormProps {
 export function CustomerForm({ customerToEdit, onSave }: CustomerFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  const { addCustomer, updateCustomer } = useDataStore();
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -72,22 +73,17 @@ export function CustomerForm({ customerToEdit, onSave }: CustomerFormProps) {
       status,
     };
     
-    try {
-      await saveCustomer(customerData);
-      toast({
-        title: customerToEdit ? 'Customer Updated' : 'Customer Added',
-        description: `Customer "${name}" has been saved successfully.`,
-      });
-      onSave?.();
-      setIsOpen(false);
-    } catch (error) {
-      console.error("Failed to save customer:", error);
-      toast({
-        title: 'Error',
-        description: 'Could not save the customer.',
-        variant: 'destructive',
-      });
+    if (customerToEdit) {
+        updateCustomer(customerData);
+    } else {
+        addCustomer(customerData);
     }
+    toast({
+      title: customerToEdit ? 'Customer Updated' : 'Customer Added',
+      description: `Customer "${name}" has been saved successfully.`,
+    });
+    onSave?.();
+    setIsOpen(false);
   };
   
   const triggerButton = customerToEdit ? (

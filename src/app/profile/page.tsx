@@ -1,10 +1,9 @@
 
+'use client';
 import { ProfilePageClient } from "@/components/profile/profile-page-client";
-import { getDashboardData } from "@/lib/server/data";
+import { useDataStore } from "@/lib/data-store";
 
-export const dynamic = 'force-dynamic';
-
-export default async function ProfilePage() {
-  const { profile } = await getDashboardData();
+export default function ProfilePage() {
+  const { profile } = useDataStore();
   return <ProfilePageClient initialData={profile} />;
 }

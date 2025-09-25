@@ -17,8 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { Vehicle } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { saveVehicle } from '@/lib/firebase-service';
 import { PlusCircle, Pencil } from 'lucide-react';
+import { useDataStore } from '@/lib/data-store';
 
 type VehicleStatus = "Active" | "Maintenance" | "Inactive";
 
@@ -30,6 +30,7 @@ interface VehicleFormProps {
 export function VehicleForm({ vehicleToEdit, onSave }: VehicleFormProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const { addVehicle, updateVehicle } = useDataStore();
   
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
@@ -68,22 +69,17 @@ export function VehicleForm({ vehicleToEdit, onSave }: VehicleFormProps) {
       status,
     };
     
-    try {
-      await saveVehicle(vehicleData);
-      toast({
-        title: vehicleToEdit ? 'Vehicle Updated' : 'Vehicle Added',
-        description: `Vehicle "${vehicleNumber}" has been saved.`,
-      });
-      onSave?.();
-      setIsOpen(false);
-    } catch (error) {
-       console.error("Failed to save vehicle:", error);
-       toast({
-         title: 'Error',
-         description: 'Could not save the vehicle.',
-         variant: 'destructive',
-       });
+    if (vehicleToEdit) {
+      updateVehicle(vehicleData);
+    } else {
+      addVehicle(vehicleData);
     }
+    toast({
+      title: vehicleToEdit ? 'Vehicle Updated' : 'Vehicle Added',
+      description: `Vehicle "${vehicleNumber}" has been saved.`,
+    });
+    onSave?.();
+    setIsOpen(false);
   };
   
   const triggerButton = vehicleToEdit ? (

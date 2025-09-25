@@ -23,17 +23,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { Reminder } from '@/lib/types';
 import Link from 'next/link';
-import { getReminders, saveReminder } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
+import { useDataStore } from '@/lib/data-store';
 
 export default function SmartReminder() {
   const formRef = React.useRef<HTMLFormElement>(null);
   const { toast } = useToast();
+  const { reminders, addReminder, updateReminder } = useDataStore();
   
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [isFetching, startFetching] = useTransition();
-
   const [isAnalyzing, startTransition] = useTransition();
   const [state, setState] = useState<{ message: string; success?: boolean; data?: any; }>({ message: '' });
   const [prompt, setPrompt] = useState('');
@@ -52,21 +50,6 @@ export default function SmartReminder() {
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
-
-  const fetchReminders = () => {
-    startFetching(async () => {
-      try {
-        const remindersData = await getReminders();
-        setReminders(remindersData);
-      } catch (error) {
-        console.error("Failed to fetch reminders:", error);
-      }
-    });
-  };
-
-  useEffect(() => {
-    fetchReminders();
   }, []);
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -132,16 +115,15 @@ export default function SmartReminder() {
     const id = editingReminder?.id || String(Date.now());
     const reminderData: Reminder = { id, type, details, dueDate, status, relatedTo, relatedToName };
     
-    try {
-        await saveReminder(reminderData);
-        toast({ title: editingReminder ? 'Reminder Updated' : 'Reminder Created', description: `Reminder "${details}" has been saved.` });
-        fetchReminders();
-        resetForm();
-        setEditingReminder(null);
-        setOpen(false);
-    } catch(error) {
-        toast({ title: 'Error', description: 'Could not save the reminder.', variant: 'destructive'});
+    if (editingReminder) {
+        updateReminder(reminderData);
+    } else {
+        addReminder(reminderData);
     }
+    toast({ title: editingReminder ? 'Reminder Updated' : 'Reminder Created', description: `Reminder "${details}" has been saved.` });
+    resetForm();
+    setEditingReminder(null);
+    setOpen(false);
   };
 
   const upcomingRenewals = reminders
@@ -177,11 +159,7 @@ export default function SmartReminder() {
               View All <ArrowRight className='h-4 w-4 ml-1'/>
             </Link>
           </div>
-           {isFetching ? (
-             <div className="text-sm text-center text-muted-foreground p-3 bg-muted/50 rounded-lg h-12 flex items-center justify-center">
-                <Loader2 className="h-4 w-4 animate-spin"/>
-             </div>
-           ) : upcomingRenewals.length > 0 ? (
+           {upcomingRenewals.length > 0 ? (
             <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-lg space-y-2">
               {upcomingRenewals.map((reminder, index) => (
                 <React.Fragment key={reminder.id}>

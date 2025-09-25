@@ -24,16 +24,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Trash2, FileText, Search, PlusCircle, Loader2 } from "lucide-react";
+import { Trash2, FileText, Search, PlusCircle } from "lucide-react";
 import type { Sales, Customer, Profile } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { SaleForm } from './sale-form';
-import { getSales, getCustomers, getProfile, deleteSaleById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Skeleton } from '../ui/skeleton';
+import { useDataStore } from '@/lib/data-store';
 
 interface InvoicingTableProps {
     initialSales: Sales[];
@@ -42,50 +42,19 @@ interface InvoicingTableProps {
 }
 
 export function InvoicingTable({ initialSales, initialCustomers, initialProfile }: InvoicingTableProps) {
-    const [sales, setSales] = useState<Sales[]>(initialSales);
-    const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
-    const [profile, setProfile] = useState<Profile | null>(initialProfile);
+    const { sales, customers, profile, deleteSale } = useDataStore();
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
-    const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
-        setSales(initialSales);
-        setCustomers(initialCustomers);
-        setProfile(initialProfile);
-    }, [initialSales, initialCustomers, initialProfile]);
-
-    const fetchData = async () => {
-        setIsLoading(true);
-        try {
-            const [salesData, customersData, profileData] = await Promise.all([
-                getSales(),
-                getCustomers(),
-                getProfile()
-            ]);
-            setSales(salesData);
-            setCustomers(customersData);
-            setProfile(profileData);
-        } catch (error) {
-            console.error("Failed to fetch invoicing data:", error);
-            toast({ title: "Error", description: "Could not fetch invoicing data.", variant: "destructive" });
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    }, []);
 
     const handleDelete = async (id: string) => {
-        try {
-            await deleteSaleById(id);
-            fetchData(); // Refetch
-            toast({ title: "Sale Deleted", description: "The sale record has been deleted." });
-        } catch (error) {
-            console.error("Failed to delete sale:", error);
-            toast({ title: "Error", description: "Could not delete the sale record.", variant: "destructive" });
-        }
+        deleteSale(id);
+        toast({ title: "Sale Deleted", description: "The sale record has been deleted." });
     }
     
     const handleGenerateBill = (sale: Sales) => {
@@ -177,7 +146,7 @@ export function InvoicingTable({ initialSales, initialCustomers, initialProfile 
                     <FileText className="h-6 w-6"/>
                     <h2 className="text-3xl font-bold tracking-tight font-headline">Invoicing</h2>
                 </div>
-                 <SaleForm onSave={fetchData} trigger={<Button><PlusCircle className="mr-2 h-4 w-4"/> Add Sale for Invoice</Button>} />
+                 <SaleForm onSave={() => {}} trigger={<Button><PlusCircle className="mr-2 h-4 w-4"/> Add Sale for Invoice</Button>} />
             </div>
             <Card>
                 <CardContent className="pt-6">
@@ -193,11 +162,6 @@ export function InvoicingTable({ initialSales, initialCustomers, initialProfile 
                         />
                         </div>
                     </div>
-                     {isLoading ? (
-                        <div className="flex justify-center items-center h-64">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                     ) : (
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -226,7 +190,7 @@ export function InvoicingTable({ initialSales, initialCustomers, initialProfile 
                                             <Button variant="ghost" size="icon" onClick={() => handleGenerateBill(sale)} title="Generate Bill">
                                                 <FileText className="h-4 w-4" />
                                             </Button>
-                                            <SaleForm saleToEdit={sale} onSave={fetchData} />
+                                            <SaleForm saleToEdit={sale} onSave={() => {}} />
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button variant="ghost" size="icon">
@@ -258,7 +222,6 @@ export function InvoicingTable({ initialSales, initialCustomers, initialProfile 
                             )}
                         </TableBody>
                     </Table>
-                    )}
                 </CardContent>
             </Card>
         </div>

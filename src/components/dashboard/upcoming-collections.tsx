@@ -1,34 +1,21 @@
 
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '../ui/separator';
 import { differenceInDays, isValid } from 'date-fns';
-import { Banknote, ArrowRight, Loader2 } from 'lucide-react';
+import { Banknote, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { getReminders } from '@/lib/firebase-service';
-import type { Reminder } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
+import { useDataStore } from '@/lib/data-store';
 
 export function UpcomingCollections() {
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [isPending, startTransition] = useTransition();
+  const { reminders } = useDataStore();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    startTransition(async () => {
-      try {
-        const remindersData = await getReminders();
-        setReminders(remindersData);
-      } catch (error) {
-        console.error("Failed to fetch collections:", error);
-      }
-    });
   }, []);
 
   const upcomingCollections = reminders
@@ -57,11 +44,7 @@ export function UpcomingCollections() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {isPending ? (
-            <div className="flex justify-center items-center h-48">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        ) : upcomingCollections.length > 0 ? (
+        {upcomingCollections.length > 0 ? (
           <div className="space-y-4">
             {upcomingCollections.map((reminder, index) => (
               <React.Fragment key={reminder.id}>

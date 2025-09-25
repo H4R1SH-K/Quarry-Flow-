@@ -13,9 +13,27 @@ export interface DataState {
   profile: Profile | null;
   auditLogs: AuditLog[];
   currentUser: User;
-  // Note: add/update/delete functions for large collections are being removed
-  // as data is now fetched directly from Firebase in each component.
-  // This reduces client-side memory usage and improves performance.
+  
+  addSale: (sale: Sales) => void;
+  updateSale: (sale: Sales) => void;
+  deleteSale: (id: string) => void;
+  
+  addCustomer: (customer: Customer) => void;
+  updateCustomer: (customer: Customer) => void;
+  deleteCustomer: (id: string) => void;
+
+  addVehicle: (vehicle: Vehicle) => void;
+  updateVehicle: (vehicle: Vehicle) => void;
+  deleteVehicle: (id: string) => void;
+
+  addExpense: (expense: Expense) => void;
+  updateExpense: (expense: Expense) => void;
+  deleteExpense: (id: string) => void;
+
+  addReminder: (reminder: Reminder) => void;
+  updateReminder: (reminder: Reminder) => void;
+  deleteReminder: (id: string) => void;
+  
   updateProfile: (profile: Profile) => void;
   restoreData: (data: Partial<DataState>) => void;
   importData: (data: Partial<DataState>) => void;
@@ -25,9 +43,9 @@ export interface DataState {
 
 const initialState = {
   ...sampleData,
-  profile: null,
+  profile: sampleData.profile || null,
   auditLogs: [],
-  currentUser: { id: 'system', name: 'System' },
+  currentUser: { id: 'local_user', name: 'Local User' },
 };
 
 const mergeById = <T extends { id: string }>(existing: T[], incoming: T[]): T[] => {
@@ -36,10 +54,6 @@ const mergeById = <T extends { id: string }>(existing: T[], incoming: T[]): T[] 
   
   const updatedItems = existing.map(item => {
     const incomingItem = incoming.find(i => i.id === item.id);
-    // Keep existing amount if incoming is null/undefined
-    if (incomingItem && 'amount' in incomingItem && (incomingItem as any).amount == null) {
-      (incomingItem as any).amount = (item as any).amount;
-    }
     return incomingItem ? { ...item, ...incomingItem } : item;
   });
 
@@ -50,6 +64,7 @@ export const useDataStore = create<DataState>()(
   persist(
     (set, get) => ({
       ...initialState,
+      // Audit Log
       addAuditLog: (log) => {
         const { currentUser } = get();
         const newLog: AuditLog = {
@@ -61,6 +76,96 @@ export const useDataStore = create<DataState>()(
         };
         set((state) => ({ auditLogs: [newLog, ...state.auditLogs] }));
       },
+      
+      // Sales
+      addSale: (sale) => {
+        get().addAuditLog({ action: 'Created', entity: 'Sale', entityId: sale.id, details: `Created sale for ${sale.customer}` });
+        set((state) => ({ sales: [...state.sales, sale] }))
+      },
+      updateSale: (sale) => {
+        get().addAuditLog({ action: 'Updated', entity: 'Sale', entityId: sale.id, details: `Updated sale for ${sale.customer}` });
+        set((state) => ({ sales: state.sales.map((s) => s.id === sale.id ? sale : s) }))
+      },
+      deleteSale: (id) => {
+        const sale = get().sales.find(s => s.id === id);
+        if (sale) {
+            get().addAuditLog({ action: 'Deleted', entity: 'Sale', entityId: id, details: `Deleted sale for ${sale.customer}` });
+        }
+        set((state) => ({ sales: state.sales.filter((s) => s.id !== id) }))
+      },
+
+      // Customers
+      addCustomer: (customer) => {
+        get().addAuditLog({ action: 'Created', entity: 'Customer', entityId: customer.id, details: `Created customer ${customer.name}` });
+        set((state) => ({ customers: [...state.customers, customer] }))
+      },
+      updateCustomer: (customer) => {
+        get().addAuditLog({ action: 'Updated', entity: 'Customer', entityId: customer.id, details: `Updated customer ${customer.name}` });
+        set((state) => ({ customers: state.customers.map((c) => c.id === customer.id ? customer : c) }))
+      },
+      deleteCustomer: (id) => {
+        const customer = get().customers.find(c => c.id === id);
+        if (customer) {
+            get().addAuditLog({ action: 'Deleted', entity: 'Customer', entityId: id, details: `Deleted customer ${customer.name}` });
+        }
+        set((state) => ({ customers: state.customers.filter((c) => c.id !== id) }))
+      },
+
+      // Vehicles
+      addVehicle: (vehicle) => {
+        get().addAuditLog({ action: 'Created', entity: 'Vehicle', entityId: vehicle.id, details: `Created vehicle ${vehicle.vehicleNumber}` });
+        set((state) => ({ vehicles: [...state.vehicles, vehicle] }))
+      },
+      updateVehicle: (vehicle) => {
+        get().addAuditLog({ action: 'Updated', entity: 'Vehicle', entityId: vehicle.id, details: `Updated vehicle ${vehicle.vehicleNumber}` });
+        set((state) => ({ vehicles: state.vehicles.map((v) => v.id === vehicle.id ? vehicle : v) }))
+      },
+      deleteVehicle: (id) => {
+        const vehicle = get().vehicles.find(v => v.id === id);
+        if (vehicle) {
+            get().addAuditLog({ action: 'Deleted', entity: 'Vehicle', entityId: id, details: `Deleted vehicle ${vehicle.vehicleNumber}` });
+        }
+        set((state) => ({ vehicles: state.vehicles.filter((v) => v.id !== id) }))
+      },
+
+      // Expenses
+      addExpense: (expense) => {
+        get().addAuditLog({ action: 'Created', entity: 'Expense', entityId: expense.id, details: `Created expense for ${expense.item}` });
+        set((state) => ({ expenses: [...state.expenses, expense] }))
+      },
+      updateExpense: (expense) => {
+        get().addAuditLog({ action: 'Updated', entity: 'Expense', entityId: expense.id, details: `Updated expense for ${expense.item}` });
+        set((state) => ({ expenses: state.expenses.map((e) => e.id === expense.id ? expense : e) }))
+      },
+      deleteExpense: (id) => {
+        const expense = get().expenses.find(e => e.id === id);
+        if (expense) {
+            get().addAuditLog({ action: 'Deleted', entity: 'Expense', entityId: id, details: `Deleted expense for ${expense.item}` });
+        }
+        set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) }))
+      },
+
+      // Reminders
+      addReminder: (reminder) => {
+        const entityType = reminder.type === 'Credit' ? 'Collection' : 'Reminder';
+        get().addAuditLog({ action: 'Created', entity: entityType, entityId: reminder.id, details: `Created reminder: ${reminder.details}` });
+        set((state) => ({ reminders: [...state.reminders, reminder] }))
+      },
+      updateReminder: (reminder) => {
+        const entityType = reminder.type === 'Credit' ? 'Collection' : 'Reminder';
+        get().addAuditLog({ action: 'Updated', entity: entityType, entityId: reminder.id, details: `Updated reminder: ${reminder.details}` });
+        set((state) => ({ reminders: state.reminders.map((r) => r.id === reminder.id ? reminder : r) }))
+      },
+      deleteReminder: (id) => {
+        const reminder = get().reminders.find(r => r.id === id);
+        if(reminder) {
+          const entityType = reminder.type === 'Credit' ? 'Collection' : 'Reminder';
+          get().addAuditLog({ action: 'Deleted', entity: entityType, entityId: id, details: `Deleted reminder: ${reminder.details}` });
+        }
+        set((state) => ({ reminders: state.reminders.filter((r) => r.id !== id) }))
+      },
+
+      // Profile & Data Management
       updateProfile: (profile) => {
         get().addAuditLog({ action: 'Updated', entity: 'Profile', entityId: get().currentUser.id, details: `Profile was updated.` });
         set({ profile });
@@ -75,17 +180,11 @@ export const useDataStore = create<DataState>()(
         profile: data.profile || state.profile,
         auditLogs: data.auditLogs ? mergeById(state.auditLogs, data.auditLogs) : state.auditLogs,
       })),
-      clearData: () => set({...initialState, sales: [], customers: [], vehicles: [], expenses: [], reminders: [], auditLogs: [] }),
+      clearData: () => set(initialState),
     }),
     {
       name: 'quarryflow-storage',
       storage: createJSONStorage(() => localStorage),
-      // Only persist a subset of the data. Large collections are fetched from Firebase.
-      partialize: (state) => ({
-        profile: state.profile,
-        auditLogs: state.auditLogs,
-        currentUser: state.currentUser,
-      }),
     }
   )
 );

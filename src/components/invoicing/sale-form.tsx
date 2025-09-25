@@ -16,10 +16,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { saveSale } from '@/lib/firebase-service';
 import type { Sales, SalesItem } from '@/lib/types';
 import { PlusCircle, X, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDataStore } from '@/lib/data-store';
 
 type PaymentMethod = 'GPay' | 'Cash' | 'Card' | 'Internet Banking';
 const defaultItem: Omit<SalesItem, 'id'> = { description: '', quantity: 1, unit: 'Ton', unitPrice: 0, total: 0 };
@@ -34,6 +34,7 @@ interface SaleFormProps {
 export function SaleForm({ saleToEdit, onSave, trigger }: SaleFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  const { addSale, updateSale } = useDataStore();
   
   const [customer, setCustomer] = useState('');
   const [vehicle, setVehicle] = useState('');
@@ -97,22 +98,17 @@ export function SaleForm({ saleToEdit, onSave, trigger }: SaleFormProps) {
       paymentMethod,
     };
 
-    try {
-      await saveSale(saleData);
-      toast({
-        title: saleToEdit ? 'Sale Updated' : 'Sale Added',
-        description: `The sale for "${customer}" has been saved.`,
-      });
-      onSave?.();
-      setIsOpen(false);
-    } catch (error) {
-      console.error("Failed to save sale:", error);
-      toast({
-        title: 'Error',
-        description: 'Could not save the sale.',
-        variant: 'destructive',
-      });
+    if (saleToEdit) {
+      updateSale(saleData);
+    } else {
+      addSale(saleData);
     }
+    toast({
+      title: saleToEdit ? 'Sale Updated' : 'Sale Added',
+      description: `The sale for "${customer}" has been saved.`,
+    });
+    onSave?.();
+    setIsOpen(false);
   };
 
   const triggerButton = trigger ? trigger : saleToEdit ? (

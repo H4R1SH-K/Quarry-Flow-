@@ -18,8 +18,8 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { Reminder } from '@/lib/types';
 import { PlusCircle, Pencil } from 'lucide-react';
-import { saveReminder } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
+import { useDataStore } from '@/lib/data-store';
 
 interface CollectionFormProps {
     reminderToEdit?: Reminder;
@@ -29,6 +29,7 @@ interface CollectionFormProps {
 export function CollectionForm({ reminderToEdit, onSave }: CollectionFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  const { addReminder, updateReminder } = useDataStore();
   
   const [details, setDetails] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -57,9 +58,8 @@ export function CollectionForm({ reminderToEdit, onSave }: CollectionFormProps) 
   };
 
   const handleSave = async () => {
-    const id = reminderToEdit?.id || String(Date.now());
     const reminderData: Reminder = {
-      id,
+      id: reminderToEdit?.id || String(Date.now()),
       type: 'Credit' as const,
       details,
       dueDate,
@@ -68,18 +68,18 @@ export function CollectionForm({ reminderToEdit, onSave }: CollectionFormProps) 
       amount: Number(amount) || 0,
     };
     
-    try {
-        await saveReminder(reminderData);
-        toast({
-          title: reminderToEdit ? 'Collection Updated' : 'Collection Added',
-          description: `Collection for "${relatedToName}" has been saved.`,
-        });
-        onSave?.();
-        setIsOpen(false);
-    } catch (error) {
-        console.error("Failed to save collection:", error);
-        toast({ title: 'Error', description: 'Could not save collection.', variant: 'destructive' });
+    if (reminderToEdit) {
+      updateReminder(reminderData);
+    } else {
+      addReminder(reminderData);
     }
+
+    toast({
+      title: reminderToEdit ? 'Collection Updated' : 'Collection Added',
+      description: `Collection for "${relatedToName}" has been saved.`,
+    });
+    onSave?.();
+    setIsOpen(false);
   };
 
   const triggerButton = reminderToEdit ? (

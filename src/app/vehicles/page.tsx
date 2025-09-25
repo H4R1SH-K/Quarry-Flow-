@@ -1,10 +1,9 @@
 
+'use client';
 import { VehicleTable } from "@/components/vehicles/vehicle-table";
-import { getDashboardData } from "@/lib/server/data";
+import { useDataStore } from "@/lib/data-store";
 
-export const dynamic = 'force-dynamic';
-
-export default async function VehiclesPage() {
-  const { vehicles } = await getDashboardData();
+export default function VehiclesPage() {
+  const { vehicles } = useDataStore();
   return <VehicleTable initialData={vehicles} />;
 }

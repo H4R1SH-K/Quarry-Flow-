@@ -24,54 +24,33 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Trash2, Search, Loader2, PlusCircle } from "lucide-react";
+import { Trash2, Search, PlusCircle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import { getSales, deleteSaleById } from '@/lib/firebase-service';
 import type { Sales } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 import { SaleForm } from '@/components/invoicing/sale-form';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Skeleton } from '../ui/skeleton';
+import { useDataStore } from '@/lib/data-store';
 
 interface SalesTableProps {
   initialData: Sales[];
 }
 
 export function SalesTable({ initialData }: SalesTableProps) {
-    const [sales, setSales] = useState<Sales[]>(initialData);
+    const { sales, deleteSale } = useDataStore();
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
-    const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
       setIsClient(true);
-      setSales(initialData);
-    }, [initialData]);
-
-    const fetchSales = async () => {
-        setIsLoading(true);
-        try {
-            const salesData = await getSales();
-            setSales(salesData);
-        } catch (error) {
-            console.error("Failed to fetch sales:", error);
-            toast({ title: "Error", description: "Could not fetch sales data.", variant: "destructive" });
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    }, []);
 
     const handleDelete = async (id: string) => {
-        try {
-            await deleteSaleById(id);
-            fetchSales(); // Refetch
-            toast({ title: "Sale Deleted", description: "The sale record has been deleted." });
-        } catch (error) {
-            console.error("Failed to delete sale:", error);
-            toast({ title: "Error", description: "Could not delete the sale record.", variant: "destructive" });
-        }
+        deleteSale(id);
+        toast({ title: "Sale Deleted", description: "The sale record has been deleted." });
     }
     
     const filteredSales = sales.filter(sale =>
@@ -84,7 +63,7 @@ export function SalesTable({ initialData }: SalesTableProps) {
        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
             <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold tracking-tight font-headline">Sales</h2>
-                <SaleForm onSave={fetchSales} trigger={<Button><PlusCircle className="mr-2 h-4 w-4"/> Add Sale</Button>} />
+                <SaleForm trigger={<Button><PlusCircle className="mr-2 h-4 w-4"/> Add Sale</Button>} />
             </div>
             <Card>
                 <CardContent className="pt-6">
@@ -100,11 +79,6 @@ export function SalesTable({ initialData }: SalesTableProps) {
                         />
                         </div>
                     </div>
-                    {isLoading ? (
-                        <div className="flex justify-center items-center h-64">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                    ) : (
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -130,7 +104,7 @@ export function SalesTable({ initialData }: SalesTableProps) {
                                         <TableCell>{sale.paymentMethod || 'N/A'}</TableCell>
                                         <TableCell className="text-right">Rs. {sale.price.toLocaleString('en-IN')}</TableCell>
                                         <TableCell className="text-right">
-                                            <SaleForm saleToEdit={sale} onSave={fetchSales} />
+                                            <SaleForm saleToEdit={sale} />
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button variant="ghost" size="icon">
@@ -162,7 +136,6 @@ export function SalesTable({ initialData }: SalesTableProps) {
                             )}
                         </TableBody>
                     </Table>
-                    )}
                 </CardContent>
             </Card>
         </div>

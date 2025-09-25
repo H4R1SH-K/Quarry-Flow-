@@ -1,11 +1,11 @@
 
+'use client';
 import { ReminderTable } from "@/components/reminders/reminder-table";
-import { getDashboardData } from "@/lib/server/data";
+import { useDataStore } from "@/lib/data-store";
 
-export const dynamic = 'force-dynamic';
 
-export default async function RemindersPage() {
-  const { reminders } = await getDashboardData();
+export default function RemindersPage() {
+  const { reminders } = useDataStore();
   const filteredReminders = reminders.filter(r => r.type !== 'Credit');
   return <ReminderTable initialData={filteredReminders} />;
 }

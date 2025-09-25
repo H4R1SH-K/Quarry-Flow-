@@ -25,54 +25,34 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Bell, Trash2, Search, Loader2 } from "lucide-react";
+import { Bell, Trash2, Search } from "lucide-react";
 import type { Reminder } from '@/lib/types';
 import { differenceInDays, format, isValid } from 'date-fns';
 import { ReminderForm } from './reminder-form';
-import { getReminders, deleteReminderById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Skeleton } from '../ui/skeleton';
+import { useDataStore } from '@/lib/data-store';
 
 interface ReminderTableProps {
   initialData: Reminder[];
 }
 
 export function ReminderTable({ initialData }: ReminderTableProps) {
-  const [reminders, setReminders] = useState<Reminder[]>(initialData);
+  const { reminders, deleteReminder } = useDataStore();
+  const filteredForPage = reminders.filter(r => r.type !== 'Credit');
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    setReminders(initialData);
-  }, [initialData]);
-
-  const fetchReminders = async () => {
-    setIsLoading(true);
-    try {
-        const remindersData = await getReminders();
-        setReminders(remindersData.filter(r => r.type !== 'Credit'));
-    } catch (error) {
-        console.error("Failed to fetch reminders:", error);
-        toast({ title: "Error", description: "Could not fetch reminders.", variant: "destructive" });
-    } finally {
-        setIsLoading(false);
-    }
-  };
+  }, []);
 
   const handleDelete = async (id: string) => {
-    try {
-        await deleteReminderById(id);
-        fetchReminders();
-        toast({ title: "Reminder Deleted", description: "The reminder has been deleted." });
-    } catch (error) {
-        console.error("Failed to delete reminder:", error);
-        toast({ title: "Error", description: "Could not delete reminder.", variant: "destructive" });
-    }
+    deleteReminder(id);
+    toast({ title: "Reminder Deleted", description: "The reminder has been deleted." });
   }
   
   const getRelatedName = (reminder: Reminder) => {
@@ -88,7 +68,7 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
     return `${days} days`;
   }
 
-  const filteredReminders = reminders.filter(reminder => 
+  const filteredReminders = filteredForPage.filter(reminder => 
     reminder.details.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
     (reminder.relatedToName && reminder.relatedToName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
   );
@@ -100,7 +80,7 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
             <Bell className="h-6 w-6"/>
             <h2 className="text-3xl font-bold tracking-tight font-headline">Reminders</h2>
         </div>
-        <ReminderForm onSave={fetchReminders} />
+        <ReminderForm />
       </div>
       <Card>
         <CardContent className="pt-6">
@@ -116,11 +96,6 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
               />
             </div>
           </div>
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -150,7 +125,7 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                       <ReminderForm reminderToEdit={reminder} onSave={fetchReminders} />
+                       <ReminderForm reminderToEdit={reminder} />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon">
@@ -182,7 +157,6 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
               )}
             </TableBody>
           </Table>
-          )}
         </CardContent>
       </Card>
     </div>

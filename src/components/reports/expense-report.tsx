@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import {
   Card,
   CardContent,
@@ -16,18 +16,14 @@ import 'jspdf-autotable';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
-import { addDays, format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, sub, isValid } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, sub, isValid } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
-import type { Sales, Expense, Reminder, Profile } from '@/lib/types';
-import { getExpenses, getSales, getProfile, getReminders } from '@/lib/firebase-service';
+import type { Sales, Expense, Reminder } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { useDataStore } from '@/lib/data-store';
 
 export function ExpenseReport() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [sales, setSales] = useState<Sales[]>([]);
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [profile, setProfile] = useState<Profile | null>(null);
-
+  const { expenses, sales, reminders, profile } = useDataStore();
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
@@ -36,27 +32,6 @@ export function ExpenseReport() {
     from: sub(new Date(), {days: 30}),
     to: new Date(),
   });
-
-  useEffect(() => {
-    startTransition(async () => {
-      try {
-        // Fetching profile on the client is fine for this report generation feature
-        const profileData = await getProfile();
-        setProfile(profileData);
-
-        const [expensesData, salesData, remindersData] = await Promise.all([
-          getExpenses(),
-          getSales(),
-          getReminders()
-        ]);
-        setExpenses(expensesData);
-        setSales(salesData);
-        setReminders(remindersData);
-      } catch (error) {
-        toast({ title: "Error", description: "Could not load data for the report.", variant: "destructive" });
-      }
-    });
-  }, [toast]);
 
    const getFilteredData = <T extends { date?: string, dueDate?: string }>(data: T[]): T[] => {
     const now = new Date();

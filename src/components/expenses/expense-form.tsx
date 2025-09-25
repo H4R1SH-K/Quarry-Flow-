@@ -16,8 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Expense } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { saveExpense } from '@/lib/firebase-service';
 import { PlusCircle, Pencil } from 'lucide-react';
+import { useDataStore } from '@/lib/data-store';
 
 
 interface ExpenseFormProps {
@@ -28,6 +28,7 @@ interface ExpenseFormProps {
 export function ExpenseForm({ expenseToEdit, onSave }: ExpenseFormProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const { addExpense, updateExpense } = useDataStore();
   
   const [category, setCategory] = useState('');
   const [item, setItem] = useState('');
@@ -66,22 +67,17 @@ export function ExpenseForm({ expenseToEdit, onSave }: ExpenseFormProps) {
       vehicle,
     };
     
-    try {
-      await saveExpense(expenseData);
-      toast({
-        title: expenseToEdit ? 'Expense Updated' : 'Expense Added',
-        description: `Expense "${item}" has been saved.`,
-      });
-      onSave?.();
-      setIsOpen(false);
-    } catch (error) {
-       console.error("Failed to save expense:", error);
-       toast({
-         title: 'Error',
-         description: 'Could not save the expense.',
-         variant: 'destructive',
-       });
+    if (expenseToEdit) {
+      updateExpense(expenseData);
+    } else {
+      addExpense(expenseData);
     }
+    toast({
+      title: expenseToEdit ? 'Expense Updated' : 'Expense Added',
+      description: `Expense "${item}" has been saved.`,
+    });
+    onSave?.();
+    setIsOpen(false);
   };
   
   const triggerButton = expenseToEdit ? (

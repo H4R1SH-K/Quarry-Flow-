@@ -1,11 +1,9 @@
 
+'use client';
 import { CustomerTable } from '@/components/customers/customer-table';
-import { getDashboardData } from '@/lib/server/data';
+import { useDataStore } from '@/lib/data-store';
 
-export const dynamic = 'force-dynamic';
-
-// This is now a Server Component that fetches data and passes it down.
-export default async function CustomersPage() {
-  const { customers } = await getDashboardData();
+export default function CustomersPage() {
+  const { customers } = useDataStore();
   return <CustomerTable initialData={customers} />;
 }

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRef, useState, useEffect, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import {
   Card,
   CardContent,
@@ -10,18 +10,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, Cloud, Loader2, LogOut, Trash2, Download } from 'lucide-react';
+import { Upload, Loader2, Trash2, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { importToFirestore, clearFirestoreData, getFirestoreData } from '@/app/settings/actions';
-import { getFirebaseApp } from '@/lib/firebase';
-import { 
-    getAuth, 
-    onAuthStateChanged, 
-    signOut, 
-    type User,
-} from 'firebase/auth';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,55 +28,9 @@ import { useDataStore } from '@/lib/data-store';
 
 export default function SettingsPage() {
     const { toast } = useToast();
-    const { clearData } = useDataStore();
+    const { importData, clearData, ...allData } = useDataStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const importMode = useRef<'import_cloud' | null>(null);
-    const [user, setUser] = useState<User | null>(null);
-    const [firebaseConfigured, setFirebaseConfigured] = useState(false);
-    const [isAuthLoading, setIsAuthLoading] = useState(true);
     const [isActionPending, startTransition] = useTransition();
-
-    useEffect(() => {
-        const app = getFirebaseApp();
-        if (app) {
-            setFirebaseConfigured(true);
-            const auth = getAuth(app);
-            const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-                setUser(currentUser);
-                setIsAuthLoading(false);
-            }, (error) => {
-                console.error("Auth State Error:", error);
-                setIsAuthLoading(false);
-            });
-
-            return () => unsubscribe();
-        } else {
-            setFirebaseConfigured(false);
-            setIsAuthLoading(false);
-        }
-    }, []);
-
-    const handleSignOut = async () => {
-        const app = getFirebaseApp();
-        if (!app) return;
-        const auth = getAuth(app);
-        try {
-            await signOut(auth);
-            setUser(null);
-            toast({
-                title: 'Signed Out',
-                description: 'You have successfully signed out.',
-            });
-        } catch (error) {
-            console.error("Sign-Out Error:", error);
-            toast({
-                title: 'Sign-Out Failed',
-                description: 'Could not sign out. Please try again.',
-                variant: 'destructive',
-            });
-        }
-    };
-
 
     const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -101,129 +45,53 @@ export default function SettingsPage() {
             }
             try {
                 const data = JSON.parse(text);
-
-                if (importMode.current === 'import_cloud') {
-                    if (!user) {
-                        toast({ title: 'Authentication Required', description: 'Please sign in to import to the cloud.', variant: 'destructive'});
-                        return;
-                    }
-                    startTransition(async () => {
-                        const result = await importToFirestore(data);
-                        if (result.success) {
-                            toast({
-                                title: "Cloud Import Successful",
-                                description: result.message,
-                            });
-                        } else {
-                             toast({
-                                title: "Cloud Import Failed",
-                                description: result.message,
-                                variant: "destructive",
-                            });
-                        }
+                startTransition(() => {
+                    importData(data);
+                    toast({
+                        title: "Import Successful",
+                        description: "Your data has been imported from the backup file.",
                     });
-                }
+                });
             } catch (error) {
                 toast({ title: "Invalid File", description: "The selected file is not a valid JSON file.", variant: "destructive" });
             } finally {
                 if(fileInputRef.current) {
                     fileInputRef.current.value = '';
                 }
-                importMode.current = null;
             }
         };
         reader.readAsText(file);
     };
 
-    const triggerFilePicker = (mode: 'import_cloud') => {
-        importMode.current = mode;
+    const triggerFilePicker = () => {
         fileInputRef.current?.click();
     };
 
     const handleClearData = () => {
-      startTransition(async () => {
-        // Clear local data first for immediate UI feedback
+      startTransition(() => {
         clearData();
-        
-        if (user) {
-          // If user is logged in, also clear cloud data
-          const result = await clearFirestoreData();
-          if (result.success) {
-            toast({ title: 'All Data Cleared', description: 'Your local and cloud data have been wiped.' });
-          } else {
-            toast({ title: 'Cloud Clear Failed', description: result.message, variant: 'destructive' });
-          }
-        } else {
-          toast({ title: 'Local Data Cleared', description: 'Your local application data has been wiped.' });
-        }
-        
-        // Force a reload to ensure all components refetch and see the empty state
+        toast({ title: 'Local Data Cleared', description: 'Your local application data has been wiped.' });
         window.location.reload();
       });
     }
 
     const handleBackup = () => {
-        startTransition(async () => {
-            if (!user) {
-                toast({ title: 'Authentication Required', description: 'Please sign in to back up your data.', variant: 'destructive'});
-                return;
-            }
-            const { success, data, message } = await getFirestoreData();
-            if (success && data) {
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'backup.json';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                toast({ title: 'Backup Successful', description: 'Your cloud data has been downloaded.' });
-            } else {
-                toast({ title: 'Backup Failed', description: message, variant: 'destructive' });
-            }
+        startTransition(() => {
+            const { sales, customers, vehicles, expenses, reminders, profile, auditLogs } = allData;
+            const backupData = { sales, customers, vehicles, expenses, reminders, profile, auditLogs };
+            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'backup.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast({ title: 'Backup Successful', description: 'Your local data has been downloaded.' });
         });
     }
 
-    const AuthContent = () => {
-        if (!firebaseConfigured) {
-            return (
-                <div className="text-sm text-destructive-foreground bg-destructive p-3 rounded-md">
-                    Firebase is not configured. Cloud features are unavailable. Please add your Firebase configuration to enable them.
-                </div>
-            )
-        }
-        if (isAuthLoading) {
-             return (
-                <div className="flex items-center justify-center h-48">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                    <span className="ml-2">Please wait...</span>
-                </div>
-            )
-        }
-        if (user) {
-             return (
-                <div className="flex flex-col items-start gap-4 p-4 bg-muted rounded-lg">
-                    <p>Signed in as <span className="font-semibold">{user.email}</span>.</p>
-                    <Button onClick={handleSignOut} variant="ghost" disabled={isActionPending}><LogOut className="mr-2 h-4 w-4" /> Sign Out</Button>
-                </div>
-            )
-        }
-        return (
-            <div className="flex flex-col gap-4">
-                <p>Sign in to enable cloud sync, backup, and multi-device access.</p>
-                <div className="flex gap-2">
-                    <Button asChild>
-                        <Link href="/login">Sign In</Link>
-                    </Button>
-                    <Button asChild variant="secondary">
-                        <Link href="/register">Create Account</Link>
-                    </Button>
-                </div>
-            </div>
-        )
-    };
 
     return (
         <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
@@ -231,105 +99,80 @@ export default function SettingsPage() {
                 <h2 className="text-3xl font-bold tracking-tight font-headline">Settings</h2>
             </div>
             
-            <Tabs defaultValue="cloud" className="space-y-4">
-              <TabsList>
-                <TabsTrigger value="cloud">Cloud & Authentication</TabsTrigger>
-                <TabsTrigger value="data">Data Management</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="cloud">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <Cloud className="h-6 w-6"/>
-                      <CardTitle className="font-headline">Cloud Status</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <AuthContent />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="data">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-headline">Data Management</CardTitle>
-                    <CardDescription>
-                      Manage your application data.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <h3 className="font-semibold">Backup Cloud Data</h3>
-                      <p className='text-sm text-muted-foreground'>
-                        Download a complete backup of all your data stored in the cloud as a JSON file.
-                      </p>
-                      <Button 
-                        onClick={handleBackup} 
-                        variant="outline" 
-                        disabled={isActionPending || !user}
-                      >
-                        {isActionPending ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Download className="mr-2 h-4 w-4" />
-                        )}
-                        Backup Cloud Data
-                      </Button>
-                      {!user && <p className="text-xs text-destructive">Please sign in to back up data.</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="font-semibold">Import to Cloud</h3>
-                      <p className='text-sm text-muted-foreground'>
-                        Import a local backup file directly to the cloud. This will merge the backup with your existing cloud data without overwriting.
-                      </p>
-                      <Button 
-                        onClick={() => triggerFilePicker('import_cloud')} 
-                        variant="outline" 
-                        disabled={isActionPending || !user}
-                      >
-                        {isActionPending && importMode.current === 'import_cloud' ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Upload className="mr-2 h-4 w-4" />
-                        )}
-                        Import Backup to Cloud
-                      </Button>
-                      {!user && <p className="text-xs text-destructive">Please sign in to import data to the cloud.</p>}
-                    </div>
-                    <div className="space-y-2 rounded-lg border border-destructive p-4">
-                      <h3 className="font-semibold text-destructive">Clear All Data</h3>
-                      <p className='text-sm text-muted-foreground'>
-                        Permanently delete all data from this application, including local and cloud storage. This action cannot be undone.
-                      </p>
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive" disabled={isActionPending}>
-                               {isActionPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                               Clear All Data
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action is irreversible. It will permanently delete all your data, including sales, customers, expenses, and settings from both your device and the cloud (if logged in).
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleClearData} className="bg-destructive hover:bg-destructive/90">
-                                Yes, delete everything
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-headline">Data Management</CardTitle>
+                <CardDescription>
+                  Manage your local application data. All data is stored in your browser.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Backup Data</h3>
+                  <p className='text-sm text-muted-foreground'>
+                    Download a complete backup of all your data as a JSON file.
+                  </p>
+                  <Button 
+                    onClick={handleBackup} 
+                    variant="outline" 
+                    disabled={isActionPending}
+                  >
+                    {isActionPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="mr-2 h-4 w-4" />
+                    )}
+                    Backup Local Data
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Import Data</h3>
+                  <p className='text-sm text-muted-foreground'>
+                    Import a local backup file. This will merge the backup with your existing data without overwriting.
+                  </p>
+                  <Button 
+                    onClick={triggerFilePicker} 
+                    variant="outline" 
+                    disabled={isActionPending}
+                  >
+                    {isActionPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="mr-2 h-4 w-4" />
+                    )}
+                    Import from Backup
+                  </Button>
+                </div>
+                <div className="space-y-2 rounded-lg border border-destructive p-4">
+                  <h3 className="font-semibold text-destructive">Clear All Data</h3>
+                  <p className='text-sm text-muted-foreground'>
+                    Permanently delete all data from this application stored in your browser. This action cannot be undone.
+                  </p>
+                   <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" disabled={isActionPending}>
+                           {isActionPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                           Clear All Data
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action is irreversible. It will permanently delete all your data, including sales, customers, expenses, and settings from your browser.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleClearData} className="bg-destructive hover:bg-destructive/90">
+                            Yes, delete everything
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
 
             <input
                 type="file"
@@ -341,5 +184,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    

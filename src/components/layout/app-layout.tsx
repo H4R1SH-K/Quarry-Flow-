@@ -2,15 +2,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign, Banknote, User, History, FileText, LogIn, LogOut } from "lucide-react";
+import { Bell, LayoutDashboard, LineChart, Settings, ShoppingCart, Truck, Users, DollarSign, Banknote, User, History, FileText } from "lucide-react";
 import { Button } from "../ui/button";
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
-import { getFirebaseApp } from '@/lib/firebase';
-import { useEffect, useState } from 'react';
-import type { User as FirebaseUser } from 'firebase/auth';
-import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,42 +33,6 @@ const menuItems = [
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { toast } = useToast();
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-
-  useEffect(() => {
-    const app = getFirebaseApp();
-    if(app) {
-      const auth = getAuth(app);
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
-        setIsAuthLoading(false);
-      });
-      return () => unsubscribe();
-    } else {
-      setIsAuthLoading(false);
-    }
-  }, []);
-
-  const handleSignOut = async () => {
-      const auth = getAuth(getFirebaseApp()!);
-      try {
-          await signOut(auth);
-          toast({
-              title: 'Signed Out',
-              description: 'You have successfully signed out.',
-          });
-          router.push('/login');
-      } catch (error) {
-          toast({
-              title: 'Sign-Out Failed',
-              description: 'Could not sign out. Please try again.',
-              variant: 'destructive',
-          });
-      }
-  };
   
   const mainContent = (
       <>
@@ -94,28 +53,17 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
                     <Avatar>
                       <AvatarFallback>
-                        {user ? user.email?.charAt(0).toUpperCase() : <User className="h-5 w-5" />}
+                        <User className="h-5 w-5" />
                       </AvatarFallback>
                     </Avatar>
                     <span className="sr-only">User Menu</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                { user ? (
-                  <>
-                    <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild><Link href="/profile"><User className="mr-2"/>Profile</Link></DropdownMenuItem>
-                    <DropdownMenuItem asChild><Link href="/settings"><Settings className="mr-2"/>Settings</Link></DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}><LogOut className="mr-2"/>Sign Out</DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                     <DropdownMenuItem asChild><Link href="/login"><LogIn className="mr-2"/>Sign In</Link></DropdownMenuItem>
-                     <DropdownMenuItem asChild><Link href="/register">Create Account</Link></DropdownMenuItem>
-                  </>
-                )}
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild><Link href="/profile"><User className="mr-2"/>Profile</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/settings"><Settings className="mr-2"/>Settings</Link></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -123,12 +71,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {children}
       </>
   );
-
-  const isAuthPage = pathname === '/login' || pathname === '/register';
-
-  if (isAuthPage) {
-    return <>{children}</>;
-  }
 
   return (
     <SidebarProvider>
@@ -143,37 +85,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent>
             <SidebarMenu>
-                {!isAuthLoading && (
-                  user ? menuItems.map((item) => (
-                      <SidebarMenuItem key={item.name}>
-                          <Link href={item.href} passHref>
-                              <SidebarMenuButton tooltip={item.name} isActive={pathname === item.href}>
-                                  <item.icon />
-                                  <span>{item.name}</span>
-                              </SidebarMenuButton>
-                          </Link>
-                      </SidebarMenuItem>
-                  )) : (
-                     <>
-                      <SidebarMenuItem>
-                          <Link href="/login" passHref>
-                              <SidebarMenuButton tooltip="Login" isActive={pathname === '/login'}>
-                                  <LogIn />
-                                  <span>Sign In</span>
-                              </SidebarMenuButton>
-                          </Link>
-                      </SidebarMenuItem>
-                       <SidebarMenuItem>
-                          <Link href="/register" passHref>
-                              <SidebarMenuButton tooltip="Register" isActive={pathname === '/register'}>
-                                  <User />
-                                  <span>Create Account</span>
-                              </SidebarMenuButton>
-                          </Link>
-                      </SidebarMenuItem>
-                    </>
-                  )
-                )}
+              {menuItems.map((item) => (
+                  <SidebarMenuItem key={item.name}>
+                      <Link href={item.href} passHref>
+                          <SidebarMenuButton tooltip={item.name} isActive={pathname === item.href}>
+                              <item.icon />
+                              <span>{item.name}</span>
+                          </SidebarMenuButton>
+                      </Link>
+                  </SidebarMenuItem>
+              ))}
             </SidebarMenu>
         </SidebarContent>
       </Sidebar>

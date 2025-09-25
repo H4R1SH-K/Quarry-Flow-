@@ -1,11 +1,10 @@
 
+'use client';
 import { CollectionsTable } from "@/components/collections/collections-table";
-import { getDashboardData } from "@/lib/server/data";
+import { useDataStore } from "@/lib/data-store";
 
-export const dynamic = 'force-dynamic';
-
-export default async function CollectionsPage() {
-  const { reminders } = await getDashboardData();
+export default function CollectionsPage() {
+  const { reminders } = useDataStore();
   const collections = reminders.filter(r => r.type === 'Credit');
   return <CollectionsTable initialData={collections} />;
 }

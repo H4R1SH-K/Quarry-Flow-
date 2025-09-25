@@ -1,11 +1,10 @@
 
+'use client';
+
 import { AuditLogTable } from "@/components/audit-log/audit-log-table";
-import { getDashboardData } from "@/lib/server/data";
+import { useDataStore } from "@/lib/data-store";
 
-export const dynamic = 'force-dynamic';
-
-export default async function AuditLogPage() {
-  const { auditLogs } = await getDashboardData();
-  // @ts-ignore - auditLogs is not part of the return type but will be present in the fallback
+export default function AuditLogPage() {
+  const { auditLogs } = useDataStore();
   return <AuditLogTable initialData={auditLogs || []} />;
 }

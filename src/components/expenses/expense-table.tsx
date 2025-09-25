@@ -24,54 +24,33 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Trash2, Search, Loader2 } from "lucide-react";
+import { Trash2, Search } from "lucide-react";
 import type { Expense } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 import { ExpenseForm } from './expense-form';
-import { getExpenses, deleteExpenseById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Skeleton } from '../ui/skeleton';
+import { useDataStore } from '@/lib/data-store';
 
 interface ExpenseTableProps {
   initialData: Expense[];
 }
 
 export function ExpenseTable({ initialData }: ExpenseTableProps) {
-  const [expenses, setExpenses] = useState<Expense[]>(initialData);
+  const { expenses, deleteExpense } = useDataStore();
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    setExpenses(initialData);
-  }, [initialData]);
-
-  const fetchExpenses = async () => {
-    setIsLoading(true);
-    try {
-      const expensesData = await getExpenses();
-      setExpenses(expensesData);
-    } catch (error) {
-      console.error("Failed to fetch expenses:", error);
-      toast({ title: "Error", description: "Could not fetch expenses.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, []);
 
   const handleDelete = async (id: string) => {
-    try {
-      await deleteExpenseById(id);
-      fetchExpenses(); // Refetch
-      toast({ title: "Expense Deleted", description: "The expense record has been deleted." });
-    } catch (error) {
-      console.error("Failed to delete expense:", error);
-      toast({ title: "Error", description: "Could not delete the expense record.", variant: "destructive" });
-    }
+    deleteExpense(id);
+    toast({ title: "Expense Deleted", description: "The expense record has been deleted." });
   }
 
   const filteredExpenses = expenses.filter(expense =>
@@ -84,7 +63,7 @@ export function ExpenseTable({ initialData }: ExpenseTableProps) {
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
        <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Expenses</h2>
-        <ExpenseForm onSave={fetchExpenses} />
+        <ExpenseForm />
       </div>
       <Card>
         <CardContent className="pt-6">
@@ -100,11 +79,6 @@ export function ExpenseTable({ initialData }: ExpenseTableProps) {
               />
             </div>
           </div>
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -129,7 +103,7 @@ export function ExpenseTable({ initialData }: ExpenseTableProps) {
                         {!isClient || !expense.date || !isValid(new Date(expense.date)) ? <Skeleton className="h-4 w-24" /> : format(new Date(expense.date), 'PPP')}
                       </TableCell>
                       <TableCell className="text-right">
-                        <ExpenseForm expenseToEdit={expense} onSave={fetchExpenses} />
+                        <ExpenseForm expenseToEdit={expense} />
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -162,7 +136,6 @@ export function ExpenseTable({ initialData }: ExpenseTableProps) {
               )}
             </TableBody>
           </Table>
-          )}
         </CardContent>
       </Card>
     </div>

@@ -1,10 +1,11 @@
 
+'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IndianRupee, Users, TrendingUp } from "lucide-react";
-import { getDashboardData } from "@/lib/server/data";
+import { useDataStore } from "@/lib/data-store";
 
-export async function OverviewStats() {
-    const { sales, expenses, customers } = await getDashboardData();
+export function OverviewStats() {
+    const { sales, expenses, customers } = useDataStore();
 
     const totalRevenue = sales.reduce((acc, sale) => acc + sale.price, 0);
     const totalExpenses = expenses.reduce((acc, expense) => acc + expense.amount, 0);

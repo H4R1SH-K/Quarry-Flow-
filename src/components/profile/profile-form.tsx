@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Profile } from '@/lib/types';
-import { saveProfile } from '@/lib/firebase-service';
+import { useDataStore } from '@/lib/data-store';
 
 interface ProfileFormProps {
   initialData: Profile | null;
@@ -18,6 +18,7 @@ interface ProfileFormProps {
 export function ProfileForm({ initialData }: ProfileFormProps) {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const { updateProfile } = useDataStore();
   
   const [formData, setFormData] = useState<Profile>(initialData || {
       name: '',
@@ -40,18 +41,12 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
 
   const handleSave = async () => {
     setIsSaving(true);
-    try {
-      await saveProfile(formData);
-      toast({
-        title: 'Profile Updated',
-        description: 'Your personal details have been saved.',
-      });
-    } catch (error) {
-      console.error("Failed to save profile:", error);
-      toast({ title: 'Error', description: 'Could not save your profile.', variant: 'destructive' });
-    } finally {
-      setIsSaving(false);
-    }
+    updateProfile(formData);
+    toast({
+      title: 'Profile Updated',
+      description: 'Your personal details have been saved.',
+    });
+    setIsSaving(false);
   };
 
   return (

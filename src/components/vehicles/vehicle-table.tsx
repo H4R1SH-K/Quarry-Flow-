@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -25,12 +25,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Truck, Wrench, Ban, ListFilter, Trash2, Search, Loader2 } from "lucide-react";
+import { Truck, Wrench, Ban, ListFilter, Trash2, Search } from "lucide-react";
 import type { Vehicle } from '@/lib/types';
 import { VehicleForm } from './vehicle-form';
-import { getVehicles, deleteVehicleById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useDataStore } from '@/lib/data-store';
 
 type VehicleStatus = "Active" | "Maintenance" | "Inactive";
 
@@ -39,50 +39,18 @@ interface VehicleTableProps {
 }
 
 export function VehicleTable({ initialData }: VehicleTableProps) {
-  const [vehicles, setVehicles] = useState<Vehicle[]>(initialData);
+  const { vehicles, deleteVehicle } = useDataStore();
   const [filter, setFilter] = useState<VehicleStatus | 'All'>('All');
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  useEffect(() => {
-    setVehicles(initialData);
-  }, [initialData]);
-
-  const fetchVehicles = async () => {
-    setIsLoading(true);
-    try {
-        const fetchedVehicles = await getVehicles();
-        setVehicles(fetchedVehicles);
-    } catch (error) {
-        console.error("Failed to fetch vehicles:", error);
-        toast({
-            title: "Error",
-            description: "Could not fetch vehicles. Please check your connection.",
-            variant: "destructive",
-        });
-    } finally {
-        setIsLoading(false);
-    }
-  };
-
   const handleDelete = async (id: string) => {
-    try {
-        await deleteVehicleById(id);
-        fetchVehicles(); // Refetch
-        toast({
-            title: "Vehicle Deleted",
-            description: "The vehicle has been successfully deleted.",
-        });
-    } catch (error) {
-        console.error("Failed to delete vehicle:", error);
-        toast({
-            title: "Error",
-            description: "Could not delete the vehicle.",
-            variant: "destructive",
-        });
-    }
+    deleteVehicle(id);
+    toast({
+        title: "Vehicle Deleted",
+        description: "The vehicle has been successfully deleted.",
+    });
   }
 
   const handleFilterChange = (newFilter: VehicleStatus | 'All') => {
@@ -115,13 +83,8 @@ export function VehicleTable({ initialData }: VehicleTableProps) {
       <Button
         variant={isCurrent ? 'default' : 'outline'}
         onClick={() => handleFilterChange(status)}
-        disabled={isLoading && !isCurrent}
       >
-        {isLoading && isCurrent ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          children
-        )}
+        {children}
       </Button>
     );
   };
@@ -131,7 +94,7 @@ export function VehicleTable({ initialData }: VehicleTableProps) {
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Vehicles</h2>
-        <VehicleForm onSave={fetchVehicles}/>
+        <VehicleForm />
       </div>
 
        <Card>
@@ -162,11 +125,6 @@ export function VehicleTable({ initialData }: VehicleTableProps) {
               </FilterButton>
             </div>
           </div>
-          { isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -200,7 +158,7 @@ export function VehicleTable({ initialData }: VehicleTableProps) {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <VehicleForm vehicleToEdit={vehicle} onSave={fetchVehicles} />
+                      <VehicleForm vehicleToEdit={vehicle} />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon">
@@ -232,7 +190,6 @@ export function VehicleTable({ initialData }: VehicleTableProps) {
               )}
             </TableBody>
           </Table>
-          )}
         </CardContent>
       </Card>
     </div>

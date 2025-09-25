@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useMemo, useState, useEffect, useTransition } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Pie, PieChart, Cell } from "recharts"
 import {
   Card,
@@ -17,9 +17,9 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart"
-import { getExpenses } from "@/lib/firebase-service";
 import type { Expense } from "@/lib/types";
-import { PieChartIcon, Loader2 } from "lucide-react"
+import { PieChartIcon } from "lucide-react"
+import { useDataStore } from "@/lib/data-store";
 
 const COLORS = [
   "hsl(var(--chart-1))",
@@ -30,19 +30,7 @@ const COLORS = [
 ];
 
 export function ExpenseBreakdownChart() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    startTransition(async () => {
-      try {
-        const fetchedExpenses = await getExpenses();
-        setExpenses(fetchedExpenses);
-      } catch (error) {
-        console.error("Failed to fetch expenses for chart:", error);
-      }
-    });
-  }, []);
+  const { expenses } = useDataStore();
 
   const chartData = useMemo(() => {
     const dataByCategory = expenses.reduce((acc, expense) => {
@@ -78,11 +66,7 @@ export function ExpenseBreakdownChart() {
         <CardDescription>A breakdown of your expenses by category.</CardDescription>
       </CardHeader>
       <CardContent>
-        {isPending ? (
-          <div className="flex justify-center items-center h-[250px]">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : chartData.length > 0 ? (
+        {chartData.length > 0 ? (
           <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
             <PieChart>
               <ChartTooltip

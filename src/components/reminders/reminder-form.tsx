@@ -18,8 +18,8 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { Reminder } from '@/lib/types';
 import { PlusCircle, Pencil } from 'lucide-react';
-import { saveReminder } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
+import { useDataStore } from '@/lib/data-store';
 
 interface ReminderFormProps {
     reminderToEdit?: Reminder;
@@ -29,6 +29,7 @@ interface ReminderFormProps {
 export function ReminderForm({ reminderToEdit, onSave }: ReminderFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  const { addReminder, updateReminder } = useDataStore();
   
   const [type, setType] = useState<"Vehicle Permit" | "Insurance">("Vehicle Permit");
   const [details, setDetails] = useState('');
@@ -71,18 +72,17 @@ export function ReminderForm({ reminderToEdit, onSave }: ReminderFormProps) {
       relatedToName,
     };
     
-    try {
-      await saveReminder(reminderData);
-      toast({
-        title: reminderToEdit ? 'Reminder Updated' : 'Reminder Added',
-        description: `Reminder "${details}" has been saved.`,
-      });
-      onSave?.();
-      setIsOpen(false);
-    } catch (error) {
-        console.error("Failed to save reminder:", error);
-        toast({ title: 'Error', description: 'Could not save reminder.', variant: 'destructive' });
+    if (reminderToEdit) {
+      updateReminder(reminderData);
+    } else {
+      addReminder(reminderData);
     }
+    toast({
+      title: reminderToEdit ? 'Reminder Updated' : 'Reminder Added',
+      description: `Reminder "${details}" has been saved.`,
+    });
+    onSave?.();
+    setIsOpen(false);
   };
   
   const triggerButton = reminderToEdit ? (

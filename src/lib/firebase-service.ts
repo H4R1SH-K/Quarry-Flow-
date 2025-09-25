@@ -1,4 +1,3 @@
-
 'use client';
 import { getFirebaseApp } from '@/lib/firebase';
 import { 
@@ -32,13 +31,13 @@ function getDb(): Firestore {
   }
   
   // Use persistent cache for client-side (browser) only
+  // This can only be initialized once.
   try {
       db = initializeFirestore(app, {
         localCache: persistentLocalCache({})
       });
   } catch(e) {
-    // This can happen in environments where persistence is not supported (e.g., server-side, some browsers in private mode).
-    console.warn("Could not initialize persistent cache. Using in-memory cache.", e);
+    // If it's already initialized (e.g., due to fast refresh), get the existing instance.
     db = getFirestore(app);
   }
   

@@ -1,4 +1,3 @@
-
 import { getFirestore, doc, getDoc, collection, getDocs, query, type Firestore, limit } from 'firebase/firestore';
 import type { Profile, Sales, Customer, Vehicle, Expense, Reminder, AuditLog } from '@/lib/types';
 import { initialState } from '@/lib/sample-data';
@@ -12,6 +11,7 @@ function getDb(): Firestore | null {
     return null;
   }
   // This is the correct way to get a Firestore instance for server-side operations.
+  // It does NOT use persistence.
   return getFirestore(app);
 }
 

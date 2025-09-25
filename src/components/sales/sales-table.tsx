@@ -32,8 +32,12 @@ import { format, isValid } from 'date-fns';
 import { SaleForm } from '@/components/invoicing/sale-form';
 import { useDebounce } from '@/hooks/use-debounce';
 
-export function SalesTable() {
-    const [sales, setSales] = useState<Sales[]>([]);
+interface SalesTableProps {
+  initialData: Sales[];
+}
+
+export function SalesTable({ initialData }: SalesTableProps) {
+    const [sales, setSales] = useState<Sales[]>(initialData);
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
     const [isPending, startTransition] = useTransition();
@@ -50,10 +54,6 @@ export function SalesTable() {
             }
         });
     };
-
-    useEffect(() => {
-        fetchSales();
-    }, []);
 
     const handleDelete = async (id: string) => {
         try {

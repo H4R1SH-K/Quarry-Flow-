@@ -29,34 +29,32 @@ import { Bell, Trash2, Search, Loader2 } from "lucide-react";
 import type { Reminder } from '@/lib/types';
 import { differenceInDays, format, isValid } from 'date-fns';
 import { ReminderForm } from './reminder-form';
-import { getReminders, deleteReminderById, saveReminder } from '@/lib/firebase-service';
+import { getReminders, deleteReminderById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 
-export function ReminderTable() {
-  const [reminders, setReminders] = useState<Reminder[]>([]);
+interface ReminderTableProps {
+  initialData: Reminder[];
+}
+
+export function ReminderTable({ initialData }: ReminderTableProps) {
+  const [reminders, setReminders] = useState<Reminder[]>(initialData);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
-  const allReminders = reminders.filter(r => r.type !== 'Credit');
-
   const fetchReminders = () => {
     startTransition(async () => {
         try {
             const remindersData = await getReminders();
-            setReminders(remindersData);
+            setReminders(remindersData.filter(r => r.type !== 'Credit'));
         } catch (error) {
             console.error("Failed to fetch reminders:", error);
             toast({ title: "Error", description: "Could not fetch reminders.", variant: "destructive" });
         }
     });
   };
-
-  useEffect(() => {
-    fetchReminders();
-  }, []);
 
   const handleDelete = async (id: string) => {
     try {
@@ -82,7 +80,7 @@ export function ReminderTable() {
     return `${days} days`;
   }
 
-  const filteredReminders = allReminders.filter(reminder => 
+  const filteredReminders = reminders.filter(reminder => 
     reminder.details.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
     (reminder.relatedToName && reminder.relatedToName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
   );

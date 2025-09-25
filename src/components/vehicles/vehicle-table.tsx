@@ -34,8 +34,12 @@ import { useDebounce } from '@/hooks/use-debounce';
 
 type VehicleStatus = "Active" | "Maintenance" | "Inactive";
 
-export function VehicleTable() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+interface VehicleTableProps {
+  initialData: Vehicle[];
+}
+
+export function VehicleTable({ initialData }: VehicleTableProps) {
+  const [vehicles, setVehicles] = useState<Vehicle[]>(initialData);
   const [filter, setFilter] = useState<VehicleStatus | 'All'>('All');
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -57,10 +61,6 @@ export function VehicleTable() {
         }
     });
   };
-
-  useEffect(() => {
-    fetchVehicles();
-  }, []);
 
   const handleDelete = async (id: string) => {
     try {

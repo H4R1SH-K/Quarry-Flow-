@@ -1,17 +1,8 @@
 
-'use client';
+import { VehicleTable } from "@/components/vehicles/vehicle-table";
+import { getVehicles } from "@/lib/server/data";
 
-import dynamic from 'next/dynamic';
-import { FullPageLoader } from '@/components/ui/full-page-loader';
-
-const VehicleTable = dynamic(
-  () => import('@/components/vehicles/vehicle-table').then((mod) => mod.VehicleTable),
-  { 
-    ssr: false,
-    loading: () => <FullPageLoader />
-  }
-);
-
-export default function VehiclesPage() {
-  return <VehicleTable />;
+export default async function VehiclesPage() {
+  const vehicles = await getVehicles();
+  return <VehicleTable initialData={vehicles} />;
 }

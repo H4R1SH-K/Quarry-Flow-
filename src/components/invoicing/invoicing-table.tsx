@@ -34,10 +34,16 @@ import { getSales, getCustomers, getProfile, deleteSaleById } from '@/lib/fireba
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 
-export function InvoicingTable() {
-    const [sales, setSales] = useState<Sales[]>([]);
-    const [customers, setCustomers] = useState<Customer[]>([]);
-    const [profile, setProfile] = useState<Profile | null>(null);
+interface InvoicingTableProps {
+    initialSales: Sales[];
+    initialCustomers: Customer[];
+    initialProfile: Profile | null;
+}
+
+export function InvoicingTable({ initialSales, initialCustomers, initialProfile }: InvoicingTableProps) {
+    const [sales, setSales] = useState<Sales[]>(initialSales);
+    const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+    const [profile, setProfile] = useState<Profile | null>(initialProfile);
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
     const [isPending, startTransition] = useTransition();
@@ -60,10 +66,6 @@ export function InvoicingTable() {
             }
         });
     };
-
-    useEffect(() => {
-        fetchData();
-    }, []);
 
     const handleDelete = async (id: string) => {
         try {

@@ -1,17 +1,8 @@
 
-'use client';
+import { SalesTable } from "@/components/sales/sales-table";
+import { getSales } from "@/lib/server/data";
 
-import dynamic from 'next/dynamic';
-import { FullPageLoader } from '@/components/ui/full-page-loader';
-
-const SalesTable = dynamic(
-  () => import('@/components/sales/sales-table').then((mod) => mod.SalesTable),
-  { 
-    ssr: false,
-    loading: () => <FullPageLoader />
-  }
-);
-
-export default function SalesPage() {
-    return <SalesTable />;
+export default async function SalesPage() {
+  const sales = await getSales();
+  return <SalesTable initialData={sales} />;
 }

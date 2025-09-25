@@ -15,6 +15,19 @@ async function getDb() {
   return getFirestore(app);
 }
 
+async function fetchCollection<T>(collectionName: string): Promise<T[]> {
+    const db = await getDb();
+    if (!db) return [];
+    try {
+        const snap = await getDocs(query(collection(db, collectionName), orderBy("id", "desc"), limit(100)));
+        if (snap.empty) return [];
+        return snap.docs.map(d => ({ ...d.data(), id: d.id })) as T[];
+    } catch(e) {
+        // If collection doesn't exist or fails, return empty array
+        return [];
+    }
+}
+
 // Profile functions
 export async function getProfile(): Promise<Profile | null> {
     const db = await getDb();
@@ -28,10 +41,14 @@ export async function getProfile(): Promise<Profile | null> {
     return null;
 }
 
-// In a real application, this would fetch data from a database or API.
-// For this local-first app, we'll return mock data on the server
-// as server components cannot access localStorage.
-// The client-side components will use the real data from the Zustand store.
+// Functions to fetch data for each page
+export const getCustomers = async () => fetchCollection<Customer>('customers');
+export const getSales = async () => fetchCollection<Sales>('sales');
+export const getVehicles = async () => fetchCollection<Vehicle>('vehicles');
+export const getExpenses = async () => fetchCollection<Expense>('expenses');
+export const getReminders = async () => fetchCollection<Reminder>('reminders');
+export const getAuditLogs = async () => fetchCollection<any>('audit-logs'); // No strong type for now
+
 
 type DashboardData = {
   sales: Sales[];
@@ -53,20 +70,15 @@ export async function getDashboardData(): Promise<DashboardData> {
   // This is a server-side fetch. We are not using the client-side store here.
   // We can fetch directly from firestore.
   try {
-    const salesSnap = await getDocs(query(collection(db, "sales"), orderBy("date", "desc"), limit(50)));
-    const customersSnap = await getDocs(query(collection(db, "customers"), limit(50)));
-    const vehiclesSnap = await getDocs(query(collection(db, "vehicles"), limit(50)));
-    const expensesSnap = await getDocs(query(collection(db, "expenses"), limit(50)));
-    const remindersSnap = await getDocs(query(collection(db, "reminders"), limit(50)));
+    const [sales, customers, vehicles, expenses, reminders] = await Promise.all([
+        fetchCollection<Sales>('sales'),
+        fetchCollection<Customer>('customers'),
+        fetchCollection<Vehicle>('vehicles'),
+        fetchCollection<Expense>('expenses'),
+        fetchCollection<Reminder>('reminders'),
+    ]);
 
-    return {
-      sales: salesSnap.docs.map(d => ({...d.data(), id: d.id})) as Sales[],
-      customers: customersSnap.docs.map(d => ({...d.data(), id: d.id})) as Customer[],
-      vehicles: vehiclesSnap.docs.map(d => ({...d.data(), id: d.id})) as Vehicle[],
-      expenses: expensesSnap.docs.map(d => ({...d.data(), id: d.id})) as Expense[],
-      reminders: remindersSnap.docs.map(d => ({...d.data(), id: d.id})) as Reminder[],
-      error: null,
-    };
+    return { sales, customers, vehicles, expenses, reminders, error: null };
 
   } catch (e: any) {
     console.error("Could not fetch dashboard data from server. Falling back to sample data.", e);

@@ -1,17 +1,8 @@
 
-'use client';
+import { AuditLogTable } from "@/components/audit-log/audit-log-table";
+import { getAuditLogs } from "@/lib/server/data";
 
-import dynamic from 'next/dynamic';
-import { FullPageLoader } from '@/components/ui/full-page-loader';
-
-const AuditLogTable = dynamic(
-  () => import('@/components/audit-log/audit-log-table').then((mod) => mod.AuditLogTable),
-  { 
-    ssr: false,
-    loading: () => <FullPageLoader />
-  }
-);
-
-export default function AuditLogPage() {
-  return <AuditLogTable />;
+export default async function AuditLogPage() {
+  const auditLogs = await getAuditLogs();
+  return <AuditLogTable initialData={auditLogs} />;
 }

@@ -1,17 +1,9 @@
 
-'use client';
+import { CustomerTable } from '@/components/customers/customer-table';
+import { getCustomers } from '@/lib/server/data';
 
-import dynamic from 'next/dynamic';
-import { FullPageLoader } from '@/components/ui/full-page-loader';
-
-const CustomerTable = dynamic(
-  () => import('@/components/customers/customer-table').then((mod) => mod.CustomerTable),
-  { 
-    ssr: false, 
-    loading: () => <FullPageLoader />
-  }
-);
-
-export default function CustomersPage() {
-  return <CustomerTable />;
+// This is now a Server Component that fetches data and passes it down.
+export default async function CustomersPage() {
+  const customers = await getCustomers();
+  return <CustomerTable initialData={customers} />;
 }

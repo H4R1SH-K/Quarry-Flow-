@@ -33,30 +33,28 @@ import { getReminders, deleteReminderById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 
-export function CollectionsTable() {
-  const [reminders, setReminders] = useState<Reminder[]>([]);
+interface CollectionsTableProps {
+  initialData: Reminder[];
+}
+
+export function CollectionsTable({ initialData }: CollectionsTableProps) {
+  const [collections, setCollections] = useState<Reminder[]>(initialData);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
-  
-  const collections = reminders.filter(r => r.type === 'Credit');
 
   const fetchCollections = () => {
     startTransition(async () => {
       try {
         const remindersData = await getReminders();
-        setReminders(remindersData);
+        setCollections(remindersData.filter(r => r.type === 'Credit'));
       } catch (error) {
         console.error("Failed to fetch collections:", error);
         toast({ title: "Error", description: "Could not fetch collections.", variant: "destructive" });
       }
     });
   };
-
-  useEffect(() => {
-    fetchCollections();
-  }, []);
 
   const handleDelete = async (id: string) => {
     try {

@@ -32,8 +32,12 @@ import { getExpenses, deleteExpenseById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 
-export function ExpenseTable() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+interface ExpenseTableProps {
+  initialData: Expense[];
+}
+
+export function ExpenseTable({ initialData }: ExpenseTableProps) {
+  const [expenses, setExpenses] = useState<Expense[]>(initialData);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [isPending, startTransition] = useTransition();
@@ -50,10 +54,6 @@ export function ExpenseTable() {
       }
     });
   };
-
-  useEffect(() => {
-    fetchExpenses();
-  }, []);
 
   const handleDelete = async (id: string) => {
     try {

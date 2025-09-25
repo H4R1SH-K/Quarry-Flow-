@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -10,28 +10,14 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { User } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import type { Profile } from '@/lib/types';
-import { getProfile } from '@/lib/firebase-service';
 import { ProfileForm } from './profile-form';
 
-export function ProfilePageClient() {
-  const { toast } = useToast();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [isPending, startTransition] = useTransition();
-  
-  useEffect(() => {
-    startTransition(async () => {
-      try {
-        const profileData = await getProfile();
-        setProfile(profileData);
-      } catch (error) {
-        console.error("Failed to fetch profile", error);
-        toast({ title: 'Error', description: 'Could not load your profile.', variant: 'destructive' });
-      }
-    });
-  }, [toast]);
+interface ProfilePageClientProps {
+  initialData: Profile | null;
+}
 
+export function ProfilePageClient({ initialData }: ProfilePageClientProps) {
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
@@ -49,10 +35,9 @@ export function ProfilePageClient() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ProfileForm initialData={profile} isPending={isPending} />
+          <ProfileForm initialData={initialData} />
         </CardContent>
       </Card>
     </div>
   );
 }
-

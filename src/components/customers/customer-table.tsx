@@ -32,8 +32,12 @@ import { getCustomers, deleteCustomerById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 
-export function CustomerTable() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+interface CustomerTableProps {
+  initialData: Customer[];
+}
+
+export function CustomerTable({ initialData }: CustomerTableProps) {
+  const [customers, setCustomers] = useState<Customer[]>(initialData);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [isPending, startTransition] = useTransition();
@@ -55,9 +59,10 @@ export function CustomerTable() {
     });
   };
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
+  // Data is now passed from server, so we can remove the initial client-side fetch.
+  // useEffect(() => {
+  //   fetchCustomers();
+  // }, []);
 
   const handleDelete = async (id: string) => {
     try {

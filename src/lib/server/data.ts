@@ -33,17 +33,21 @@ export async function getProfile(): Promise<Profile | null> {
 // as server components cannot access localStorage.
 // The client-side components will use the real data from the Zustand store.
 
-export async function getDashboardData(): Promise<{
+type DashboardData = {
   sales: Sales[];
   customers: Customer[];
   vehicles: Vehicle[];
   expenses: Expense[];
   reminders: Reminder[];
-}> {
+  error?: string | null;
+};
+
+
+export async function getDashboardData(): Promise<DashboardData> {
   const db = await getDb();
   if (!db) {
     // Fallback to sample data if firebase is not configured
-    return initialState;
+    return {...initialState, error: 'FIREBASE_NOT_CONFIGURED'};
   }
 
   // This is a server-side fetch. We are not using the client-side store here.
@@ -61,11 +65,18 @@ export async function getDashboardData(): Promise<{
       vehicles: vehiclesSnap.docs.map(d => ({...d.data(), id: d.id})) as Vehicle[],
       expenses: expensesSnap.docs.map(d => ({...d.data(), id: d.id})) as Expense[],
       reminders: remindersSnap.docs.map(d => ({...d.data(), id: d.id})) as Reminder[],
+      error: null,
     };
 
-  } catch (e) {
+  } catch (e: any) {
     console.error("Could not fetch dashboard data from server. Falling back to sample data.", e);
+    
+    let errorType = 'UNKNOWN_ERROR';
+    if (e.code === 'permission-denied') {
+        errorType = 'PERMISSION_DENIED';
+    }
+
     // Fallback to sample data if there's a firebase error
-    return initialState;
+    return {...initialState, error: errorType};
   }
 }

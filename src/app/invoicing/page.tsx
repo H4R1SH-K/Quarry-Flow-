@@ -1,20 +1,17 @@
 
 import { InvoicingTable } from "@/components/invoicing/invoicing-table";
-import { getSales, getCustomers, getProfile } from "@/lib/server/data";
-import { initialState } from "@/lib/sample-data";
+import { getDashboardData, getProfile } from "@/lib/server/data";
 
 export default async function InvoicingPage() {
-  const [sales, customers, profile] = await Promise.all([
-    getSales(),
-    getCustomers(),
+  // Fetch all required data using the robust getDashboardData function
+  const [{ sales, customers }, profile] = await Promise.all([
+    getDashboardData(),
     getProfile()
   ]);
 
-  const useSampleData = sales.length === 0 && customers.length === 0;
-
   return <InvoicingTable 
-      initialSales={useSampleData ? initialState.sales : sales} 
-      initialCustomers={useSampleData ? initialState.customers : customers} 
+      initialSales={sales} 
+      initialCustomers={customers} 
       initialProfile={profile} 
     />;
 }

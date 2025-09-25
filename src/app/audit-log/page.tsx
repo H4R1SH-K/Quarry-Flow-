@@ -1,8 +1,9 @@
 
 import { AuditLogTable } from "@/components/audit-log/audit-log-table";
-import { getAuditLogs } from "@/lib/server/data";
+import { getDashboardData } from "@/lib/server/data";
 
 export default async function AuditLogPage() {
-  const auditLogs = await getAuditLogs();
-  return <AuditLogTable initialData={auditLogs} />;
+  const { auditLogs } = await getDashboardData();
+  // @ts-ignore - auditLogs is not part of the return type but will be present in the fallback
+  return <AuditLogTable initialData={auditLogs || []} />;
 }

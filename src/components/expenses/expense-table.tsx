@@ -126,7 +126,7 @@ export function ExpenseTable({ initialData }: ExpenseTableProps) {
                       <TableCell>{expense.vehicle || 'N/A'}</TableCell>
                       <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
                       <TableCell>
-                        {isClient && expense.date && isValid(new Date(expense.date)) ? format(new Date(expense.date), 'PPP') : <Skeleton className="h-4 w-24" />}
+                        {!isClient || !expense.date || !isValid(new Date(expense.date)) ? <Skeleton className="h-4 w-24" /> : format(new Date(expense.date), 'PPP')}
                       </TableCell>
                       <TableCell className="text-right">
                         <ExpenseForm expenseToEdit={expense} onSave={fetchExpenses} />

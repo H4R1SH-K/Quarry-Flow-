@@ -37,6 +37,7 @@ export function UpcomingCollections() {
     .slice(0, 3);
   
   const getDaysLeft = (dueDate: string) => {
+    if (!isClient || !dueDate || !isValid(new Date(dueDate))) return <Skeleton className="h-4 w-20" />;
     const days = differenceInDays(new Date(dueDate), new Date());
     if (days < 0) return <span className="font-medium text-destructive">Overdue</span>
     if (days === 0) return <span className="font-medium text-destructive">Today</span>
@@ -71,7 +72,7 @@ export function UpcomingCollections() {
                   </div>
                   <div className="flex justify-between">
                     <p className="text-muted-foreground truncate max-w-[200px]">{reminder.details}</p>
-                    {isClient ? <p className="font-medium">{getDaysLeft(reminder.dueDate)}</p> : <Skeleton className="h-4 w-20" />}
+                    <p className="font-medium">{getDaysLeft(reminder.dueDate)}</p>
                   </div>
                 </div>
                 {index < upcomingCollections.length - 1 && <Separator />}

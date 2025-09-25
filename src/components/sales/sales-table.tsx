@@ -125,7 +125,7 @@ export function SalesTable({ initialData }: SalesTableProps) {
                                         <TableCell>{sale.vehicle}</TableCell>
                                         <TableCell>{sale.items?.length || 1} item(s)</TableCell>
                                         <TableCell>
-                                          {isClient && sale.date && isValid(new Date(sale.date)) ? format(new Date(sale.date), 'PPP') : <Skeleton className="h-4 w-24" />}
+                                          {!isClient || !sale.date || !isValid(new Date(sale.date)) ? <Skeleton className="h-4 w-24" /> : format(new Date(sale.date), 'PPP')}
                                         </TableCell>
                                         <TableCell>{sale.paymentMethod || 'N/A'}</TableCell>
                                         <TableCell className="text-right">Rs. {sale.price.toLocaleString('en-IN')}</TableCell>

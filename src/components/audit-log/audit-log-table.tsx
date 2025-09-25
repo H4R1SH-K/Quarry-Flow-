@@ -137,12 +137,12 @@ export function AuditLogTable({ initialData }: AuditLogTableProps) {
                       <div className="flex flex-col">
                          <div className="flex items-center gap-2">
                            <Calendar className="h-4 w-4 text-muted-foreground"/>
-                           {isClient ? (
+                           {!isClient ? (
+                             <Skeleton className="h-4 w-24" />
+                           ) : (
                              <span title={format(new Date(log.timestamp), 'PPpp')}>
                               {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
                              </span>
-                           ) : (
-                             <Skeleton className="h-4 w-24" />
                            )}
                          </div>
                       </div>

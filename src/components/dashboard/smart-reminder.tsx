@@ -150,7 +150,7 @@ export default function SmartReminder() {
     .slice(0, 2);
 
   const getDaysLeft = (dueDate: string) => {
-    if (!dueDate || !isValid(new Date(dueDate))) return null;
+    if (!isClient || !dueDate || !isValid(new Date(dueDate))) return <Skeleton className="h-4 w-16" />;
     const days = differenceInDays(new Date(dueDate), new Date());
     if (days < 0) return <span className="font-medium text-destructive">Overdue</span>
     if (days === 0) return <span className="font-medium text-destructive">Today</span>
@@ -187,7 +187,7 @@ export default function SmartReminder() {
                 <React.Fragment key={reminder.id}>
                   <div className="flex items-center justify-between">
                     <p className='truncate max-w-[200px]'>{reminder.details}</p>
-                    {isClient ? getDaysLeft(reminder.dueDate) : <Skeleton className="h-4 w-16" />}
+                    {getDaysLeft(reminder.dueDate)}
                   </div>
                   {index < upcomingRenewals.length - 1 && <Separator />}
                 </React.Fragment>

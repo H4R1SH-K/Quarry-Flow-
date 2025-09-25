@@ -48,7 +48,8 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    setReminders(initialData);
+  }, [initialData]);
 
   const fetchReminders = async () => {
     setIsLoading(true);
@@ -79,7 +80,7 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
   }
 
   const getDaysLeft = (dueDate: string) => {
-    if (!dueDate || !isValid(new Date(dueDate))) return 'N/A';
+    if (!isClient || !dueDate || !isValid(new Date(dueDate))) return <Skeleton className="h-4 w-16" />;
     const days = differenceInDays(new Date(dueDate), new Date());
     if (days < 0) return <span className="text-destructive">Overdue</span>
     if (days === 0) return <span className="text-destructive">Today</span>
@@ -139,9 +140,9 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
                     <TableCell className="font-medium">{reminder.type}</TableCell>
                     <TableCell className="max-w-[250px] truncate">{reminder.details}</TableCell>
                     <TableCell>
-                      {isClient && reminder.dueDate && isValid(new Date(reminder.dueDate)) ? format(new Date(reminder.dueDate), 'PPP') : <Skeleton className="h-4 w-24" />}
+                      {!isClient || !reminder.dueDate || !isValid(new Date(reminder.dueDate)) ? <Skeleton className="h-4 w-24" /> : format(new Date(reminder.dueDate), 'PPP')}
                     </TableCell>
-                    <TableCell>{isClient ? getDaysLeft(reminder.dueDate) : <Skeleton className='h-4 w-16' />}</TableCell>
+                    <TableCell>{getDaysLeft(reminder.dueDate)}</TableCell>
                     <TableCell>{getRelatedName(reminder)}</TableCell>
                     <TableCell>
                       <Badge variant={reminder.status === "Pending" ? "destructive" : "default"}>

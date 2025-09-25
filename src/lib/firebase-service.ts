@@ -1,4 +1,3 @@
-
 'use client';
 import { getFirebaseApp } from '@/lib/firebase';
 import { 
@@ -37,6 +36,7 @@ function getDb(): Firestore {
         localCache: persistentLocalCache({})
       });
   } catch(e) {
+    // This can happen in environments where persistence is not supported (e.g., server-side, some browsers in private mode).
     console.warn("Could not initialize persistent cache. Using in-memory cache.", e);
     db = getFirestore(app);
   }

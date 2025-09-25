@@ -1,5 +1,4 @@
-
-import { getFirestore, doc, getDoc, collection, getDocs, query, limit, Firestore } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, collection, getDocs, query, type Firestore } from 'firebase/firestore';
 import type { Profile, Sales, Customer, Vehicle, Expense, Reminder, AuditLog } from '@/lib/types';
 import { initialState } from '@/lib/sample-data';
 import { getFirebaseApp } from '../firebase';
@@ -16,58 +15,30 @@ function getDb(): Firestore | null {
 }
 
 
-async function fetchCollection<T>(collectionName: keyof typeof initialState | 'profile' | 'auditLogs'): Promise<T[]> {
-    const db = getDb();
-    if (!db) {
-        // @ts-ignore
-        return initialState[collectionName] || [];
-    }
-    
-    try {
-        const snap = await getDocs(query(collection(db, collectionName)));
-        if (snap.empty) {
-          // Fallback to sample data if the collection is empty in Firestore
-          // @ts-ignore
-          return initialState[collectionName] || [];
-        }
-        return snap.docs.map(d => ({ ...d.data(), id: d.id })) as T[];
-
-    } catch (e: any) {
-         if (e.code === 'permission-denied' || e.code === 'failed-precondition') {
-            console.warn(`Firestore permission error on server for collection: ${collectionName}. Falling back to sample data.`);
-            // @ts-ignore
-            return initialState[collectionName] || [];
-        }
-        throw e;
-    }
+async function fetchCollection<T>(db: Firestore, collectionName: keyof typeof initialState | 'profile' | 'auditLogs'): Promise<T[]> {
+  const snap = await getDocs(query(collection(db, collectionName)));
+  if (snap.empty) {
+    // @ts-ignore
+    return initialState[collectionName] || [];
+  }
+  return snap.docs.map(d => ({ ...d.data(), id: d.id })) as T[];
 }
 
-export async function getProfile(): Promise<Profile | null> {
-    const db = getDb();
-    if (!db) return initialState.profile;
-    
-    try {
-        const docRef = doc(db, 'profile', 'user_profile');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            return docSnap.data() as Profile;
-        }
-        return initialState.profile; 
-    } catch(e: any) {
-        if (e.code === 'permission-denied' || e.code === 'failed-precondition') {
-            console.warn(`Firestore permission error on server for profile. Falling back to sample data.`);
-            return initialState.profile;
-        }
-        throw e;
+export async function getProfile(db: Firestore): Promise<Profile | null> {
+    const docRef = doc(db, 'profile', 'user_profile');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as Profile;
     }
+    return initialState.profile; 
 }
 
-export const getCustomers = async () => fetchCollection<Customer>('customers');
-export const getSales = async () => fetchCollection<Sales>('sales');
-export const getVehicles = async () => fetchCollection<Vehicle>('vehicles');
-export const getExpenses = async () => fetchCollection<Expense>('expenses');
-export const getReminders = async () => fetchCollection<Reminder>('reminders');
-export const getAuditLogs = async () => fetchCollection<AuditLog>('auditLogs');
+export const getCustomers = (db: Firestore) => fetchCollection<Customer>(db, 'customers');
+export const getSales = (db: Firestore) => fetchCollection<Sales>(db, 'sales');
+export const getVehicles = (db: Firestore) => fetchCollection<Vehicle>(db, 'vehicles');
+export const getExpenses = (db: Firestore) => fetchCollection<Expense>(db, 'expenses');
+export const getReminders = (db: Firestore) => fetchCollection<Reminder>(db, 'reminders');
+export const getAuditLogs = (db: Firestore) => fetchCollection<AuditLog>(db, 'auditLogs');
 
 
 type DashboardData = {
@@ -82,33 +53,27 @@ type DashboardData = {
 
 
 export async function getDashboardData(): Promise<DashboardData> {
+  const db = getDb();
+  if (!db) {
+    return {...initialState, profile: initialState.profile, error: 'FIREBASE_NOT_CONFIGURED'};
+  }
+  
   try {
-    // We try to fetch just one collection to detect the permission error.
-    // The individual functions will handle their own fallbacks.
-    const db = getDb();
-    if (db) {
-        // This is a lightweight check to see if we can connect to Firestore.
-        await getDocs(query(collection(db, 'customers'), limit(1)));
-    } else {
-        // If Firebase isn't configured at all, return sample data.
-        return {...initialState, profile: initialState.profile, error: 'FIREBASE_NOT_CONFIGURED'};
-    }
-    
     const [sales, customers, vehicles, expenses, reminders, profile] = await Promise.all([
-        getSales(),
-        getCustomers(),
-        getVehicles(),
-        getExpenses(),
-        getReminders(),
-        getProfile(),
+        getSales(db),
+        getCustomers(db),
+        getVehicles(db),
+        getExpenses(db),
+        getReminders(db),
+        getProfile(db),
     ]);
     
     return { sales, customers, vehicles, expenses, reminders, profile, error: null };
 
   } catch (e: any) {
     let errorType = 'UNKNOWN_ERROR';
-    if (e.code === 'permission-denied' || e.code === 'failed-precondition') {
-        console.warn(`Firestore permission/connection error detected. Falling back to initial data for the entire app.`);
+    if (e.code === 'permission-denied' || e.code === 'failed-precondition' || e.code === 'unimplemented') {
+        console.warn(`Firestore connection error on server. Falling back to initial data. Error: ${e.code}`);
         errorType = 'PERMISSION_DENIED';
     } else {
         console.error("Could not fetch dashboard data from server.", e);

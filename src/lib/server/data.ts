@@ -11,7 +11,7 @@ function getDb(): Firestore | null {
     return null;
   }
   // This is the correct way to get a Firestore instance for server-side operations.
-  // It does NOT use persistence.
+  // It does NOT use persistence or any client-side features.
   return getFirestore(app);
 }
 
@@ -60,11 +60,8 @@ export async function getDashboardData(): Promise<DashboardData> {
   }
   
   try {
-    // This is a check to see if Firestore is enabled. It's a lightweight operation.
-    // If it fails, we fall back to sample data.
-    // We wrap this in a promise that will not crash the entire `Promise.all`.
-    await getDocs(query(collection(db, 'customers'), limit(1)));
-
+    // This is a lightweight check to see if Firestore is enabled. If it fails, we fall back to sample data.
+    // This top-level try/catch prevents the entire app from crashing if the API is disabled.
     const [sales, customers, vehicles, expenses, reminders, profile] = await Promise.all([
         getSales(db),
         getCustomers(db),
@@ -85,6 +82,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         console.error("Could not fetch dashboard data from server.", e);
     }
     
+    // Fallback to sample data on any error during server-side fetch
     return {...initialState, profile: initialState.profile, error: errorType};
   }
 }

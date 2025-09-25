@@ -12,7 +12,6 @@ import {
   orderBy,
   getDoc,
   initializeFirestore,
-  persistentLocalCache,
   enableIndexedDbPersistence,
   type Firestore
 } from 'firebase/firestore';
@@ -32,21 +31,24 @@ async function getDb(): Promise<Firestore> {
     throw new Error("Firebase is not configured. Please add your Firebase configuration.");
   }
   
-  db = getFirestore(app);
-
+  // Use initializeFirestore for explicit configuration
+  const firestore = initializeFirestore(app, {});
+  
   if (!persistenceEnabled) {
     try {
-        await enableIndexedDbPersistence(db);
+        // This enables the offline cache
+        await enableIndexedDbPersistence(firestore);
         persistenceEnabled = true;
     } catch (err: any) {
         if (err.code === 'failed-precondition') {
-            console.warn("Firestore persistence failed to initialize. Multiple tabs open?");
+            console.warn("Firestore persistence failed to initialize. This can happen if you have multiple tabs open.");
         } else if (err.code === 'unimplemented') {
             console.warn("Firestore persistence is not available in this browser.");
         }
     }
   }
   
+  db = firestore;
   return db;
 }
 

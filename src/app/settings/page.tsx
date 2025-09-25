@@ -10,9 +10,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, Cloud, Loader2, LogOut } from 'lucide-react';
+import { Upload, Cloud, Loader2, LogOut, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { importToFirestore } from '@/app/settings/actions';
+import { importToFirestore, clearFirestoreData } from '@/app/settings/actions';
 import { getFirebaseApp } from '@/lib/firebase';
 import { 
     getAuth, 
@@ -22,10 +22,23 @@ import {
 } from 'firebase/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useDataStore } from '@/lib/data-store';
 
 
 export default function SettingsPage() {
     const { toast } = useToast();
+    const { clearData } = useDataStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const importMode = useRef<'import_cloud' | null>(null);
     const [user, setUser] = useState<User | null>(null);
@@ -127,6 +140,28 @@ export default function SettingsPage() {
         fileInputRef.current?.click();
     };
 
+    const handleClearData = () => {
+      startTransition(async () => {
+        // Clear local data first for immediate UI feedback
+        clearData();
+        
+        if (user) {
+          // If user is logged in, also clear cloud data
+          const result = await clearFirestoreData();
+          if (result.success) {
+            toast({ title: 'All Data Cleared', description: 'Your local and cloud data have been wiped.' });
+          } else {
+            toast({ title: 'Cloud Clear Failed', description: result.message, variant: 'destructive' });
+          }
+        } else {
+          toast({ title: 'Local Data Cleared', description: 'Your local application data has been wiped.' });
+        }
+        
+        // Force a reload to ensure all components refetch and see the empty state
+        window.location.reload();
+      });
+    }
+
     const AuthContent = () => {
         if (!firebaseConfigured) {
             return (
@@ -219,6 +254,34 @@ export default function SettingsPage() {
                         Import Backup to Cloud
                       </Button>
                       {!user && <p className="text-xs text-destructive">Please sign in to import data to the cloud.</p>}
+                    </div>
+                    <div className="space-y-2 rounded-lg border border-destructive p-4">
+                      <h3 className="font-semibold text-destructive">Clear All Data</h3>
+                      <p className='text-sm text-muted-foreground'>
+                        Permanently delete all data from this application, including local and cloud storage. This action cannot be undone.
+                      </p>
+                       <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" disabled={isActionPending}>
+                               {isActionPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                               Clear All Data
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action is irreversible. It will permanently delete all your data, including sales, customers, expenses, and settings from both your device and the cloud (if logged in).
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleClearData} className="bg-destructive hover:bg-destructive/90">
+                                Yes, delete everything
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                     </div>
                   </CardContent>
                 </Card>

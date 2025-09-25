@@ -48,7 +48,8 @@ export function CollectionsTable({ initialData }: CollectionsTableProps) {
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    setCollections(initialData);
+  }, [initialData]);
 
   const fetchCollections = async () => {
     setIsLoading(true);

@@ -47,7 +47,8 @@ export function ExpenseTable({ initialData }: ExpenseTableProps) {
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    setExpenses(initialData);
+  }, [initialData]);
 
   const fetchExpenses = async () => {
     setIsLoading(true);

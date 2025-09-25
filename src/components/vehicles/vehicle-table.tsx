@@ -46,6 +46,10 @@ export function VehicleTable({ initialData }: VehicleTableProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
+  useEffect(() => {
+    setVehicles(initialData);
+  }, [initialData]);
+
   const fetchVehicles = async () => {
     setIsLoading(true);
     try {

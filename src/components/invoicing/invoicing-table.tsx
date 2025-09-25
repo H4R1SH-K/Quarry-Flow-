@@ -53,7 +53,10 @@ export function InvoicingTable({ initialSales, initialCustomers, initialProfile 
 
     useEffect(() => {
         setIsClient(true);
-    }, []);
+        setSales(initialSales);
+        setCustomers(initialCustomers);
+        setProfile(initialProfile);
+    }, [initialSales, initialCustomers, initialProfile]);
 
     const fetchData = async () => {
         setIsLoading(true);

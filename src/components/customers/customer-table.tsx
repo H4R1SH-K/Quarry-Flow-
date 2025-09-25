@@ -43,6 +43,10 @@ export function CustomerTable({ initialData }: CustomerTableProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    setCustomers(initialData);
+  }, [initialData]);
+
   const fetchCustomers = async () => {
     setIsLoading(true);
     try {

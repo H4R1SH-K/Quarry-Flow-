@@ -47,7 +47,8 @@ export function SalesTable({ initialData }: SalesTableProps) {
 
     useEffect(() => {
       setIsClient(true);
-    }, []);
+      setSales(initialData);
+    }, [initialData]);
 
     const fetchSales = async () => {
         setIsLoading(true);

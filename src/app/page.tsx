@@ -5,11 +5,11 @@ import { Suspense } from 'react';
 import { OverviewStats } from '@/components/dashboard/overview-stats';
 import { getDashboardData } from '@/lib/server/data';
 import { DashboardCardSkeleton, OverviewStatsSkeleton } from '@/components/dashboard/skeletons';
-import dynamic from 'next/dynamic';
 import { FullPageLoader } from '@/components/ui/full-page-loader';
 import { ClientOnlyDashboard } from '@/components/dashboard/client-only-dashboard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
+import dynamic from 'next/dynamic';
 
 export const dynamic = 'force-dynamic';
 

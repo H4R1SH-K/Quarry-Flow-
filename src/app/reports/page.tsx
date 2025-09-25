@@ -4,6 +4,7 @@
 import dynamic from 'next/dynamic';
 import { FullPageLoader } from '@/components/ui/full-page-loader';
 
+export const dynamic = 'force-dynamic';
 
 const ExpenseReport = dynamic(
   () => import('@/components/reports/expense-report').then((mod) => mod.ExpenseReport),

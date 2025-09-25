@@ -1,5 +1,5 @@
 
-import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, collection, getDocs, query, limit } from 'firebase/firestore';
 import type { Profile, Sales, Customer, Vehicle, Expense, Reminder, AuditLog } from '@/lib/types';
 import { initialState } from '@/lib/sample-data';
 import { getFirebaseApp } from '../firebase';
@@ -25,7 +25,9 @@ async function fetchCollection<T>(collectionName: keyof typeof initialState | 'p
     try {
         const snap = await getDocs(query(collection(db, collectionName)));
         if (snap.empty) {
-          return [];
+          // Fallback to sample data if the collection is empty in Firestore
+          // @ts-ignore
+          return initialState[collectionName] || [];
         }
         return snap.docs.map(d => ({ ...d.data(), id: d.id })) as T[];
 
@@ -95,13 +97,6 @@ export async function getDashboardData(): Promise<DashboardData> {
         getReminders(),
         getProfile(),
     ]);
-
-    const isDbEmpty = sales.length === 0 && customers.length === 0 && vehicles.length === 0 && expenses.length === 0 && reminders.length === 0;
-
-    if (isDbEmpty) {
-      console.log('Database is empty, returning initial empty state.');
-      return {...initialState, profile: initialState.profile, error: null};
-    }
     
     return { sales, customers, vehicles, expenses, reminders, profile, error: null };
 

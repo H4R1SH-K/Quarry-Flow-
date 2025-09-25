@@ -1,5 +1,6 @@
+
 'use server';
-import { getFirestore, collection, writeBatch, getDocs, doc } from "firebase/firestore";
+import { getFirestore, collection, writeBatch, getDocs, doc, getDoc } from "firebase/firestore";
 import { getFirebaseApp } from "@/lib/firebase";
 import type { DataState } from "@/lib/data-store";
 
@@ -9,7 +10,6 @@ const COLLECTIONS = {
     VEHICLES: 'vehicles',
     EXPENSES: 'expenses',
     REMINDERS: 'reminders',
-    PROFILE: 'profile',
 };
 
 type DataKeys = 'sales' | 'customers' | 'vehicles' | 'expenses' | 'reminders';
@@ -17,44 +17,37 @@ type DataKeys = 'sales' | 'customers' | 'vehicles' | 'expenses' | 'reminders';
 
 const validateData = (data: any): data is Partial<DataState> => {
     if (!data) return false;
-    const requiredKeys: DataKeys[] = ['sales', 'customers', 'vehicles', 'expenses', 'reminders'];
-    return requiredKeys.every(key => data[key] === undefined || Array.isArray(data[key]));
+    // Loosen validation to allow for backups that might not have all keys
+    return typeof data === 'object';
 }
 
 
-export const migrateToFirestore = async (data: Partial<DataState>) => {
+export const getFirestoreData = async () => {
     try {
         const app = getFirebaseApp();
         if (!app) {
-            return { success: false, message: "Firebase is not configured. Please add your Firebase configuration to enable cloud features." };
+            return { success: false, message: "Firebase is not configured." };
         }
         const db = getFirestore(app);
         
-        if (!validateData(data)) {
-            throw new Error("Invalid data structure for migration.");
-        }
-        const batch = writeBatch(db);
+        const data: Partial<DataState> = {};
 
-        for (const key in data) {
-            const collectionName = COLLECTIONS[key.toUpperCase() as keyof typeof COLLECTIONS];
-            if (collectionName) {
-                const items = data[key as DataKeys] as any[];
-                if(items) {
-                    items.forEach(item => {
-                        if(item.id) {
-                            const docRef = doc(db, collectionName, item.id);
-                            batch.set(docRef, item);
-                        }
-                    });
-                }
-            }
+        for (const key of Object.values(COLLECTIONS)) {
+            const querySnapshot = await getDocs(collection(db, key));
+            // @ts-ignore
+            data[key as DataKeys] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
 
-        await batch.commit();
-        return { success: true, message: 'Your local data has been synced to the cloud.' };
+        // Handle profile separately as it's a single doc
+        const profileDoc = await getDoc(doc(db, 'profile', 'user_profile'));
+        if (profileDoc.exists()) {
+            data.profile = profileDoc.data();
+        }
+
+        return { success: true, data };
     } catch (error: any) {
-        console.error('Cloud Sync Error:', error);
-        return { success: false, message: error.message || 'Could not sync data to the cloud. Please try again.' };
+        console.error('Cloud Backup Error:', error);
+        return { success: false, message: error.message || 'Could not get data from the cloud.' };
     }
 }
 
@@ -87,6 +80,9 @@ export const importToFirestore = async (data: Partial<DataState>) => {
                         }
                     });
                 }
+            } else if (key === 'profile' && data.profile) {
+                const docRef = doc(db, 'profile', 'user_profile');
+                batch.set(docRef, data.profile, { merge: true });
             }
         }
 
@@ -116,6 +112,9 @@ export const clearFirestoreData = async () => {
             });
         }
         
+        // Also delete the profile document
+        batch.delete(doc(db, 'profile', 'user_profile'));
+
         await batch.commit();
         return { success: true, message: 'All cloud data has been successfully cleared.' };
     } catch (error: any) {
@@ -123,3 +122,5 @@ export const clearFirestoreData = async () => {
         return { success: false, message: error.message || 'Could not clear cloud data. Please try again.' };
     }
 }
+
+    

@@ -10,9 +10,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, Cloud, Loader2, LogOut, Trash2 } from 'lucide-react';
+import { Upload, Cloud, Loader2, LogOut, Trash2, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { importToFirestore, clearFirestoreData } from '@/app/settings/actions';
+import { importToFirestore, clearFirestoreData, getFirestoreData } from '@/app/settings/actions';
 import { getFirebaseApp } from '@/lib/firebase';
 import { 
     getAuth, 
@@ -162,6 +162,30 @@ export default function SettingsPage() {
       });
     }
 
+    const handleBackup = () => {
+        startTransition(async () => {
+            if (!user) {
+                toast({ title: 'Authentication Required', description: 'Please sign in to back up your data.', variant: 'destructive'});
+                return;
+            }
+            const { success, data, message } = await getFirestoreData();
+            if (success && data) {
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'backup.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                toast({ title: 'Backup Successful', description: 'Your cloud data has been downloaded.' });
+            } else {
+                toast({ title: 'Backup Failed', description: message, variant: 'destructive' });
+            }
+        });
+    }
+
     const AuthContent = () => {
         if (!firebaseConfigured) {
             return (
@@ -237,6 +261,25 @@ export default function SettingsPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-2">
+                      <h3 className="font-semibold">Backup Cloud Data</h3>
+                      <p className='text-sm text-muted-foreground'>
+                        Download a complete backup of all your data stored in the cloud as a JSON file.
+                      </p>
+                      <Button 
+                        onClick={handleBackup} 
+                        variant="outline" 
+                        disabled={isActionPending || !user}
+                      >
+                        {isActionPending ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Download className="mr-2 h-4 w-4" />
+                        )}
+                        Backup Cloud Data
+                      </Button>
+                      {!user && <p className="text-xs text-destructive">Please sign in to back up data.</p>}
+                    </div>
+                    <div className="space-y-2">
                       <h3 className="font-semibold">Import to Cloud</h3>
                       <p className='text-sm text-muted-foreground'>
                         Import a local backup file directly to the cloud. This will merge the backup with your existing cloud data without overwriting.
@@ -298,3 +341,5 @@ export default function SettingsPage() {
         </div>
     );
 }
+
+    

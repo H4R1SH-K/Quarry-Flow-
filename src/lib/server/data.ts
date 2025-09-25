@@ -1,4 +1,3 @@
-
 import { getFirebaseApp } from '@/lib/firebase';
 import { getFirestore, doc, getDoc, collection, getDocs, limit, query, orderBy } from 'firebase/firestore';
 import type { Profile, Sales, Customer, Vehicle, Expense, Reminder, AuditLog } from '@/lib/types';
@@ -7,15 +6,15 @@ import { initialState } from '@/lib/sample-data';
 
 async function getDb() {
   const app = getFirebaseApp();
-  // On the server, we don't need persistence. We want a direct connection.
-  // We initialize a new instance for each server-side request context if needed.
   if (!app) {
     return null;
   }
+  // This is the correct way to get a Firestore instance for server-side operations.
+  // It does not involve client-side persistence features.
   return getFirestore(app);
 }
 
-// This function now throws on permission errors so a central handler can catch it.
+
 async function fetchCollection<T>(collectionName: keyof typeof initialState | 'profile' | 'auditLogs'): Promise<T[]> {
     const db = await getDb();
     if (!db) {
@@ -26,21 +25,22 @@ async function fetchCollection<T>(collectionName: keyof typeof initialState | 'p
     try {
         const snap = await getDocs(query(collection(db, collectionName), orderBy("id", "desc"), limit(100)));
         if (snap.empty) {
-          // @ts-ignore
-          return initialState[collectionName] || [];
+          // If the collection is empty in Firestore, return an empty array, not sample data.
+          // Sample data is now handled at a higher level in getDashboardData.
+          return [];
         }
         return snap.docs.map(d => ({ ...d.data(), id: d.id })) as T[];
     } catch (e: any) {
         if (e.code === 'permission-denied' || e.code === 'failed-precondition') {
-            console.warn(`Firestore permission error fetching '${collectionName}'. Falling back to sample data.`);
-             // @ts-ignore
-            return initialState[collectionName] || [];
+            console.warn(`Firestore permission error fetching '${collectionName}'. A fallback will be used.`);
+            // Throw the error so the higher-level function can decide on a fallback strategy.
+            throw e;
         }
-        throw e; // Re-throw other errors
+        // Re-throw other unexpected errors
+        throw e;
     }
 }
 
-// Profile functions
 export async function getProfile(): Promise<Profile | null> {
     const db = await getDb();
     if (!db) return initialState.profile;
@@ -51,7 +51,7 @@ export async function getProfile(): Promise<Profile | null> {
         if (docSnap.exists()) {
             return docSnap.data() as Profile;
         }
-        return initialState.profile;
+        return initialState.profile; // Fallback to sample if no profile exists
     } catch (e: any) {
          if (e.code === 'permission-denied' || e.code === 'failed-precondition') {
             console.warn(`Firestore permission error fetching 'profile'. Falling back to sample data.`);
@@ -61,7 +61,6 @@ export async function getProfile(): Promise<Profile | null> {
     }
 }
 
-// Functions to fetch data for each page
 export const getCustomers = async () => fetchCollection<Customer>('customers');
 export const getSales = async () => fetchCollection<Sales>('sales');
 export const getVehicles = async () => fetchCollection<Vehicle>('vehicles');
@@ -83,7 +82,6 @@ type DashboardData = {
 export async function getDashboardData(): Promise<DashboardData> {
   const db = await getDb();
   if (!db) {
-    // Fallback to sample data if firebase is not configured
     return {...initialState, profile: initialState.profile, error: 'FIREBASE_NOT_CONFIGURED'};
   }
 
@@ -96,11 +94,12 @@ export async function getDashboardData(): Promise<DashboardData> {
         getReminders(),
     ]);
 
-    // If all fetches succeeded but returned empty arrays, it means the DB is empty.
-    // In this case, we use sample data to populate the UI for the user.
+    // This logic correctly handles using sample data only when the database is truly empty,
+    // which is useful for first-time users.
     const isDbEmpty = sales.length === 0 && customers.length === 0 && vehicles.length === 0 && expenses.length === 0 && reminders.length === 0;
 
     if (isDbEmpty) {
+      console.log('Database is empty, falling back to sample data for initial view.');
       return {...initialState, error: null};
     }
     
@@ -108,15 +107,14 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   } catch (e: any) {
     let errorType = 'UNKNOWN_ERROR';
-     // This top-level catch is a safety net. The main permission error is now caught in fetchCollection/getProfile
     if (e.code === 'permission-denied' || e.code === 'failed-precondition') {
-        console.warn(`Firestore permission/connection error. Falling back to sample data.`);
+        console.warn(`Firestore permission/connection error. Falling back to sample data for the entire app.`);
         errorType = 'PERMISSION_DENIED';
     } else {
         console.error("Could not fetch dashboard data from server.", e);
     }
     
-    // Fallback to sample data if there's any firebase error during the fetch.
+    // Fallback to sample data for the whole app if there's any firebase error during the fetch.
     return {...initialState, error: errorType};
   }
 }

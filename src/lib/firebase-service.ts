@@ -1,4 +1,3 @@
-
 'use client';
 import { getFirebaseApp } from '@/lib/firebase';
 import { 
@@ -20,7 +19,7 @@ import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from '@/lib
 
 let db: Firestore | null = null;
 
-// This function initializes Firestore with persistence for the client-side.
+// This function initializes Firestore correctly for client or server.
 function getDb(): Firestore {
   if (db) {
     return db;
@@ -28,15 +27,18 @@ function getDb(): Firestore {
 
   const app = getFirebaseApp();
   if (!app) {
-    // This should not happen in the browser if config is present, but it's a safeguard.
     throw new Error("Firebase is not configured. Please add your Firebase configuration.");
   }
   
-  // Initialize with the correct cache for the browser environment.
-  // This runs only once.
-  db = initializeFirestore(app, {
-    localCache: persistentLocalCache({})
-  });
+  // Use persistent cache for client-side (browser) only
+  if (typeof window !== 'undefined') {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({})
+    });
+  } else {
+    // Use standard Firestore instance for server-side
+    db = getFirestore(app);
+  }
   
   return db;
 }
@@ -127,7 +129,7 @@ export async function deleteReminderById(id: string): Promise<void> {
     return deleteDocument('reminders', id);
 }
 
-// Profile functions (Client-side only)
+// Profile functions
 export async function getProfile(): Promise<Profile | null> {
     const db = getDb();
     const docRef = doc(db, 'profile', 'user_profile');

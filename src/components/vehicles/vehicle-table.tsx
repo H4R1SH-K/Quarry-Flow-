@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -43,23 +43,24 @@ export function VehicleTable({ initialData }: VehicleTableProps) {
   const [filter, setFilter] = useState<VehicleStatus | 'All'>('All');
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  const fetchVehicles = () => {
-    startTransition(async () => {
-        try {
-            const fetchedVehicles = await getVehicles();
-            setVehicles(fetchedVehicles);
-        } catch (error) {
-            console.error("Failed to fetch vehicles:", error);
-            toast({
-                title: "Error",
-                description: "Could not fetch vehicles. Please check your connection.",
-                variant: "destructive",
-            });
-        }
-    });
+  const fetchVehicles = async () => {
+    setIsLoading(true);
+    try {
+        const fetchedVehicles = await getVehicles();
+        setVehicles(fetchedVehicles);
+    } catch (error) {
+        console.error("Failed to fetch vehicles:", error);
+        toast({
+            title: "Error",
+            description: "Could not fetch vehicles. Please check your connection.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -81,9 +82,7 @@ export function VehicleTable({ initialData }: VehicleTableProps) {
   }
 
   const handleFilterChange = (newFilter: VehicleStatus | 'All') => {
-    startTransition(() => {
-        setFilter(newFilter);
-    });
+    setFilter(newFilter);
   }
 
   const baseVehicles = vehicles.filter(vehicle => {
@@ -112,9 +111,9 @@ export function VehicleTable({ initialData }: VehicleTableProps) {
       <Button
         variant={isCurrent ? 'default' : 'outline'}
         onClick={() => handleFilterChange(status)}
-        disabled={isPending && !isCurrent}
+        disabled={isLoading && !isCurrent}
       >
-        {isPending && isCurrent ? (
+        {isLoading && isCurrent ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
           children
@@ -159,7 +158,7 @@ export function VehicleTable({ initialData }: VehicleTableProps) {
               </FilterButton>
             </div>
           </div>
-          { isPending ? (
+          { isLoading ? (
               <div className="flex justify-center items-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>

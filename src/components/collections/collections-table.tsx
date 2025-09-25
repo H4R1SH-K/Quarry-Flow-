@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -42,7 +42,7 @@ export function CollectionsTable({ initialData }: CollectionsTableProps) {
   const [collections, setCollections] = useState<Reminder[]>(initialData);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
 
@@ -50,16 +50,17 @@ export function CollectionsTable({ initialData }: CollectionsTableProps) {
     setIsClient(true);
   }, []);
 
-  const fetchCollections = () => {
-    startTransition(async () => {
-      try {
-        const remindersData = await getReminders();
-        setCollections(remindersData.filter(r => r.type === 'Credit'));
-      } catch (error) {
-        console.error("Failed to fetch collections:", error);
-        toast({ title: "Error", description: "Could not fetch collections.", variant: "destructive" });
-      }
-    });
+  const fetchCollections = async () => {
+    setIsLoading(true);
+    try {
+      const remindersData = await getReminders();
+      setCollections(remindersData.filter(r => r.type === 'Credit'));
+    } catch (error) {
+      console.error("Failed to fetch collections:", error);
+      toast({ title: "Error", description: "Could not fetch collections.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -110,7 +111,7 @@ export function CollectionsTable({ initialData }: CollectionsTableProps) {
               />
             </div>
           </div>
-          {isPending ? (
+          {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
@@ -133,7 +134,9 @@ export function CollectionsTable({ initialData }: CollectionsTableProps) {
                   <TableRow key={reminder.id}>
                     <TableCell className="max-w-[250px] truncate font-medium">{reminder.details}</TableCell>
                     <TableCell>₹{reminder.amount?.toLocaleString('en-IN') || 'N/A'}</TableCell>
-                    <TableCell>{reminder.dueDate && isValid(new Date(reminder.dueDate)) ? format(new Date(reminder.dueDate), 'PPP') : 'N/A'}</TableCell>
+                    <TableCell>
+                      {isClient && reminder.dueDate && isValid(new Date(reminder.dueDate)) ? format(new Date(reminder.dueDate), 'PPP') : <Skeleton className="h-4 w-24" />}
+                    </TableCell>
                     <TableCell>{isClient ? getDaysLeft(reminder.dueDate) : <Skeleton className="h-4 w-16" />}</TableCell>
                     <TableCell>{reminder.relatedToName || 'N/A'}</TableCell>
                     <TableCell>

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -31,6 +31,7 @@ import type { Sales } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 import { SaleForm } from '@/components/invoicing/sale-form';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Skeleton } from '../ui/skeleton';
 
 interface SalesTableProps {
   initialData: Sales[];
@@ -40,19 +41,25 @@ export function SalesTable({ initialData }: SalesTableProps) {
     const [sales, setSales] = useState<Sales[]>(initialData);
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
-    const [isPending, startTransition] = useTransition();
+    const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
+    const [isClient, setIsClient] = useState(false);
 
-    const fetchSales = () => {
-        startTransition(async () => {
-            try {
-                const salesData = await getSales();
-                setSales(salesData);
-            } catch (error) {
-                console.error("Failed to fetch sales:", error);
-                toast({ title: "Error", description: "Could not fetch sales data.", variant: "destructive" });
-            }
-        });
+    useEffect(() => {
+      setIsClient(true);
+    }, []);
+
+    const fetchSales = async () => {
+        setIsLoading(true);
+        try {
+            const salesData = await getSales();
+            setSales(salesData);
+        } catch (error) {
+            console.error("Failed to fetch sales:", error);
+            toast({ title: "Error", description: "Could not fetch sales data.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleDelete = async (id: string) => {
@@ -92,7 +99,7 @@ export function SalesTable({ initialData }: SalesTableProps) {
                         />
                         </div>
                     </div>
-                    {isPending ? (
+                    {isLoading ? (
                         <div className="flex justify-center items-center h-64">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         </div>
@@ -116,7 +123,9 @@ export function SalesTable({ initialData }: SalesTableProps) {
                                         <TableCell className="font-medium">{sale.customer}</TableCell>
                                         <TableCell>{sale.vehicle}</TableCell>
                                         <TableCell>{sale.items?.length || 1} item(s)</TableCell>
-                                        <TableCell>{sale.date && isValid(new Date(sale.date)) ? format(new Date(sale.date), 'PPP') : 'N/A'}</TableCell>
+                                        <TableCell>
+                                          {isClient && sale.date && isValid(new Date(sale.date)) ? format(new Date(sale.date), 'PPP') : <Skeleton className="h-4 w-24" />}
+                                        </TableCell>
                                         <TableCell>{sale.paymentMethod || 'N/A'}</TableCell>
                                         <TableCell className="text-right">Rs. {sale.price.toLocaleString('en-IN')}</TableCell>
                                         <TableCell className="text-right">

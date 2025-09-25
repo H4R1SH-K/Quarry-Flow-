@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -31,6 +31,7 @@ import { ExpenseForm } from './expense-form';
 import { getExpenses, deleteExpenseById } from '@/lib/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Skeleton } from '../ui/skeleton';
 
 interface ExpenseTableProps {
   initialData: Expense[];
@@ -40,19 +41,25 @@ export function ExpenseTable({ initialData }: ExpenseTableProps) {
   const [expenses, setExpenses] = useState<Expense[]>(initialData);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
 
-  const fetchExpenses = () => {
-    startTransition(async () => {
-      try {
-        const expensesData = await getExpenses();
-        setExpenses(expensesData);
-      } catch (error) {
-        console.error("Failed to fetch expenses:", error);
-        toast({ title: "Error", description: "Could not fetch expenses.", variant: "destructive" });
-      }
-    });
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const fetchExpenses = async () => {
+    setIsLoading(true);
+    try {
+      const expensesData = await getExpenses();
+      setExpenses(expensesData);
+    } catch (error) {
+      console.error("Failed to fetch expenses:", error);
+      toast({ title: "Error", description: "Could not fetch expenses.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -92,7 +99,7 @@ export function ExpenseTable({ initialData }: ExpenseTableProps) {
               />
             </div>
           </div>
-          {isPending ? (
+          {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
@@ -117,7 +124,9 @@ export function ExpenseTable({ initialData }: ExpenseTableProps) {
                       <TableCell className="max-w-[200px] truncate">{expense.item}</TableCell>
                       <TableCell>{expense.vehicle || 'N/A'}</TableCell>
                       <TableCell>₹{expense.amount.toLocaleString('en-IN')}</TableCell>
-                      <TableCell>{expense.date && isValid(new Date(expense.date)) ? format(new Date(expense.date), 'PPP') : 'N/A'}</TableCell>
+                      <TableCell>
+                        {isClient && expense.date && isValid(new Date(expense.date)) ? format(new Date(expense.date), 'PPP') : <Skeleton className="h-4 w-24" />}
+                      </TableCell>
                       <TableCell className="text-right">
                         <ExpenseForm expenseToEdit={expense} onSave={fetchExpenses} />
                         <AlertDialog>

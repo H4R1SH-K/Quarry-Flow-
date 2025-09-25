@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -42,7 +42,7 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
   const [reminders, setReminders] = useState<Reminder[]>(initialData);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
 
@@ -50,16 +50,17 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
     setIsClient(true);
   }, []);
 
-  const fetchReminders = () => {
-    startTransition(async () => {
-        try {
-            const remindersData = await getReminders();
-            setReminders(remindersData.filter(r => r.type !== 'Credit'));
-        } catch (error) {
-            console.error("Failed to fetch reminders:", error);
-            toast({ title: "Error", description: "Could not fetch reminders.", variant: "destructive" });
-        }
-    });
+  const fetchReminders = async () => {
+    setIsLoading(true);
+    try {
+        const remindersData = await getReminders();
+        setReminders(remindersData.filter(r => r.type !== 'Credit'));
+    } catch (error) {
+        console.error("Failed to fetch reminders:", error);
+        toast({ title: "Error", description: "Could not fetch reminders.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -114,7 +115,7 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
               />
             </div>
           </div>
-          {isPending ? (
+          {isLoading ? (
             <div className="flex justify-center items-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
@@ -137,7 +138,9 @@ export function ReminderTable({ initialData }: ReminderTableProps) {
                   <TableRow key={reminder.id}>
                     <TableCell className="font-medium">{reminder.type}</TableCell>
                     <TableCell className="max-w-[250px] truncate">{reminder.details}</TableCell>
-                    <TableCell>{reminder.dueDate && isValid(new Date(reminder.dueDate)) ? format(new Date(reminder.dueDate), 'PPP') : 'N/A'}</TableCell>
+                    <TableCell>
+                      {isClient && reminder.dueDate && isValid(new Date(reminder.dueDate)) ? format(new Date(reminder.dueDate), 'PPP') : <Skeleton className="h-4 w-24" />}
+                    </TableCell>
                     <TableCell>{isClient ? getDaysLeft(reminder.dueDate) : <Skeleton className='h-4 w-16' />}</TableCell>
                     <TableCell>{getRelatedName(reminder)}</TableCell>
                     <TableCell>

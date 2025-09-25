@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -40,29 +40,25 @@ export function CustomerTable({ initialData }: CustomerTableProps) {
   const [customers, setCustomers] = useState<Customer[]>(initialData);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const fetchCustomers = () => {
-    startTransition(async () => {
-      try {
-        const fetchedCustomers = await getCustomers();
-        setCustomers(fetchedCustomers);
-      } catch (error) {
-        console.error("Failed to fetch customers:", error);
-        toast({
-          title: "Error",
-          description: "Could not fetch customers. Please check your connection.",
-          variant: "destructive",
-        });
-      }
-    });
+  const fetchCustomers = async () => {
+    setIsLoading(true);
+    try {
+      const fetchedCustomers = await getCustomers();
+      setCustomers(fetchedCustomers);
+    } catch (error) {
+      console.error("Failed to fetch customers:", error);
+      toast({
+        title: "Error",
+        description: "Could not fetch customers. Please check your connection.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  // Data is now passed from server, so we can remove the initial client-side fetch.
-  // useEffect(() => {
-  //   fetchCustomers();
-  // }, []);
 
   const handleDelete = async (id: string) => {
     try {
@@ -110,7 +106,7 @@ export function CustomerTable({ initialData }: CustomerTableProps) {
               />
             </div>
           </div>
-          {isPending ? (
+          {isLoading ? (
              <div className="flex justify-center items-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
              </div>

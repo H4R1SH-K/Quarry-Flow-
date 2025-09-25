@@ -13,15 +13,17 @@ import {
   getDoc,
   initializeFirestore,
   persistentLocalCache,
+  enableIndexedDbPersistence,
   type Firestore
 } from 'firebase/firestore';
 import type { Customer, Sales, Vehicle, Expense, Reminder, Profile } from '@/lib/types';
 
 let db: Firestore | null = null;
+let persistenceEnabled = false;
 
 // This function initializes Firestore for the CLIENT-SIDE ONLY with persistence.
-function getDb(): Firestore {
-  if (db) {
+async function getDb(): Promise<Firestore> {
+  if (db && persistenceEnabled) {
     return db;
   }
 
@@ -30,15 +32,19 @@ function getDb(): Firestore {
     throw new Error("Firebase is not configured. Please add your Firebase configuration.");
   }
   
-  // Use persistent cache for client-side (browser) only
-  // This can only be initialized once.
-  try {
-      db = initializeFirestore(app, {
-        localCache: persistentLocalCache({})
-      });
-  } catch(e) {
-    // If it's already initialized (e.g., due to fast refresh), get the existing instance.
-    db = getFirestore(app);
+  db = getFirestore(app);
+
+  if (!persistenceEnabled) {
+    try {
+        await enableIndexedDbPersistence(db);
+        persistenceEnabled = true;
+    } catch (err: any) {
+        if (err.code === 'failed-precondition') {
+            console.warn("Firestore persistence failed to initialize. Multiple tabs open?");
+        } else if (err.code === 'unimplemented') {
+            console.warn("Firestore persistence is not available in this browser.");
+        }
+    }
   }
   
   return db;
@@ -47,7 +53,7 @@ function getDb(): Firestore {
 
 // Generic function to get all documents from a collection, with a default limit.
 async function getCollection<T>(collectionName: string, recordLimit: number = 100): Promise<T[]> {
-  const db = getDb();
+  const db = await getDb();
   const q = query(collection(db, collectionName), orderBy('id', 'desc'), limit(recordLimit));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
@@ -55,14 +61,14 @@ async function getCollection<T>(collectionName: string, recordLimit: number = 10
 
 // Generic function to add or update a document
 async function setDocument<T extends { id: string }>(collectionName: string, item: T): Promise<void> {
-  const db = getDb();
+  const db = await getDb();
   const docRef = doc(db, collectionName, item.id);
   await setDoc(docRef, item, { merge: true });
 }
 
 // Generic function to delete a document
 async function deleteDocument(collectionName: string, id: string): Promise<void> {
-  const db = getDb();
+  const db = await getDb();
   await deleteDoc(doc(db, collectionName, id));
 }
 
@@ -82,7 +88,7 @@ export async function getSales(): Promise<Sales[]> {
     return getCollection<Sales>('sales');
 }
 export async function getRecentSales(count: number = 5): Promise<Sales[]> {
-    const db = getDb();
+    const db = await getDb();
     const salesCollection = collection(db, 'sales');
     const q = query(salesCollection, orderBy('date', 'desc'), limit(count));
     const querySnapshot = await getDocs(q);
@@ -132,7 +138,7 @@ export async function deleteReminderById(id: string): Promise<void> {
 
 // Profile functions
 export async function getProfile(): Promise<Profile | null> {
-    const db = getDb();
+    const db = await getDb();
     const docRef = doc(db, 'profile', 'user_profile');
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
@@ -141,7 +147,7 @@ export async function getProfile(): Promise<Profile | null> {
     return null;
 }
 export async function saveProfile(profile: Profile): Promise<void> {
-    const db = getDb();
+    const db = await getDb();
     const docRef = doc(db, 'profile', 'user_profile');
     await setDoc(docRef, profile);
 }
